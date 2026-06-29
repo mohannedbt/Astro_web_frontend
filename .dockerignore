@@ -3,5 +3,4 @@ dist
 .git
 .dockerignore
 Dockerfile
-nginx.conf
 backup_html
