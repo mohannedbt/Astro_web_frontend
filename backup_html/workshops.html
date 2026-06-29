@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACI — Club Workshops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+/* ===========================
+   DESIGN TOKENS & SAAS THEME
+=========================== */
+:root {
+  --bg-base:        #09090b; 
+  --bg-surface:     #18181b; 
+  --bg-hover:       #27272a; 
+  --border:         rgba(255, 255, 255, 0.08);
+  --border-hover:   rgba(255, 255, 255, 0.15);
+  --text-primary:   #fafafa; 
+  --text-secondary: #a1a1aa; 
+  --text-tertiary:  #52525b; 
+  
+  /* Status Colors */
+  --status-upcoming:  #3b82f6;
+  --status-ongoing:   #22c55e;
+  --status-completed: #71717a;
+
+  /* Level Colors */
+  --level-beginner:   #22c55e;
+  --level-inter:      #eab308;
+  --level-advanced:   #ef4444;
+
+  --sidebar-w:      260px;
+  --sidebar-w-col:  76px;
+  --header-h:       72px;
+  --radius-sm:      8px;
+  --radius-md:      12px;
+  --radius-lg:      20px;
+  --transition:     0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===========================
+   RESET & APP LAYOUT
+=========================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button, select, input { font-family: inherit; color: inherit; background: none; border: none; outline: none; }
+h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+
+#starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.4; }
+.shell { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+/* ===========================
+   SIDEBAR (Collapsible Fixes Applied)
+=========================== */
+.sidebar {
+  width: var(--sidebar-w); background: rgba(9, 9, 11, 0.8); backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transition: width var(--transition); overflow: hidden;
+}
+.sidebar.collapsed { width: var(--sidebar-w-col); }
+
+.sidebar-logo { height: var(--header-h); display: flex; align-items: center; gap: 12px; padding: 0 24px; min-width: var(--sidebar-w); white-space: nowrap; }
+.logo-icon { width: 28px; height: 28px; background: var(--text-primary); color: var(--bg-base); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-name { font-size: 18px; font-weight: 700; transition: opacity var(--transition); }
+.sidebar.collapsed .logo-name { opacity: 0; pointer-events: none; }
+
+.nav-section { padding: 24px 12px 0; min-width: var(--sidebar-w); }
+.nav-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); padding: 0 12px 12px; transition: opacity var(--transition); white-space: nowrap; }
+.sidebar.collapsed .nav-label { opacity: 0; pointer-events: none; }
+
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.2s; margin-bottom: 4px; cursor: pointer; white-space: nowrap; }
+.nav-item i, .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+.nav-item:hover { background: var(--bg-surface); color: var(--text-primary); }
+.nav-item.active { background: var(--bg-hover); color: var(--text-primary); }
+.nav-item span { transition: opacity var(--transition); }
+.sidebar.collapsed .nav-item span { opacity: 0; pointer-events: none; }
+
+.sidebar-user { margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 12px; min-width: var(--sidebar-w); white-space: nowrap; }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-hover); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.user-avatar i, .user-avatar svg { flex-shrink: 0; }
+.user-name { font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: opacity var(--transition); }
+.sidebar.collapsed .user-name { opacity: 0; pointer-events: none; }
+
+/* ===========================
+   MAIN CONTENT VIEW
+=========================== */
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; transition: margin-left var(--transition); }
+.main.expanded { margin-left: var(--sidebar-w-col); }
+
+.topbar {
+  height: var(--header-h); background: rgba(9, 9, 11, 0.7); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.toggle-sidebar { color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; }
+.toggle-sidebar:hover { color: var(--text-primary); }
+.breadcrumbs { font-size: 14px; color: var(--text-tertiary); }
+.breadcrumbs span { color: var(--text-primary); }
+
+.page-content { padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px; }
+
+.page-title-area { display: flex; flex-direction: column; gap: 8px; }
+.page-title-area h1 { font-size: 32px; font-weight: 700; }
+.page-title-area p { color: var(--text-secondary); font-size: 15px; }
+
+/* ===========================
+   FILTER BAR SYSTEM
+=========================== */
+.filter-panel {
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+}
+.search-input-wrapper {
+  display: flex; align-items: center; gap: 10px; background: var(--bg-base);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; width: 300px;
+}
+.search-input-wrapper i { color: var(--text-tertiary); width: 18px; height: 18px; }
+.search-input-wrapper input { width: 100%; font-size: 14px; color: var(--text-primary); }
+.search-input-wrapper input::placeholder { color: var(--text-tertiary); }
+
+.filter-controls-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.custom-select-wrapper {
+  background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 16px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.custom-select-wrapper select { cursor: pointer; font-size: 14px; padding-right: 8px; appearance: none; -webkit-appearance: none; }
+
+.status-tabs { display: flex; background: var(--bg-base); border: 1px solid var(--border); padding: 4px; border-radius: var(--radius-sm); }
+.status-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; color: var(--text-secondary); border-radius: calc(var(--radius-sm) - 2px); cursor: pointer; transition: all 0.2s; }
+.status-tab:hover { color: var(--text-primary); }
+.status-tab.active { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ===========================
+   WORKSHOP DYNAMIC GRID
+=========================== */
+.workshops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
+
+.ws-card {
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ws-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+.ws-card-banner { height: 8px; background: var(--border); }
+.ws-card.upcoming .ws-card-banner { background: var(--status-upcoming); }
+.ws-card.ongoing .ws-card-banner { background: var(--status-ongoing); }
+.ws-card.completed .ws-card-banner { background: var(--status-completed); }
+
+.ws-card-body { padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+.ws-card-meta { display: flex; align-items: center; justify-content: space-between; }
+.topic-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); background: var(--bg-base); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border); }
+
+.status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+.status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+.upcoming .status-badge { color: var(--status-upcoming); }
+.upcoming .status-badge::before { background: var(--status-upcoming); }
+.ongoing .status-badge { color: var(--status-ongoing); }
+.ongoing .status-badge::before { background: var(--status-ongoing); animation: pulse 1.5s infinite; }
+.completed .status-badge { color: var(--status-completed); }
+.completed .status-badge::before { background: var(--status-completed); }
+
+@keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+.ws-title { font-size: 18px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+.ws-summary { font-size: 14px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+.ws-details-row { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); }
+.ws-details-row span { display: flex; align-items: center; gap: 8px; }
+.ws-details-row i { width: 14px; height: 14px; color: var(--text-tertiary); }
+
+.ws-card-actions { padding: 16px 24px 24px; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.05); }
+.btn-more { font-size: 13px; font-weight: 500; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; transition: color 0.2s; }
+.btn-more:hover { color: var(--text-primary); }
+
+.btn-join { margin-left: auto; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 20px; transition: all 0.2s; background: var(--bg-base); border: 1px solid var(--border); color: var(--text-primary); }
+.btn-join:not(:disabled):hover { background: var(--text-primary); color: var(--bg-base); border-color: var(--text-primary); }
+.btn-join:disabled { color: var(--text-tertiary); cursor: not-allowed; opacity: 0.5; }
+
+/* ===========================
+   RICH MODAL WINDOW DIALOG
+=========================== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(8px);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 20px;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+
+.modal-container {
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  width: 100%; max-width: 760px; max-height: 90vh; overflow-y: auto; 
+  display: flex; flex-direction: column; 
+  transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-container::-webkit-scrollbar { width: 8px; }
+.modal-container::-webkit-scrollbar-track { background: var(--bg-base); border-radius: var(--radius-lg); }
+.modal-container::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: var(--radius-lg); }
+
+.modal-overlay.active .modal-container { transform: scale(1); }
+
+.modal-header-sec { padding: 32px 32px 24px; border-bottom: 1px solid var(--border); position: relative; }
+.modal-close { position: absolute; top: 24px; right: 24px; color: var(--text-secondary); cursor: pointer; background: var(--bg-base); border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.modal-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.modal-body-sec { padding: 32px; display: flex; flex-direction: column; gap: 32px; }
+
+/* Modal Grid Layout */
+.modal-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.info-block { display: flex; flex-direction: column; gap: 12px; }
+.info-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+.level-badge { display: inline-flex; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background: var(--bg-base); border: 1px solid var(--border); }
+.level-badge.beginner { color: var(--level-beginner); border-color: rgba(34, 197, 94, 0.2); }
+.level-badge.intermediate { color: var(--level-inter); border-color: rgba(234, 179, 8, 0.2); }
+.level-badge.advanced { color: var(--level-advanced); border-color: rgba(239, 68, 68, 0.2); }
+
+.prereq-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.prereq-item { background: var(--bg-base); border: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); padding: 4px 10px; border-radius: 4px; }
+
+.desc-text { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+
+.agenda-list { display: flex; flex-direction: column; gap: 12px; border-left: 2px solid var(--border); padding-left: 16px; margin-left: 8px; }
+.agenda-item { position: relative; font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+.agenda-item::before { content: ''; position: absolute; left: -21px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--text-tertiary); border: 2px solid var(--bg-surface); }
+
+.presentation-card { display: flex; align-items: center; justify-content: space-between; background: var(--bg-base); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); }
+.pres-info { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-primary); font-weight: 500; }
+.pres-link { color: var(--text-secondary); font-size: 13px; text-decoration: underline; transition: color 0.2s; }
+.pres-link:hover { color: var(--text-primary); }
+.pres-unavailable { color: var(--text-tertiary); font-size: 13px; font-style: italic; }
+
+.modal-footer { padding: 24px 32px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: rgba(0,0,0,0.2); }
+
+/* ===========================
+   NO RESULTS 
+=========================== */
+.no-results { grid-column: 1 / -1; text-align: center; padding: 60px 0; color: var(--text-tertiary); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><img src="profile.png" onerror="this.style.display='none';" style="width: 50px;"></div>
+      <div class="logo-name">Nova<span>.</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Club Space</div>
+      <div class="nav-item"><i data-lucide="compass"></i> <span>HQ Dashboard</span></div>
+      <div class="nav-item"><i data-lucide="book-open"></i> <span>Magazine</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Activities</div>
+      <div class="nav-item active"><i data-lucide="mic"></i> <span>Workshops</span></div>
+      <div class="nav-item"><i data-lucide="calendar"></i> <span>Schedule</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i data-lucide="user" size="14"></i></div>
+      <div class="user-name">Observer Mode</div>
+    </div>
+  </aside>
+
+  <main class="main" id="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="toggle-sidebar" id="toggle-btn"><i data-lucide="menu"></i></button>
+        <div class="breadcrumbs">Activities / <span>Workshops</span></div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      
+      <div class="page-title-area">
+        <h1>Educational Workshops</h1>
+        <p>Enhance your deep-sky processing, observational workflow, and technical sky tracking skills with experts.</p>
+      </div>
+
+      <section class="filter-panel">
+        <div class="search-input-wrapper">
+          <i data-lucide="search"></i>
+          <input type="text" id="search-box" placeholder="Search title, host, or topics...">
+        </div>
+
+        <div class="filter-controls-right">
+          <div class="custom-select-wrapper">
+            <i data-lucide="layers" size="14" style="color:var(--text-secondary)"></i>
+            <select id="topic-select">
+              <option value="all">All Topics</option>
+              <option value="astrophotography">Astrophotography</option>
+              <option value="astrophysics">Astrophysics</option>
+              <option value="hardware">Telescope Hardware</option>
+            </select>
+          </div>
+
+          <div class="status-tabs" id="status-filter-group">
+            <div class="status-tab active" data-status="all">All</div>
+            <div class="status-tab" data-status="upcoming">Upcoming</div>
+            <div class="status-tab" data-status="ongoing">Ongoing</div>
+            <div class="status-tab" data-status="completed">Completed</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="workshops-grid" id="grid-view">
+        </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal-container">
+    
+    <div class="modal-header-sec">
+      <span class="topic-tag" id="modal-topic" style="margin-bottom: 12px; display: inline-block;">Topic</span>
+      <h2 id="modal-title" style="font-size: 26px; line-height: 1.3;">Workshop Title</h2>
+      <div class="ws-details-row" id="modal-sub-details" style="border: none; padding-top: 12px; flex-direction: row; gap: 24px;">
+        </div>
+      <button class="modal-close" id="modal-close-btn"><i data-lucide="x" size="18"></i></button>
+    </div>
+
+    <div class="modal-body-sec">
+      
+      <div class="modal-grid-2col">
+        <div class="info-block">
+          <div class="info-label"><i data-lucide="bar-chart-2" size="14"></i> Difficulty Level</div>
+          <div id="modal-level-container"></div>
+        </div>
+        <div class="info-block">
+          <div class="info-label"><i data-lucide="check-square" size="14"></i> Prerequisites</div>
+          <div class="prereq-list" id="modal-prereqs"></div>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label"><i data-lucide="align-left" size="14"></i> Overview & Description</div>
+        <p class="desc-text" id="modal-full-summary"></p>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label"><i data-lucide="list" size="14"></i> Workshop Agenda</div>
+        <div class="agenda-list" id="modal-agenda"></div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label"><i data-lucide="file-text" size="14"></i> Presentation Materials</div>
+        <div class="presentation-card" id="modal-presentation"></div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-more" style="background:transparent; border:none;" onclick="closeModal()">Cancel</button>
+      <button class="btn-join" id="modal-action-btn" style="margin:0; padding:10px 24px; border-radius:30px;">Join Session</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Initialize Icons
+  lucide.createIcons();
+
+  // Sidebar Toggle
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('main-content');
+  const toggleBtn = document.getElementById('toggle-btn');
+
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+  });
+
+  // Background Starfield
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function initStars() {
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    stars = Array.from({length: 120}, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      radius: Math.random() * 1.2, speed: Math.random() * 0.15 + 0.05, alpha: Math.random()
+    }));
+  }
+  function animateStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    stars.forEach(star => {
+      ctx.globalAlpha = star.alpha;
+      ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2); ctx.fill();
+      star.y -= star.speed; if (star.y < 0) star.y = canvas.height;
+    });
+    requestAnimationFrame(animateStars);
+  }
+  window.addEventListener('resize', initStars); initStars(); animateStars();
+
+  // ==========================================
+  // EXTENDED MOCK DATABASE
+  // ==========================================
+  const mockWorkshopsDatabase = [
+    {
+      id: "ws-01",
+      title: "Deep Sky Stacking & PixInsight Workflows",
+      instructor: "Dr. Aris Thorne",
+      topic: "astrophotography",
+      topicLabel: "Astrophotography",
+      status: "upcoming",
+      statusLabel: "Upcoming",
+      date: "July 18, 2026",
+      time: "19:00 UTC",
+      duration: "2.5 Hours",
+      level: "Advanced",
+      prerequisites: ["Basic Astrophotography", "PixInsight Trial Installed", "64-bit OS"],
+      summary: "Unlock the secrets to tracking processing nebulae. Learn how to accurately calibrate, register, stack subs, and manage background extraction constraints gracefully.",
+      fullDetail: "This intensive masterclass focuses heavily on post-processing nebulae and distant galaxy groups using modern digital darkroom suites. Dr. Thorne will walk you through a complete manual pipeline, handling complex calibration frames, dealing with dynamic light pollution artifacts, and optimizing linear non-destructive scaling steps before processing highlights.",
+      agenda: [
+        "Introduction to Linear vs Non-Linear data states.",
+        "Image calibration (Darks, Flats, Biases).",
+        "Dynamic Background Extraction (DBE) techniques.",
+        "Star removal (StarNet++) and selective masking.",
+        "Final Q&A and community showcase."
+      ],
+      presentationLink: "https://example.com/slides/pixinsight-workflow.pdf"
+    },
+    {
+      id: "ws-02",
+      title: "Live Sky Capture & Planetary Imaging",
+      instructor: "Sarah Jenkins",
+      topic: "astrophotography",
+      topicLabel: "Astrophotography",
+      status: "ongoing",
+      statusLabel: "Ongoing Live",
+      date: "Right Now",
+      time: "Ongoing",
+      duration: "1.5 Hours remain",
+      level: "Intermediate",
+      prerequisites: ["Equatorial Mount Basics", "Understanding Exposure/Gain"],
+      summary: "We are currently online adjusting scope parameters on the club tracker node to image Jupiter and Saturn live. Tune into raw feed capturing.",
+      fullDetail: "A real-time live-stream operational exercise tracking planets via high frame-rate lucky imaging methodology. The session covers real-time adjustments on critical focus shifts, filter configuration swap times, and sensor temperature management variables.",
+      agenda: [
+        "Live connection to Club Telescope Node 04.",
+        "Lucky imaging theory: Beating atmospheric seeing.",
+        "Capturing SER video files of Jupiter.",
+        "Live stacking preview using AutoStakkert."
+      ],
+      presentationLink: null // No slides, it's live
+    },
+    {
+      id: "ws-03",
+      title: "Introduction to Dark Matter & Cosmic Web Filamentary Structures",
+      instructor: "Prof. Alan Vance",
+      topic: "astrophysics",
+      topicLabel: "Astrophysics",
+      status: "upcoming",
+      statusLabel: "Upcoming",
+      date: "August 02, 2026",
+      time: "15:00 UTC",
+      duration: "3 Hours",
+      level: "Beginner",
+      prerequisites: ["None. Open to all curiosity levels."],
+      summary: "An structural deep-dive analytical overview detailing cosmic lensing mechanisms used to deduce micro-structures of hidden cold cluster elements.",
+      fullDetail: "Geared towards mathematical modeling amateurs, this talk sets expectations clearly regarding gravitational anomalies detected via early Euclid data structures. Basic orbital vectors understanding is recommended but not mandatory.",
+      agenda: [
+        "Historical context: Vera Rubin's galaxy rotation curves.",
+        "Gravitational lensing and mapping invisible mass.",
+        "The Cosmic Web: Filaments, nodes, and voids.",
+        "Future probes and the role of the Nancy Grace Roman telescope."
+      ],
+      presentationLink: "https://example.com/slides/dark-matter-intro.pdf"
+    },
+    {
+      id: "ws-04",
+      title: "Equatorial Mount Tuning & Backlash Calibration",
+      instructor: "Marcus Vance",
+      topic: "hardware",
+      topicLabel: "Telescope Hardware",
+      status: "completed",
+      statusLabel: "Completed",
+      date: "June 14, 2026",
+      time: "Archived Session",
+      duration: "2 Hours",
+      level: "Advanced",
+      prerequisites: ["Own an Equatorial Mount", "Hex Key Toolkit", "PHD2 Installed"],
+      summary: "A practical breakdown mechanics tutorial on minimizing physical gear backlash tolerances on commercial belt-driven telescope mounts.",
+      fullDetail: "This recorded hardware session outlines the physical tearing down, gear polishing, regreasing, and digital guiding assistant configuration adjustments needed to minimize persistent guide star calibration deviations.",
+      agenda: [
+        "Identifying RA/DEC backlash symptoms in guide graphs.",
+        "Physical teardown and belt tensioning.",
+        "Worm gear meshing and greasing protocols.",
+        "Software calibration: PHD2 Guiding Assistant runs."
+      ],
+      presentationLink: "https://example.com/slides/mount-tuning-v2.pdf"
+    }
+  ];
+
+  // ==========================================
+  // RUNTIME FILTERING ENGINE CONTROLLER
+  // ==========================================
+  const searchBox = document.getElementById('search-box');
+  const topicSelect = document.getElementById('topic-select');
+  const statusTabs = document.querySelectorAll('.status-tab');
+  const gridView = document.getElementById('grid-view');
+
+  let activeStatusFilter = "all";
+
+  searchBox.addEventListener('input', renderWorkshops);
+  topicSelect.addEventListener('change', renderWorkshops);
+  statusTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      statusTabs.forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      activeStatusFilter = e.target.getAttribute('data-status');
+      renderWorkshops();
+    });
+  });
+
+  function renderWorkshops() {
+    const searchText = searchBox.value.toLowerCase().trim();
+    const selectTopic = topicSelect.value;
+
+    const filteredDataset = mockWorkshopsDatabase.filter(item => {
+      const matchSearch = item.title.toLowerCase().includes(searchText) || item.instructor.toLowerCase().includes(searchText);
+      const matchTopic = (selectTopic === "all") || (item.topic === selectTopic);
+      const matchStatus = (activeStatusFilter === "all") || (item.status === activeStatusFilter);
+      return matchSearch && matchTopic && matchStatus;
+    });
+
+    gridView.innerHTML = "";
+    if(filteredDataset.length === 0) {
+      gridView.innerHTML = `
+        <div class="no-results">
+          <i data-lucide="search-code"></i>
+          <h3>No matching workshops discovered</h3>
+          <p>Try modifying your search text query filters parameters or select alternative classifications.</p>
+        </div>
+      `;
+      lucide.createIcons();
+      return;
+    }
+
+    filteredDataset.forEach(item => {
+      const card = document.createElement('div');
+      card.className = `ws-card ${item.status}`;
+      
+      let actionBtnState = `<button class="btn-join" onclick="openModalDetails('${item.id}')">Join</button>`;
+      if (item.status === "completed") {
+        actionBtnState = `<button class="btn-join" disabled><i data-lucide="video-off" size="12"></i> Archived</button>`;
+      } else if (item.status === "ongoing") {
+        actionBtnState = `<button class="btn-join" style="background:#22c55e; color:#000; border-color:#22c55e;" onclick="openModalDetails('${item.id}')">Enter Live</button>`;
+      }
+
+      card.innerHTML = `
+        <div class="ws-card-banner"></div>
+        <div class="ws-card-body">
+          <div class="ws-card-meta">
+            <span class="topic-tag">${item.topicLabel}</span>
+            <span class="status-badge">${item.statusLabel}</span>
+          </div>
+          <h3 class="ws-title">${item.title}</h3>
+          <p class="ws-summary">${item.summary}</p>
+          <div class="ws-details-row">
+            <span><i data-lucide="user"></i> Host: ${item.instructor}</span>
+            <span><i data-lucide="calendar"></i> ${item.date} • ${item.time}</span>
+            <span><i data-lucide="clock"></i> Duration: ${item.duration}</span>
+          </div>
+        </div>
+        <div class="ws-card-actions">
+          <button class="btn-more" onclick="openModalDetails('${item.id}')">See Details <i data-lucide="chevron-right" size="14"></i></button>
+          ${actionBtnState}
+        </div>
+      `;
+      gridView.appendChild(card);
+    });
+
+    lucide.createIcons();
+  }
+
+  // ==========================================
+  // RICH MODAL LOGIC MANAGEMENT
+  // ==========================================
+  const detailModal = document.getElementById('detail-modal');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  
+  function closeModal() { detailModal.classList.remove('active'); }
+  modalCloseBtn.addEventListener('click', closeModal);
+  detailModal.addEventListener('click', (e) => { if(e.target === detailModal) closeModal(); });
+
+  function openModalDetails(id) {
+    const item = mockWorkshopsDatabase.find(w => w.id === id);
+    if(!item) return;
+
+    // Header Info
+    document.getElementById('modal-topic').textContent = item.topicLabel;
+    document.getElementById('modal-title').textContent = item.title;
+    document.getElementById('modal-sub-details').innerHTML = `
+      <span><i data-lucide="user" size="16"></i> ${item.instructor}</span>
+      <span><i data-lucide="calendar" size="16"></i> ${item.date} @ ${item.time}</span>
+      <span><i data-lucide="clock" size="16"></i> ${item.duration}</span>
+    `;
+
+    // Level
+    const levelLower = item.level.toLowerCase();
+    document.getElementById('modal-level-container').innerHTML = `<span class="level-badge ${levelLower}">${item.level} Level</span>`;
+
+    // Prerequisites
+    const prereqContainer = document.getElementById('modal-prereqs');
+    prereqContainer.innerHTML = item.prerequisites.map(p => `<span class="prereq-item">${p}</span>`).join('');
+
+    // Summary
+    document.getElementById('modal-full-summary').textContent = item.fullDetail;
+
+    // Agenda Syllabus
+    const agendaContainer = document.getElementById('modal-agenda');
+    agendaContainer.innerHTML = item.agenda.map(a => `<div class="agenda-item">${a}</div>`).join('');
+
+    // Presentation Material
+    const presContainer = document.getElementById('modal-presentation');
+    if (item.presentationLink) {
+      presContainer.innerHTML = `
+        <div class="pres-info"><i data-lucide="monitor-play"></i> Standard Presentation Deck</div>
+        <a href="${item.presentationLink}" target="_blank" class="pres-link">Download PDF <i data-lucide="download" size="12"></i></a>
+      `;
+    } else {
+      presContainer.innerHTML = `
+        <div class="pres-info"><i data-lucide="monitor-off" style="color:var(--text-tertiary)"></i> No slides available</div>
+        <span class="pres-unavailable">Live demonstration only</span>
+      `;
+    }
+
+    // Call to Action Button Mapping
+    const modalActionBtn = document.getElementById('modal-action-btn');
+    if (item.status === "completed") {
+      modalActionBtn.textContent = "Archived Recording Unavailable";
+      modalActionBtn.disabled = true;
+      modalActionBtn.style.background = "transparent";
+      modalActionBtn.style.borderColor = "var(--border)";
+      modalActionBtn.style.color = "var(--text-tertiary)";
+      modalActionBtn.onclick = null;
+    } else {
+      modalActionBtn.textContent = item.status === "ongoing" ? "Connect Instantly to Stream" : "Reserve Seat / Join";
+      modalActionBtn.disabled = false;
+      modalActionBtn.style.background = item.status === "ongoing" ? "var(--status-ongoing)" : "var(--text-primary)";
+      modalActionBtn.style.borderColor = item.status === "ongoing" ? "var(--status-ongoing)" : "var(--text-primary)";
+      modalActionBtn.style.color = item.status === "ongoing" ? "#000" : "var(--bg-base)";
+      modalActionBtn.onclick = () => {
+        alert(`Success! Connecting to module: [${item.title}]`);
+        closeModal();
+      };
+    }
+
+    detailModal.classList.add('active');
+    lucide.createIcons();
+  }
+
+  // Init
+  window.addEventListener('DOMContentLoaded', renderWorkshops);
+</script>
+</body>
+</html>

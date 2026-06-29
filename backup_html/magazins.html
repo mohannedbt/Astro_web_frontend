@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACI — Cosmic Chronicle Magazine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+/* ===========================
+   DESIGN TOKENS
+=========================== */
+:root {
+  --bg-base:        #09090b; 
+  --bg-surface:     #18181b; 
+  --bg-hover:       #27272a; 
+  --border:         rgba(255, 255, 255, 0.08);
+  --border-hover:   rgba(255, 255, 255, 0.15);
+  --text-primary:   #fafafa; 
+  --text-secondary: #a1a1aa; 
+  --text-tertiary:  #52525b; 
+  
+  --sidebar-w:      260px;
+  --sidebar-w-col:  76px;
+  --header-h:       72px;
+  --radius-sm:      8px;
+  --radius-md:      12px;
+  --radius-lg:      20px;
+  --transition:     0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===========================
+   RESET & BASE
+=========================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font-family: inherit; color: inherit; background: none; border: none; outline: none; }
+h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+a { color: inherit; text-decoration: none; }
+
+#starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.3; }
+.shell { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+/* ===========================
+   SIDEBAR (Collapsible Fixes Applied)
+=========================== */
+.sidebar {
+  width: var(--sidebar-w); background: rgba(9, 9, 11, 0.8); backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transition: width var(--transition); overflow: hidden;
+}
+.sidebar.collapsed { width: var(--sidebar-w-col); }
+
+.sidebar-logo { height: var(--header-h); display: flex; align-items: center; gap: 12px; padding: 0 24px; min-width: var(--sidebar-w); white-space: nowrap; }
+.logo-icon { width: 28px; height: 28px; background: var(--text-primary); color: var(--bg-base); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+.logo-name { font-size: 18px; font-weight: 700; transition: opacity var(--transition); }
+.sidebar.collapsed .logo-name { opacity: 0; pointer-events: none; }
+
+.nav-section { padding: 24px 12px 0; min-width: var(--sidebar-w); }
+.nav-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); padding: 0 12px 12px; transition: opacity var(--transition); white-space: nowrap; }
+.sidebar.collapsed .nav-label { opacity: 0; pointer-events: none; }
+
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.2s; margin-bottom: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; }
+.nav-item i, .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+.nav-item:hover { background: var(--bg-surface); color: var(--text-primary); }
+.nav-item.active { background: var(--bg-hover); color: var(--text-primary); }
+.nav-item span { transition: opacity var(--transition); }
+.sidebar.collapsed .nav-item span { opacity: 0; pointer-events: none; }
+
+.sidebar-user { margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 12px; min-width: var(--sidebar-w); white-space: nowrap; }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-hover); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.user-avatar i, .user-avatar svg { flex-shrink: 0; }
+.user-name { font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: opacity var(--transition); }
+.sidebar.collapsed .user-name { opacity: 0; pointer-events: none; }
+
+/* ===========================
+   MAIN CONTENT
+=========================== */
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; transition: margin-left var(--transition); }
+.main.expanded { margin-left: var(--sidebar-w-col); }
+
+.topbar {
+  height: var(--header-h); background: rgba(9, 9, 11, 0.7); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.toggle-sidebar { color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; }
+.toggle-sidebar:hover { color: var(--text-primary); }
+.breadcrumbs { font-size: 14px; color: var(--text-tertiary); }
+.breadcrumbs span { color: var(--text-primary); }
+
+.page-content { padding: 40px; max-width: 1500px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px; }
+
+/* Filter Navigation */
+.mag-nav { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 16px; flex-wrap: wrap; gap: 20px; }
+.mag-title-area h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+.mag-title-area p { font-size: 14px; color: var(--text-secondary); }
+
+.search-input-wrapper {
+  display: flex; align-items: center; gap: 10px; background: var(--bg-surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; width: 340px;
+  transition: border-color 0.2s;
+}
+.search-input-wrapper:focus-within { border-color: var(--text-secondary); }
+.search-input-wrapper i { color: var(--text-tertiary); width: 18px; height: 18px; }
+.search-input-wrapper input { width: 100%; font-size: 14px; color: var(--text-primary); }
+.search-input-wrapper input::placeholder { color: var(--text-tertiary); }
+
+/* ===========================
+   EDITORIAL LAYOUT
+=========================== */
+.editorial-grid { display: grid; grid-template-columns: 1fr 340px; gap: 40px; }
+
+/* Left Column: Articles Container */
+.article-feed { display: flex; flex-direction: column; gap: 40px; }
+
+/* Cinematic Featured Post */
+.featured-post {
+  position: relative; border-radius: var(--radius-lg); overflow: hidden;
+  height: 460px; display: flex; flex-direction: column; justify-content: flex-end;
+  border: 1px solid var(--border); cursor: pointer; display: block;
+}
+.featured-post-bg {
+  position: absolute; inset: 0; z-index: 1; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.featured-post:hover .featured-post-bg { transform: scale(1.05); }
+.featured-post-bg img { width: 100%; height: 100%; object-fit: cover; }
+.featured-post-overlay {
+  position: absolute; inset: 0; z-index: 2;
+  background: linear-gradient(to top, rgba(9,9,11,1) 0%, rgba(9,9,11,0.6) 40%, transparent 100%);
+}
+.featured-content { position: relative; z-index: 3; padding: 40px; max-width: 800px; }
+.post-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 12px; }
+.meta-tag { color: #fff; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 12px; backdrop-filter: blur(8px); }
+.featured-title { font-size: clamp(28px, 3.5vw, 40px); line-height: 1.2; margin-bottom: 16px; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.featured-excerpt { font-size: 16px; color: var(--text-secondary); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Standard Posts Grid */
+.sub-articles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
+
+.article-card { display: flex; flex-direction: column; gap: 16px; cursor: pointer; transition: transform 0.2s; }
+.article-card:hover { transform: translateY(-4px); }
+.article-card:hover .article-title { color: var(--text-secondary); }
+.article-img-wrapper { border-radius: var(--radius-md); overflow: hidden; height: 200px; border: 1px solid var(--border); position: relative; }
+.article-img-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; opacity: 0.9; }
+.article-card:hover .article-img-wrapper img { transform: scale(1.05); opacity: 1; }
+.article-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.article-meta span.cat { color: var(--text-primary); font-weight: 600; }
+.article-title { font-size: 20px; font-weight: 600; line-height: 1.3; transition: color 0.2s; }
+.article-excerpt { font-size: 14px; color: var(--text-secondary); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ===========================
+   RIGHT SIDEBAR
+=========================== */
+.magazine-sidebar { display: flex; flex-direction: column; gap: 40px; }
+.sidebar-section-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+
+/* Trending Briefs */
+.trending-list { display: flex; flex-direction: column; gap: 20px; }
+.trending-item { display: flex; gap: 16px; align-items: flex-start; cursor: pointer; }
+.trending-num { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; color: var(--border-hover); line-height: 1; transition: color 0.2s; }
+.trending-item:hover .trending-num { color: var(--text-primary); }
+.trending-info { flex: 1; }
+.trending-title { font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; transition: color 0.2s; }
+.trending-item:hover .trending-title { color: var(--text-secondary); }
+.trending-meta { font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 6px; }
+
+/* Newsletter Widget */
+.newsletter-widget { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; text-align: center; }
+.newsletter-icon { width: 40px; height: 40px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--text-primary); }
+.newsletter-widget h3 { font-size: 18px; margin-bottom: 8px; }
+.newsletter-widget p { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+.newsletter-form { display: flex; flex-direction: column; gap: 10px; }
+.newsletter-form input { background: var(--bg-base); border: 1px solid var(--border); padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; width: 100%; }
+.newsletter-form button { background: var(--text-primary); color: var(--bg-base); font-weight: 600; padding: 12px; border-radius: var(--radius-sm); cursor: pointer; transition: transform 0.2s; }
+.newsletter-form button:hover { transform: translateY(-2px); }
+
+/* Statuses */
+.loader { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--text-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.no-results { text-align: center; padding: 60px 0; color: var(--text-tertiary); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .editorial-grid { grid-template-columns: 1fr; }
+  .magazine-sidebar { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+}
+@media (max-width: 768px) {
+  .sub-articles-grid { grid-template-columns: 1fr; }
+  .magazine-sidebar { grid-template-columns: 1fr; }
+  .featured-post { height: 400px; }
+  .featured-content { padding: 24px; }
+  .mag-nav { flex-direction: column; align-items: flex-start; }
+  .search-input-wrapper { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><img src="profile.png" onerror="this.style.display='none';"></div>
+      <div class="logo-name">ACI<span>.</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Club Space</div>
+      <div class="nav-item"><i data-lucide="compass"></i> <span>HQ Dashboard</span></div>
+      <div class="nav-item active"><i data-lucide="book-open"></i> <span>Magazine</span></div>
+      <div class="nav-item"><i data-lucide="map"></i> <span>Sky Map</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Activities</div>
+      <div class="nav-item"><i data-lucide="mic"></i> <span>Workshops</span></div>
+      <div class="nav-item"><i data-lucide="calendar"></i> <span>Schedule</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i data-lucide="user" size="14"></i></div>
+      <div class="user-name">Observer Mode</div>
+    </div>
+  </aside>
+
+  <main class="main" id="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="toggle-sidebar" id="toggle-btn"><i data-lucide="menu"></i></button>
+        <div class="breadcrumbs">Club Space / <span>Magazine</span></div>
+      </div>
+      <button style="color:var(--text-secondary)"><i data-lucide="bell" size="18"></i></button>
+    </header>
+
+    <div class="page-content">
+      
+      <nav class="mag-nav">
+        <div class="mag-title-area">
+          <h1>Cosmic Chronicle</h1>
+          <p>Real-time telemetry and news curated from global space agencies.</p>
+        </div>
+        
+        <div class="search-input-wrapper">
+          <i data-lucide="search"></i>
+          <input type="text" id="search-box" placeholder="Filter articles by title...">
+        </div>
+      </nav>
+
+      <div class="editorial-grid">
+        
+        <div class="article-feed" id="articles-container">
+           </div>
+
+        <aside class="magazine-sidebar">
+          
+          <div>
+            <h3 class="sidebar-section-title"><i data-lucide="trending-up" size="18"></i> Top Trending Topics</h3>
+            <div class="trending-list">
+              <div class="trending-item">
+                <div class="trending-num">01</div>
+                <div class="trending-info">
+                  <h4 class="trending-title">Betelgeuse Dimming: Is a Supernova Imminent?</h4>
+                  <div class="trending-meta"><i data-lucide="tag" size="10"></i> Stellar Physics</div>
+                </div>
+              </div>
+              <div class="trending-item">
+                <div class="trending-num">02</div>
+                <div class="trending-info">
+                  <h4 class="trending-title">Amateur Astronomer Discovers New Comet</h4>
+                  <div class="trending-meta"><i data-lucide="tag" size="10"></i> Community</div>
+                </div>
+              </div>
+              <div class="trending-item">
+                <div class="trending-num">03</div>
+                <div class="trending-info">
+                  <h4 class="trending-title">Perseid Meteor Shower Zenith Forecast</h4>
+                  <div class="trending-meta"><i data-lucide="tag" size="10"></i> Skywatching</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="newsletter-widget">
+            <div class="newsletter-icon"><i data-lucide="mail"></i></div>
+            <h3>The Event Horizon</h3>
+            <p>Get a curated weekly digest of the biggest astronomical discoveries sent directly to your inbox.</p>
+            <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed to the Event Horizon!');">
+              <input type="email" placeholder="Your email address" required>
+              <button type="submit">Subscribe</button>
+            </form>
+          </div>
+
+        </aside>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Initialize Icons
+  lucide.createIcons();
+
+  // Sidebar Toggle
+  document.getElementById('toggle-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main-content').classList.toggle('expanded');
+  });
+
+  // Background Starfield
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function initStars() {
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    stars = Array.from({length: 100}, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      radius: Math.random() * 1.2, speed: Math.random() * 0.1 + 0.02, alpha: Math.random() * 0.5
+    }));
+  }
+  function animateStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    stars.forEach(star => {
+      ctx.globalAlpha = star.alpha; ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2); ctx.fill();
+      star.y -= star.speed; if (star.y < 0) star.y = canvas.height;
+    });
+    requestAnimationFrame(animateStars);
+  }
+  window.addEventListener('resize', initStars); initStars(); animateStars();
+
+  // ==========================================
+  // REAL-TIME NEWS FETCHER & FILTERER
+  // ==========================================
+  const articlesContainer = document.getElementById('articles-container');
+  const searchBox = document.getElementById('search-box');
+  let globalArticles = [];
+
+  // Fetch from official Spaceflight News API (SNAPI)
+  async function fetchSpaceNews() {
+    articlesContainer.innerHTML = '<div class="loader"></div>';
+    
+    try {
+      // Fetch 11 articles (1 for feature, 10 for grid)
+      const response = await fetch('https://api.spaceflightnewsapi.net/v4/articles?limit=11');
+      const data = await response.json();
+      globalArticles = data.results;
+      
+      // Render initially
+      renderArticlesEngine();
+    } catch (error) {
+      console.error('API Fetch Error:', error);
+      articlesContainer.innerHTML = `
+        <div class="no-results">
+          <i data-lucide="wifi-off" style="width:40px; height:40px;"></i>
+          <h3>Connection Error</h3>
+          <p>Unable to connect to the Space News network. Please try again later.</p>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+  }
+
+  // Filter and Render Logic
+  function renderArticlesEngine() {
+    const searchText = searchBox.value.toLowerCase().trim();
+    
+    // Filter array based on title
+    const filteredArticles = globalArticles.filter(art => 
+      art.title.toLowerCase().includes(searchText)
+    );
+
+    // Handle Empty State
+    if (filteredArticles.length === 0) {
+      articlesContainer.innerHTML = `
+        <div class="no-results">
+          <i data-lucide="search-code" style="width:40px; height:40px;"></i>
+          <h3>No articles found</h3>
+          <p>No recent news matching "${searchBox.value}". Try a different term.</p>
+        </div>
+      `;
+      lucide.createIcons();
+      return;
+    }
+
+    // Split into Featured (first item) and the rest
+    const featured = filteredArticles[0];
+    const restOfArticles = filteredArticles.slice(1);
+    
+    // Format Date for featured
+    const featDate = new Date(featured.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    // Build Featured HTML
+    let htmlContent = `
+      <a href="${featured.url}" target="_blank" class="featured-post">
+        <div class="featured-post-bg">
+          <img src="${featured.image_url}" alt="Featured Cover" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop';">
+        </div>
+        <div class="featured-post-overlay"></div>
+        <div class="featured-content">
+          <div class="post-meta">
+            <span class="meta-tag">${featured.news_site}</span>
+            <span><i data-lucide="calendar" size="12"></i> ${featDate}</span>
+          </div>
+          <h2 class="featured-title">${featured.title}</h2>
+          <p class="featured-excerpt">${featured.summary}</p>
+        </div>
+      </a>
+      <div class="sub-articles-grid">
+    `;
+
+    // Build Sub-grid HTML
+    restOfArticles.forEach(art => {
+      const artDate = new Date(art.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      htmlContent += `
+        <a href="${art.url}" target="_blank" class="article-card">
+          <div class="article-img-wrapper">
+            <img src="${art.image_url}" alt="Thumbnail" onerror="this.src='https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=600&auto=format&fit=crop';">
+          </div>
+          <div class="article-meta">
+            <span class="cat">${art.news_site}</span>
+            <span>${artDate}</span>
+          </div>
+          <h3 class="article-title">${art.title}</h3>
+          <p class="article-excerpt">${art.summary}</p>
+        </a>
+      `;
+    });
+
+    htmlContent += `</div>`; // Close grid
+    
+    // Inject and re-init icons
+    articlesContainer.innerHTML = htmlContent;
+    lucide.createIcons();
+  }
+
+  // Bind the search box to the render engine for Real-Time filtering
+  searchBox.addEventListener('input', renderArticlesEngine);
+
+  // Initialize Data Fetch on Load
+  window.addEventListener('DOMContentLoaded', fetchSpaceNews);
+
+</script>
+</body>
+</html>

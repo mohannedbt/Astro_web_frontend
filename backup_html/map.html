@@ -1,0 +1,458 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova — Live Sky Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+/* ===========================
+   DESIGN TOKENS
+=========================== */
+:root {
+  --bg-base:        #09090b; 
+  --bg-surface:     #18181b; 
+  --bg-hover:       #27272a; 
+  --border:         rgba(255, 255, 255, 0.08);
+  --border-hover:   rgba(255, 255, 255, 0.15);
+  --text-primary:   #fafafa; 
+  --text-secondary: #a1a1aa; 
+  --text-tertiary:  #52525b; 
+  --accent:         #ffffff;
+  
+  --sidebar-w:      260px;
+  --sidebar-w-col:  76px;
+  --header-h:       72px;
+  --radius-sm:      8px;
+  --radius-md:      12px;
+  --radius-lg:      20px;
+  --transition:     0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===========================
+   RESET & BASE
+=========================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font-family: inherit; color: inherit; background: none; border: none; outline: none; }
+h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+
+#starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.3; }
+.shell { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+/* ===========================
+   SIDEBAR (Collapsible)
+=========================== */
+.sidebar {
+  width: var(--sidebar-w); 
+  background: rgba(9, 9, 11, 0.8); 
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border); 
+  display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; 
+  transition: width var(--transition); 
+  overflow: hidden; 
+}
+.sidebar.collapsed { width: var(--sidebar-w-col); }
+
+/* Logo Area */
+.sidebar-logo { 
+  height: var(--header-h); display: flex; align-items: center; gap: 12px; padding: 0 24px; 
+  white-space: nowrap; 
+}
+.logo-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: var(--text-primary); color: var(--bg-base);
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.logo-name { 
+  font-size: 18px; font-weight: 700; 
+  transition: opacity var(--transition); 
+}
+.sidebar.collapsed .logo-name { opacity: 0; pointer-events: none; }
+
+/* Navigation Links */
+.nav-section { padding: 24px 12px 0; }
+.nav-label { 
+  font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); 
+  padding: 0 12px 12px; transition: opacity var(--transition); white-space: nowrap; 
+}
+.sidebar.collapsed .nav-label { opacity: 0; pointer-events: none; }
+
+.nav-item { 
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; 
+  border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 14px; 
+  font-weight: 500; transition: all 0.2s; margin-bottom: 4px; cursor: pointer; 
+  white-space: nowrap; overflow: hidden;
+}
+/* FIXED: Added 'svg' so Lucide icons don't get squished */
+.nav-item i, .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+.nav-item:hover { background: var(--bg-surface); color: var(--text-primary); }
+.nav-item.active { background: var(--bg-hover); color: var(--text-primary); }
+.nav-item span { transition: opacity var(--transition); }
+.sidebar.collapsed .nav-item span { opacity: 0; pointer-events: none; }
+
+/* User Area */
+.sidebar-user { 
+  margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px; white-space: nowrap; 
+}
+.user-avatar { flex-shrink: 0; }
+.user-avatar i, .user-avatar svg { flex-shrink: 0; }
+.user-name { transition: opacity var(--transition); }
+.sidebar.collapsed .user-name { opacity: 0; pointer-events: none; }
+
+/* ===========================
+   MAIN CONTENT
+=========================== */
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; transition: margin-left var(--transition); }
+.main.expanded { margin-left: var(--sidebar-w-col); }
+
+.topbar {
+  height: var(--header-h); background: rgba(9, 9, 11, 0.7); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 20px; }
+.toggle-sidebar { color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; }
+.toggle-sidebar:hover { color: var(--text-primary); }
+.breadcrumbs { font-size: 14px; color: var(--text-tertiary); }
+.breadcrumbs span { color: var(--text-primary); }
+
+.page-content { padding: 40px; max-width: 1600px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 32px; }
+
+/* Header area */
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; }
+.page-title-area h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+.page-title-area p { color: var(--text-secondary); font-size: 15px; }
+.status-indicator { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; }
+.status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+
+/* ===========================
+   MAP INTERFACE LAYOUT
+=========================== */
+.map-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; }
+
+/* The Map Area */
+.map-container {
+  background: #000;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; position: relative;
+  height: 75vh; min-height: 600px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+.map-container iframe { width: 100%; height: 100%; border: none; filter: contrast(1.1); pointer-events: auto; }
+
+/* Internal map overlay for styling */
+.map-overlay-ui { position: absolute; top: 20px; left: 20px; pointer-events: none; }
+.map-coord-display { background: rgba(9,9,11,0.8); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); padding: 10px 16px; border-radius: var(--radius-sm); font-family: 'Space Grotesk', monospace; font-size: 13px; color: var(--text-secondary); letter-spacing: 0.05em; }
+.map-coord-display span { color: var(--text-primary); font-weight: 600; }
+
+/* Right Panel: Control Deck */
+.control-deck { display: flex; flex-direction: column; gap: 24px; }
+
+.panel { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; }
+.panel-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+/* Location Inputs */
+.loc-group { margin-bottom: 16px; }
+.loc-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.input-wrap { display: flex; align-items: center; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 12px; transition: border-color 0.2s; }
+.input-wrap:focus-within { border-color: var(--text-secondary); }
+.input-wrap i { color: var(--text-tertiary); width: 16px; height: 16px; }
+.input-wrap input { width: 100%; padding: 10px; font-size: 14px; color: var(--text-primary); }
+
+.btn-gps { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; background: var(--bg-hover); color: var(--text-primary); font-size: 13px; font-weight: 500; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
+.btn-gps:hover { background: var(--text-primary); color: var(--bg-base); }
+
+/* Custom Switch Toggles */
+.toggle-list { display: flex; flex-direction: column; gap: 16px; }
+.toggle-item { display: flex; justify-content: space-between; align-items: center; }
+.toggle-label { font-size: 14px; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+.toggle-label i { width: 16px; height: 16px; color: var(--text-secondary); }
+
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-base); border: 1px solid var(--border); transition: .3s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--text-secondary); transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--text-primary); }
+input:checked + .slider:before { transform: translateX(20px); background-color: var(--bg-base); }
+
+/* Object List */
+.visible-list { display: flex; flex-direction: column; gap: 12px; }
+.obj-item { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.obj-item:last-child { border: none; padding: 0; }
+.obj-name { color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.obj-name .dot { width: 6px; height: 6px; border-radius: 50%; }
+.obj-mag { color: var(--text-secondary); font-family: 'Space Grotesk', monospace; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .map-layout { grid-template-columns: 1fr; }
+  .map-container { height: 60vh; min-height: 400px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><img src="profile.png" onerror="this.style.display='none';" style="width: 50px;"></div>
+      <div class="logo-name">ACI<span>.</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Club Space</div>
+      <div class="nav-item"><i data-lucide="compass"></i> <span>HQ Dashboard</span></div>
+      <div class="nav-item active"><i data-lucide="map"></i> <span>Sky Map</span></div>
+      <div class="nav-item"><i data-lucide="book-open"></i> <span>Magazine</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Activities</div>
+      <div class="nav-item"><i data-lucide="telescope"></i> <span>Observations</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i data-lucide="user" size="14"></i></div>
+      <div class="user-name">Observer Mode</div>
+    </div>
+  </aside>
+
+  <main class="main" id="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="toggle-sidebar" id="toggle-btn"><i data-lucide="menu"></i></button>
+        <div class="breadcrumbs">Club Space / <span>Live Sky Map</span></div>
+      </div>
+      <button style="color:var(--text-secondary)"><i data-lucide="maximize" size="18"></i></button>
+    </header>
+
+    <div class="page-content">
+      
+      <div class="page-header">
+        <div class="page-title-area">
+          <h1>Interactive Zenith Map</h1>
+          <p>Real-time celestial projections based on your coordinates. Drag to explore.</p>
+        </div>
+        <div class="status-indicator">
+          <div class="status-dot"></div> Live Telemetry Active
+        </div>
+      </div>
+
+      <div class="map-layout">
+        
+        <div class="map-container">
+          <iframe id="virtual-sky-frame" src=""></iframe>
+          
+          <div class="map-overlay-ui">
+            <div class="map-coord-display">
+              LAT: <span id="disp-lat">--</span> ° &nbsp;|&nbsp; LON: <span id="disp-lon">--</span> °
+            </div>
+          </div>
+        </div>
+
+        <div class="control-deck">
+          
+          <div class="panel">
+            <h3 class="panel-title"><i data-lucide="crosshair"></i> Positioning</h3>
+            <div class="loc-group">
+              <label>Latitude (Decimal)</label>
+              <div class="input-wrap">
+                <i data-lucide="arrow-up-down"></i>
+                <input type="number" id="input-lat" value="36.80" step="0.01">
+              </div>
+            </div>
+            <div class="loc-group">
+              <label>Longitude (Decimal)</label>
+              <div class="input-wrap">
+                <i data-lucide="arrow-left-right"></i>
+                <input type="number" id="input-lon" value="10.18" step="0.01">
+              </div>
+            </div>
+            <button class="btn-gps" id="btn-gps"><i data-lucide="satellite"></i> Auto-Detect Location</button>
+          </div>
+
+          <div class="panel">
+            <h3 class="panel-title"><i data-lucide="layers"></i> Map Layers</h3>
+            <div class="toggle-list">
+              <div class="toggle-item">
+                <span class="toggle-label"><i data-lucide="share-2"></i> Constellations</span>
+                <label class="switch"><input type="checkbox" id="t-const" checked><span class="slider"></span></label>
+              </div>
+              <div class="toggle-item">
+                <span class="toggle-label"><i data-lucide="type"></i> Star Names</span>
+                <label class="switch"><input type="checkbox" id="t-labels"><span class="slider"></span></label>
+              </div>
+              <div class="toggle-item">
+                <span class="toggle-label"><i data-lucide="moon"></i> Planets & Moon</span>
+                <label class="switch"><input type="checkbox" id="t-planets" checked><span class="slider"></span></label>
+              </div>
+              <div class="toggle-item">
+                <span class="toggle-label"><i data-lucide="grid"></i> Azimuth Grid</span>
+                <label class="switch"><input type="checkbox" id="t-grid"><span class="slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3 class="panel-title"><i data-lucide="eye"></i> Notably Visible Now</h3>
+            <div class="visible-list">
+              <div class="obj-item">
+                <span class="obj-name"><span class="dot" style="background:#eab308"></span> Jupiter</span>
+                <span class="obj-mag">Mag -2.4</span>
+              </div>
+              <div class="obj-item">
+                <span class="obj-name"><span class="dot" style="background:#a8a29e"></span> Moon</span>
+                <span class="obj-mag">Mag -12.0</span>
+              </div>
+              <div class="obj-item">
+                <span class="obj-name"><span class="dot" style="background:#ef4444"></span> Mars</span>
+                <span class="obj-mag">Mag 0.8</span>
+              </div>
+              <div class="obj-item">
+                <span class="obj-name"><span class="dot" style="background:#3b82f6"></span> Sirius</span>
+                <span class="obj-mag">Mag -1.4</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  // Initialize Icons
+  lucide.createIcons();
+
+  // Sidebar Toggle
+  document.getElementById('toggle-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('main-content').classList.toggle('expanded');
+  });
+
+  // Simple background starfield
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function initStars() {
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    stars = Array.from({length: 100}, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      radius: Math.random() * 1.2, speed: Math.random() * 0.05
+    }));
+  }
+  function animateStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    stars.forEach(s => {
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2); ctx.fill();
+      s.y -= s.speed; if (s.y < 0) s.y = canvas.height;
+    });
+    requestAnimationFrame(animateStars);
+  }
+  window.addEventListener('resize', initStars); initStars(); animateStars();
+
+  // ==========================================
+  // REAL SKY MAP CONTROLLER (VirtualSky API)
+  // ==========================================
+  const iframe = document.getElementById('virtual-sky-frame');
+  const latInput = document.getElementById('input-lat');
+  const lonInput = document.getElementById('input-lon');
+  const dispLat = document.getElementById('disp-lat');
+  const dispLon = document.getElementById('disp-lon');
+  
+  // Toggles
+  const tConst = document.getElementById('t-const');
+  const tLabels = document.getElementById('t-labels');
+  const tPlanets = document.getElementById('t-planets');
+  const tGrid = document.getElementById('t-grid');
+
+  // Function to build and apply the LCO VirtualSky URL
+  function updateSkyMap() {
+    const lat = parseFloat(latInput.value).toFixed(2);
+    const lon = parseFloat(lonInput.value).toFixed(2);
+    
+    // Update display UI
+    dispLat.textContent = lat;
+    dispLon.textContent = lon;
+
+    const baseUrl = "https://virtualsky.lco.global/embed/index.html";
+    const params = new URLSearchParams({
+      longitude: lon,
+      latitude: lat,
+      projection: 'polar',
+      constellations: tConst.checked,
+      constellationlabels: tLabels.checked,
+      planets: tPlanets.checked,
+      gridlines_az: tGrid.checked,
+      meteorshowers: 'true',
+      live: 'true',      
+      keyboard: 'false', 
+      color: 'black'     
+    });
+
+    iframe.src = `${baseUrl}?${params.toString()}`;
+  }
+
+  // Bind inputs to map update logic
+  latInput.addEventListener('change', updateSkyMap);
+  lonInput.addEventListener('change', updateSkyMap);
+  tConst.addEventListener('change', updateSkyMap);
+  tLabels.addEventListener('change', updateSkyMap);
+  tPlanets.addEventListener('change', updateSkyMap);
+  tGrid.addEventListener('change', updateSkyMap);
+
+  // Geolocation API - Fetch real user coordinates
+  document.getElementById('btn-gps').addEventListener('click', () => {
+    const btn = document.getElementById('btn-gps');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="loader" class="lucide-spin"></i> Locating...`;
+    lucide.createIcons();
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        // Success
+        latInput.value = position.coords.latitude.toFixed(2);
+        lonInput.value = position.coords.longitude.toFixed(2);
+        updateSkyMap();
+        btn.innerHTML = `<i data-lucide="check"></i> Synced`;
+        lucide.createIcons();
+        setTimeout(() => { btn.innerHTML = originalText; lucide.createIcons(); }, 2000);
+      }, (error) => {
+        // Error
+        alert("Unable to retrieve location. Please check browser permissions.");
+        btn.innerHTML = originalText;
+        lucide.createIcons();
+      });
+    } else {
+      alert("Geolocation is not supported by your browser.");
+      btn.innerHTML = originalText;
+      lucide.createIcons();
+    }
+  });
+
+  // Initial Load
+  window.addEventListener('DOMContentLoaded', () => {
+    updateSkyMap();
+  });
+</script>
+</body>
+</html>
+
