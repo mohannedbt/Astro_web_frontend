@@ -1,0 +1,40 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://neondb_owner:npg_0VfKRdAqBUa9@ep-withered-hall-atn692pg.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_min_32_chars_for_production}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:-adminpass}
+      - NEWS_API_URL=https://api.spaceflightnewsapi.net/v4/articles?limit=
+    depends_on:
+      redis:
+        condition: service_started
+    command: sh -c "npm run seed-admin && npm start"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/workshops"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  redis-data:

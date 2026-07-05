@@ -88,7 +88,10 @@ const Topbar = ({ collapsed, setCollapsed, activePage }) => {
         </button>
         <div className="breadcrumbs">{getBreadcrumbs()}</div>
       </div>
-      {renderRightButton()}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <button onClick={() => window.dispatchEvent(new Event('showTour'))} style={{ fontSize: 13, padding: '8px 10px' }}>Take Tour</button>
+        {renderRightButton()}
+      </div>
     </header>
   );
 };

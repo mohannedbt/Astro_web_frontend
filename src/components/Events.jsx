@@ -74,10 +74,10 @@ const Events = () => {
               }}>
                 <Calendar size={24} style={{ margin: '0 auto 8px', color: 'var(--text-primary)' }} />
                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                  {ev.date.split(',')[0]}
+                  {ev.date}
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  {ev.date.split(',')[1]}
+                  {ev.time || 'Time TBA'}
                 </div>
               </div>
 

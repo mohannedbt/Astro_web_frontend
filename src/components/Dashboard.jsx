@@ -1,37 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { Radio, Newspaper, MapPin, User } from 'lucide-react';
+import { fetchNews, fetchEvents, fetchWorkshops } from '../services/api';
 
-const mockEvents = [
-  { day: '15', month: 'Jul', title: 'Perseid Meteor Shower Watch', location: 'Observatory Hill' },
-  { day: '22', month: 'Jul', title: 'Lunar Eclipse Tracking', location: 'Online Sync' },
-  { day: '05', month: 'Aug', title: 'Saturn Opposition', location: 'Main Campus' }
-];
-
-const mockWorkshops = [
-  { day: '18', month: 'Jul', title: 'Astrophotography 101', instructor: 'Dr. Aris Thorne' },
-  { day: '25', month: 'Jul', title: 'Telescope Calibration', instructor: 'Sarah Jenkins' }
-];
-
-const Dashboard = ({ setActivePage }) => {
+const Dashboard = ({ setActivePage, user }) => {
   const [articles, setArticles] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
   const [errorNews, setErrorNews] = useState(false);
+  const [widgetEvents, setWidgetEvents] = useState([]);
+  const [widgetWorkshops, setWidgetWorkshops] = useState([]);
 
   useEffect(() => {
-    const fetchDiscoveries = async () => {
+    const load = async () => {
+      setLoadingNews(true);
+      setErrorNews(false);
       try {
-        const response = await fetch('https://api.spaceflightnewsapi.net/v4/articles?limit=3');
-        const data = await response.json();
-        setArticles(data.results || []);
-      } catch (error) {
-        console.error('Failed to fetch live space news:', error);
+        const data = await fetchNews();
+        const list = data && (data.articles || data.results || data) ? (data.articles || data.results || data) : [];
+        if (!list || list.length === 0) {
+          setErrorNews(true);
+          setArticles([]);
+          return;
+        }
+        setArticles(list.slice ? list.slice(0, 3) : []);
+      } catch (e) {
+        console.error('news error', e);
         setErrorNews(true);
       } finally {
         setLoadingNews(false);
       }
     };
 
-    fetchDiscoveries();
+    load();
+    (async () => {
+      try {
+        const ev = await fetchEvents();
+        setWidgetEvents(ev.slice ? ev.slice(0, 3) : []);
+      } catch (e) {
+        setWidgetEvents([]);
+      }
+      try {
+        const ws = await fetchWorkshops();
+        setWidgetWorkshops(ws.slice ? ws.slice(0, 3) : []);
+      } catch (e) {
+        setWidgetWorkshops([]);
+      }
+    })();
   }, []);
 
   return (
@@ -47,6 +60,11 @@ const Dashboard = ({ setActivePage }) => {
           <p className="hero-sub">
             Welcome to <b>Astro Club INSAT</b>. Spread information, track our upcoming stargazing events, and dive into the latest astrophysical discoveries.
           </p>
+          {!user && (
+            <div className="status-indicator" style={{ marginBottom: '18px' }}>
+              Observer mode enabled. <button className="btn-more" onClick={() => setActivePage('login')} style={{ color: 'var(--text-primary)' }}>Sign in for full access</button>
+            </div>
+          )}
           <div className="hero-actions">
             <button className="btn btn-primary" onClick={() => setActivePage('workshops')}>
               Join Workshop
@@ -86,7 +104,7 @@ const Dashboard = ({ setActivePage }) => {
             ) : (
               articles.map((item, index) => {
                 const isFeatured = index === 0;
-                const dateObj = new Date(item.published_at);
+                const dateObj = new Date(item.published_at || item.date);
                 const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
                 return (
@@ -99,7 +117,7 @@ const Dashboard = ({ setActivePage }) => {
                   >
                     <div className="mag-img">
                       <img
-                        src={item.image_url}
+                        src={item.image_url || item.image}
                         alt={item.title}
                         onError={(e) => {
                           e.target.src = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop';
@@ -107,9 +125,9 @@ const Dashboard = ({ setActivePage }) => {
                       />
                     </div>
                     <div className="mag-content">
-                      <div className="mag-meta"><span>{item.news_site}</span> • {formattedDate}</div>
+                      <div className="mag-meta"><span>{item.news_site || 'Astronomy News'}</span> • {formattedDate}</div>
                       <h3 className="mag-title">{item.title}</h3>
-                      <p className="mag-excerpt">{item.summary}</p>
+                      <p className="mag-excerpt">{item.summary || item.description || 'Discover the latest astronomy breakthrough...'}</p>
                     </div>
                   </a>
                 );
@@ -122,40 +140,48 @@ const Dashboard = ({ setActivePage }) => {
           <div className="widget-box">
             <h3 className="widget-title">Upcoming Events</h3>
             <div>
-              {mockEvents.map((ev, index) => (
-                <div className="list-item" key={index}>
-                  <div className="date-badge">
-                    <div className="date-d">{ev.day}</div>
-                    <div className="date-m">{ev.month}</div>
+              {widgetEvents.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)' }}>No events scheduled yet.</p>
+              ) : (
+                widgetEvents.map((ev, index) => (
+                  <div className="list-item" key={index}>
+                    <div className="date-badge">
+                      <div className="date-d">{new Date(ev.date || Date.now()).getDate()}</div>
+                      <div className="date-m">{new Date(ev.date || Date.now()).toLocaleString('en-US', { month: 'short' })}</div>
+                    </div>
+                    <div className="item-info">
+                      <h4>{ev.title}</h4>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <MapPin size={12} /> {ev.location}
+                      </p>
+                    </div>
                   </div>
-                  <div className="item-info">
-                    <h4>{ev.title}</h4>
-                    <p style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <MapPin size={12} /> {ev.location}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
           <div className="widget-box">
             <h3 className="widget-title">Scheduled Workshops</h3>
             <div>
-              {mockWorkshops.map((ws, index) => (
-                <div className="list-item" key={index}>
-                  <div className="date-badge">
-                    <div className="date-d">{ws.day}</div>
-                    <div className="date-m">{ws.month}</div>
+              {widgetWorkshops.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)' }}>No workshops scheduled yet.</p>
+              ) : (
+                widgetWorkshops.map((ws, index) => (
+                  <div className="list-item" key={index}>
+                    <div className="date-badge">
+                      <div className="date-d">{new Date(ws.date || Date.now()).getDate()}</div>
+                      <div className="date-m">{new Date(ws.date || Date.now()).toLocaleString('en-US', { month: 'short' })}</div>
+                    </div>
+                    <div className="item-info">
+                      <h4>{ws.title}</h4>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <User size={12} /> by {ws.instructor}
+                      </p>
+                    </div>
                   </div>
-                  <div className="item-info">
-                    <h4>{ws.title}</h4>
-                    <p style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <User size={12} /> by {ws.instructor}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Calendar, TrendingUp, Tag, Mail, WifiOff } from 'lucide-react';
+import { fetchMagazineNews, subscribeNewsletter } from '../services/api';
 
 const Magazine = () => {
   const [articles, setArticles] = useState([]);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
-    const fetchSpaceNews = async () => {
+    const load = async () => {
       setLoading(true);
       setError(false);
       try {
-        const response = await fetch('https://api.spaceflightnewsapi.net/v4/articles?limit=11');
-        const data = await response.json();
-        setArticles(data.results || []);
+        const data = await fetchMagazineNews(11);
+        const list = data && (data.articles || data.results || data) ? (data.articles || data.results || data) : [];
+        setArticles(list.slice ? list.slice(0, 11) : []);
       } catch (err) {
         console.error('API Fetch Error:', err);
         setError(true);
@@ -23,7 +26,7 @@ const Magazine = () => {
       }
     };
 
-    fetchSpaceNews();
+    load();
   }, []);
 
   const filteredArticles = articles.filter((art) =>
@@ -189,14 +192,29 @@ const Magazine = () => {
             <p>Get a curated weekly digest of the biggest astronomical discoveries sent directly to your inbox.</p>
             <form
               className="newsletter-form"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                alert('Subscribed to the Event Horizon!');
+                setNewsletterStatus('Subscribing...');
+                try {
+                  await subscribeNewsletter(newsletterEmail);
+                  setNewsletterEmail('');
+                  setNewsletterStatus('Subscribed successfully!');
+                } catch (err) {
+                  setNewsletterStatus(`Subscription failed: ${err.message}`);
+                }
               }}
             >
-              <input type="email" placeholder="Your email address" required style={{ color: 'var(--text-primary)' }} />
+              <input
+                type="email"
+                placeholder="Your email address"
+                required
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                style={{ color: 'var(--text-primary)' }}
+              />
               <button type="submit">Subscribe</button>
             </form>
+            {newsletterStatus && <div style={{ marginTop: '10px', color: 'var(--text-secondary)', fontSize: '13px' }}>{newsletterStatus}</div>}
           </div>
         </aside>
       </div>

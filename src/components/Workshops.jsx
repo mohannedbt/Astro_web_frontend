@@ -16,6 +16,9 @@ import {
   MonitorPlay,
   Download,
   MonitorOff,
+  MapPin,
+  Users,
+  Tag,
 } from 'lucide-react';
 
 import { fetchWorkshops } from '../services/api';
@@ -177,15 +180,26 @@ const Workshops = () => {
                 {selectedWorkshop.topicLabel}
               </span>
               <h2 style={{ fontSize: '26px', lineHeight: 1.3 }}>{selectedWorkshop.title}</h2>
-              <div className="ws-details-row" style={{ border: 'none', paddingTop: '12px', flexDirection: 'row', gap: '24px' }}>
+              <div className="ws-details-row" style={{ border: 'none', paddingTop: '12px', flexDirection: 'row', gap: '24px', flexWrap: 'wrap' }}>
                 <span>
                   <User size={16} /> {selectedWorkshop.instructor}
                 </span>
                 <span>
-                  <Calendar size={16} /> {selectedWorkshop.date} @ {selectedWorkshop.time}
+                  <Calendar size={16} /> {selectedWorkshop.date} @ {selectedWorkshop.time || 'TBA'}
                 </span>
                 <span>
-                  <Clock size={16} /> {selectedWorkshop.duration}
+                  <Clock size={16} /> {selectedWorkshop.duration || 'TBA'}
+                </span>
+              </div>
+              <div className="ws-details-row" style={{ border: 'none', paddingTop: '8px', flexDirection: 'row', gap: '24px', flexWrap: 'wrap' }}>
+                <span>
+                  <MapPin size={16} /> {selectedWorkshop.location || 'TBA'}
+                </span>
+                <span>
+                  <Tag size={16} /> {selectedWorkshop.topicLabel || 'General'}
+                </span>
+                <span>
+                  <Users size={16} /> Capacity: {selectedWorkshop.capacity || 'Unlimited'}
                 </span>
               </div>
               <button className="modal-close" onClick={() => setSelectedWorkshop(null)}>
@@ -210,11 +224,15 @@ const Workshops = () => {
                     <CheckSquare size={14} /> Prerequisites
                   </div>
                   <div className="prereq-list">
-                    {selectedWorkshop.prerequisites.map((p, idx) => (
-                      <span className="prereq-item" key={idx}>
-                        {p}
-                      </span>
-                    ))}
+                    {selectedWorkshop.prerequisites.length > 0 ? (
+                      selectedWorkshop.prerequisites.map((p, idx) => (
+                        <span className="prereq-item" key={idx}>
+                          {p}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ color: 'var(--text-secondary)' }}>No prerequisites required for this session.</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -231,11 +249,15 @@ const Workshops = () => {
                   <List size={14} /> Workshop Agenda
                 </div>
                 <div className="agenda-list">
-                  {selectedWorkshop.agenda.map((a, idx) => (
-                    <div className="agenda-item" key={idx}>
-                      {a}
-                    </div>
-                  ))}
+                  {selectedWorkshop.agenda.length > 0 ? (
+                    selectedWorkshop.agenda.map((a, idx) => (
+                      <div className="agenda-item" key={idx}>
+                        {a}
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ color: 'var(--text-secondary)' }}>Agenda will be shared before the session.</span>
+                  )}
                 </div>
               </div>
 
