@@ -10,6 +10,18 @@ const SMTP_PASS = process.env.SMTP_PASS || '';
 const SMTP_FROM = process.env.SMTP_FROM || 'insatastroclub@gmail.com';
 const nodemailer = require('nodemailer');
 
+function logNewsletterServiceError(error, context) {
+  console.error(`newsletter service integration failed [${context}]`, {
+    message: error?.message,
+    stack: error?.stack,
+    code: error?.code,
+    responseStatus: error?.response?.status,
+    responseData: error?.response?.data,
+    responseHeaders: error?.response?.headers,
+    request: error?.request,
+  });
+}
+
 function newsletterRoutes(app) {
   // Public: subscribe to newsletter
   app.post('/api/newsletter/subscribe', async (req, res) => {
@@ -28,8 +40,9 @@ function newsletterRoutes(app) {
       try {
         await sendNewsletterService(email);
       } catch (serviceError) {
-        console.error('newsletter service integration failed', serviceError.message || serviceError);
-        return res.status(502).json({ error: 'Newsletter service integration failed' });
+        logNewsletterServiceError(serviceError, 'subscribe');
+        const reason = serviceError?.message || 'Unknown newsletter error';
+        return res.status(502).json({ error: 'Newsletter service integration failed', reason });
       }
 
       return res.json({ success: true });
