@@ -1,7 +1,7 @@
 import React from 'react';
-import { Menu, Search, Bell, Maximize } from 'lucide-react';
+import { Menu, Search, Bell, Maximize, Palette } from 'lucide-react';
 
-const Topbar = ({ collapsed, setCollapsed, activePage }) => {
+const Topbar = ({ collapsed, setCollapsed, activePage, theme, setTheme }) => {
   const getBreadcrumbs = () => {
     switch (activePage) {
       case 'dashboard':
@@ -90,6 +90,13 @@ const Topbar = ({ collapsed, setCollapsed, activePage }) => {
       </div>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <button onClick={() => window.dispatchEvent(new Event('showTour'))} style={{ fontSize: 13, padding: '8px 10px' }}>Take Tour</button>
+        <button
+          onClick={() => setTheme(theme === 'blue' ? 'dark' : 'blue')}
+          style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}
+          aria-label="Toggle site theme"
+        >
+          <Palette size={18} />
+        </button>
         {renderRightButton()}
       </div>
     </header>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, BookOpen, Map, Mic, User, Calendar } from 'lucide-react';
+import { Compass, BookOpen, Map, Mic, User, Calendar, Gamepad2 } from 'lucide-react';
 
 const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
   const navItems = [
@@ -9,14 +9,16 @@ const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
         { id: 'dashboard', label: 'ACI Dashboard', icon: Compass },
         { id: 'magazine', label: 'Magazine', icon: BookOpen },
         { id: 'skymap', label: 'Sky Map', icon: Map },
+        { id: 'astrogames', label: 'AstroGames', icon: Gamepad2 },
       ],
     },
     {
       section: 'Activities',
       items: [
         { id: 'workshops', label: 'Workshops', icon: Mic },
-        { id: 'admin', label: 'Admin', icon: User, adminOnly: true },
+        { id: 'calendar', label: 'Astro Calendar', icon: Calendar },
         { id: 'events', label: 'Events', icon: Calendar },
+        { id: 'admin', label: 'Admin', icon: User, adminOnly: true },
       ],
     },
   ];

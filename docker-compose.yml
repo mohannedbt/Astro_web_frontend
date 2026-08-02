@@ -22,8 +22,11 @@ services:
       - DATABASE_URL=postgresql://neondb_owner:npg_0VfKRdAqBUa9@ep-withered-hall-atn692pg.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_min_32_chars_for_production}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
-      - ADMIN_USER=${ADMIN_USER:-admin}
-      - ADMIN_PASS=${ADMIN_PASS:-adminpass}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@astro.local}
+      - ADMIN_USER=${ADMIN_USERNAME:-admin}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_NAME=${ADMIN_NAME:-Admin User}
+      - ADMIN_PASS=${ADMIN_PASS:-change-me-please}
       - NEWS_API_URL=https://api.spaceflightnewsapi.net/v4/articles?limit=
     depends_on:
       redis:

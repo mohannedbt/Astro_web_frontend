@@ -6,8 +6,60 @@ Below are quick start commands, example `.env` templates, Docker Compose usage, 
 
 ---
 
-## Quick local (Docker Compose)
-This will run Redis, Postgres, and the backend service with automatic database initialization and admin seeding.
+## Local setup (no Docker)
+This is the easiest way to test locally.
+
+```bash
+# frontend
+npm install
+cp .env.example .env
+
+# backend
+cd backend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Then run the frontend from the repository root:
+
+```bash
+npm run dev
+```
+
+Use these defaults:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5000
+- Database: SQLite automatically when DATABASE_URL is empty
+- Redis: optional; if unavailable, the app falls back to an in-memory cache
+
+## Production setup
+For production, use hosted Postgres and Redis.
+
+```env
+# backend/.env
+DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
+REDIS_URL=redis://:password@host:6379
+JWT_SECRET=replace-with-a-long-random-secret
+```
+
+Then start the backend with:
+
+```bash
+cd backend
+npm install
+npm start
+```
+
+And the frontend with:
+
+```bash
+npm install
+npm run build
+```
+
+## Docker Compose (optional)
+This will run Redis and the backend service with automatic database initialization and admin seeding.
 
 ```bash
 # from repository root
@@ -17,13 +69,6 @@ docker compose ps
 ```
 
 When containers are running, the backend will be available at `http://localhost:5000`.
-
-**Access the app:**
-- Frontend: `http://localhost:5173` (if running `npm run dev`)
-- Backend API: `http://localhost:5000/api`
-- Admin Login: username: `admin` password: `adminpass` (or your custom ADMIN_PASS)
-
-The admin user is automatically seeded on startup. After logging in, the Admin panel will appear in the sidebar.
 
 Stop services:
 

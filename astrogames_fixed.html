@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AstroGames</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#07080f;
+    --void-2:#0c0e18;
+    --panel: rgba(18,20,34,0.55);
+    --panel-solid:#12142299;
+    --panel-border: rgba(237,235,247,0.08);
+    --aurora:#6EE7C4;
+    --aurora-dim: rgba(110,231,196,0.16);
+    --nova:#FF8A5B;
+    --nova-dim: rgba(255,138,91,0.18);
+    --violet:#8B7FD6;
+    --star:#EDEBF7;
+    --star-dim: rgba(237,235,247,0.55);
+    --err:#FF6B6B;
+    --err-dim: rgba(255,107,107,0.16);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--void);
+    color:var(--star);
+    font-family:'Outfit', sans-serif;
+    overflow-x:hidden;
+    min-height:100vh;
+    position:relative;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk', sans-serif;}
+  #starfield{position:fixed; inset:0; z-index:0;}
+  a{color:inherit;}
+  .app{position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 22px clamp(16px, 4vw, 48px);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Space Grotesk'; font-weight:600; font-size:1.05rem;
+    letter-spacing:0.02em;
+  }
+  .brand .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--aurora);
+    box-shadow:0 0 12px 2px var(--aurora);
+  }
+  .back-btn{
+    font-family:'Outfit'; font-size:0.85rem; color:var(--star-dim);
+    background:var(--panel); border:1px solid var(--panel-border);
+    padding:8px 16px; border-radius:100px; cursor:pointer;
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    transition:all .2s ease; display:none;
+  }
+  .back-btn:hover{color:var(--star); border-color:var(--aurora);}
+  .back-btn.show{display:inline-flex; align-items:center; gap:6px;}
+
+  /* ---------- Home / Orrery nav ---------- */
+  .home{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 20px 20px 60px;
+    text-align:center;
+  }
+  .home .eyebrow{
+    font-size:0.72rem; letter-spacing:0.28em; text-transform:uppercase;
+    color:var(--aurora); margin-bottom:14px; font-weight:500;
+  }
+  .home h1{
+    font-size:clamp(2.4rem, 6vw, 4.2rem); font-weight:700; line-height:1.05;
+    background:linear-gradient(135deg, #fff 20%, var(--aurora) 65%, var(--violet) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    margin-bottom:14px;
+  }
+  .home .sub{
+    color:var(--star-dim); font-size:1rem; max-width:480px; margin-bottom:52px;
+    font-weight:300;
+  }
+  .orrery{
+    position:relative;
+    width:min(300px, 60vw); height:min(300px, 60vw);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:44px;
+  }
+  .sun{
+    position:absolute; width:44px; height:44px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--nova) 45%, #a34a1f 100%);
+    box-shadow:0 0 50px 10px var(--nova-dim), 0 0 20px 4px rgba(255,138,91,0.5);
+  }
+  .ring{
+    position:absolute; border:1px dashed rgba(237,235,247,0.14); border-radius:50%;
+  }
+  .ring.r1{width:64%; height:64%; animation: spin 22s linear infinite;}
+  .ring.r2{width:100%; height:100%; animation: spin 34s linear infinite reverse;}
+  @keyframes spin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+  /* small orbiting dots — purely decorative, ride the same rings */
+  .orbit-dot{
+    position:absolute; top:50%; left:50%; width:100%; height:100%;
+    margin-top:-50%; margin-left:-50%;
+  }
+  .orbit-dot.d1{ animation: spin 22s linear infinite; }
+  .orbit-dot.d2{ animation: spin 34s linear infinite reverse; }
+  .orbit-dot .dot{
+    position:absolute; width:12px; height:12px; border-radius:50%;
+  }
+  .orbit-dot.d1 .dot{ top:18%; left:50%; transform:translateX(-50%); background:var(--aurora); box-shadow:0 0 12px 2px var(--aurora-dim); }
+  .orbit-dot.d2 .dot{ top:0%; left:50%; transform:translateX(-50%); background:var(--nova); box-shadow:0 0 12px 2px var(--nova-dim); }
+
+  .game-select{
+    display:flex; gap:20px; flex-wrap:wrap; justify-content:center; max-width:520px;
+  }
+  .game-btn{
+    width:200px; padding:22px 20px;
+    background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:20px; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    cursor:pointer; text-align:left;
+    transition: border-color .25s ease, transform .22s ease, box-shadow .25s ease;
+  }
+  .game-btn:hover{
+    border-color:var(--aurora);
+    box-shadow:0 12px 34px -12px var(--aurora-dim);
+    transform:translateY(-4px);
+  }
+  .game-btn[data-game="universle"]:hover{ border-color:var(--nova); box-shadow:0 12px 34px -12px var(--nova-dim); }
+  .game-btn .icon{width:26px; height:26px; margin-bottom:12px; color:var(--aurora);}
+  .game-btn[data-game="universle"] .icon{ color:var(--nova); }
+  .game-btn h3{font-size:1.05rem; font-weight:600; margin-bottom:5px;}
+  .game-btn p{font-size:0.82rem; color:var(--star-dim); font-weight:300; line-height:1.35;}
+
+  @media (max-width: 620px){
+    .game-btn{ width:44vw; min-width:150px; padding:16px 14px; }
+  }
+
+  /* ---------- Shared game shell ---------- */
+  .screen{ display:none; flex:1; flex-direction:column; padding: 0 20px 40px; }
+  .screen.active{ display:flex; }
+  .game-header{
+    max-width:900px; margin:0 auto; width:100%; text-align:center; padding: 10px 0 30px;
+  }
+  .game-header h2{ font-size:clamp(1.6rem,4vw,2.2rem); margin-bottom:6px;}
+  .game-header p{ color:var(--star-dim); font-weight:300; font-size:0.92rem;}
+
+  .glass-card{
+    background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:22px; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+  }
+
+  /* ---------- Quiz ---------- */
+  #quiz-wrap{ max-width:680px; margin:0 auto; width:100%; }
+  .quiz-topline{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:18px; font-size:0.85rem; color:var(--star-dim);
+  }
+  .quiz-topline .score{ color:var(--aurora); font-weight:600; font-family:'Space Grotesk';}
+  .progress-track{ height:4px; border-radius:10px; background:rgba(237,235,247,0.1); overflow:hidden; margin-bottom:28px;}
+  .progress-fill{ height:100%; background:linear-gradient(90deg, var(--aurora), var(--violet)); transition:width .4s ease; border-radius:10px;}
+  .quiz-card{ padding: clamp(24px,4vw,42px); min-height:340px; }
+  .q-category{ font-size:0.7rem; text-transform:uppercase; letter-spacing:0.2em; color:var(--nova); margin-bottom:14px; font-weight:500;}
+  .q-text{ font-size:clamp(1.1rem,2.6vw,1.4rem); font-weight:500; line-height:1.4; margin-bottom:30px; font-family:'Space Grotesk';}
+  .answers{ display:grid; gap:12px; }
+  .answer-btn{
+    text-align:left; padding:16px 20px; border-radius:14px;
+    background:rgba(255,255,255,0.03); border:1px solid var(--panel-border);
+    color:var(--star); font-family:'Outfit'; font-size:0.95rem; cursor:pointer;
+    transition: all .18s ease; opacity:0; transform:translateY(8px); animation: fade-in-up .4s ease forwards;
+  }
+  .answer-btn:nth-child(1){animation-delay:.05s;}
+  .answer-btn:nth-child(2){animation-delay:.1s;}
+  .answer-btn:nth-child(3){animation-delay:.15s;}
+  .answer-btn:nth-child(4){animation-delay:.2s;}
+  @keyframes fade-in-up{ to{opacity:1; transform:translateY(0);} }
+  .answer-btn:hover:not(:disabled){ border-color:var(--aurora); background:rgba(110,231,196,0.06); transform:translateX(4px); }
+  .answer-btn:disabled{ cursor:default; }
+  .answer-btn.correct{ border-color:var(--aurora); background:var(--aurora-dim); }
+  .answer-btn.wrong{ border-color:var(--err); background:var(--err-dim); }
+  .quiz-footer{ display:flex; justify-content:flex-end; margin-top:24px; }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--aurora), var(--violet));
+    color:#07080f; font-family:'Space Grotesk'; font-weight:600; font-size:0.9rem;
+    padding:12px 26px; border-radius:100px; border:none; cursor:pointer;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 10px 24px -8px var(--aurora-dim); }
+  .btn-primary:disabled{ opacity:0.35; cursor:not-allowed; transform:none; box-shadow:none;}
+  .result-panel{ text-align:center; padding: clamp(30px,6vw,60px); }
+  .result-panel .big-score{ font-family:'Space Grotesk'; font-size:3.4rem; font-weight:700; color:var(--aurora); margin:10px 0;}
+  .loading-state{ text-align:center; padding:80px 20px; color:var(--star-dim); }
+  .spinner{
+    width:38px; height:38px; border-radius:50%;
+    border:3px solid rgba(237,235,247,0.15); border-top-color:var(--aurora);
+    margin:0 auto 18px; animation: spin 1s linear infinite;
+  }
+
+  /* ---------- Universle ---------- */
+  #universle-wrap{ max-width:1000px; margin:0 auto; width:100%; display:grid; grid-template-columns: 1.1fr 1fr; gap:24px; }
+  @media (max-width:860px){ #universle-wrap{ grid-template-columns:1fr; } }
+  .viz-card{ position:relative; min-height:340px; overflow:hidden; }
+  #uni-canvas-wrap{ position:absolute; inset:0; }
+  .viz-caption{ position:absolute; bottom:14px; left:16px; font-size:0.72rem; color:var(--star-dim); letter-spacing:0.06em; text-transform:uppercase; z-index:2;}
+  .guess-card{ padding: clamp(20px,3vw,30px); display:flex; flex-direction:column; }
+  .guess-row{ display:flex; gap:10px; margin-bottom:16px; position:relative; }
+  #uni-input{
+    flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--panel-border);
+    border-radius:12px; padding:12px 16px; color:var(--star); font-family:'Outfit'; font-size:0.95rem;
+  }
+  #uni-input:focus{ outline:none; border-color:var(--aurora); }
+  .suggestions{
+    position:absolute; top:calc(100% + 6px); left:0; right:96px;
+    background:var(--void-2); border:1px solid var(--panel-border); border-radius:12px;
+    max-height:220px; overflow-y:auto; z-index:10; display:none;
+  }
+  .suggestions.show{ display:block; }
+  .suggestion-item{ padding:10px 16px; font-size:0.88rem; cursor:pointer; }
+  .suggestion-item:hover{ background:rgba(110,231,196,0.08); color:var(--aurora); }
+  .guess-history{ display:flex; flex-direction:column; gap:8px; overflow-y:auto; max-height:340px; padding-right:4px;}
+  .guess-item{
+    display:grid; grid-template-columns: 1.1fr 0.9fr 0.9fr 0.9fr 0.9fr; gap:5px;
+    padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.02);
+    border:1px solid var(--panel-border); font-size:0.78rem; align-items:center;
+    animation: fade-in-up .35s ease forwards;
+  }
+  .guess-item .name{ font-weight:500; font-family:'Space Grotesk'; }
+  .chip{ text-align:center; padding:6px 4px; border-radius:8px; font-weight:500; font-size:0.72rem; }
+  .chip.match{ background:var(--aurora-dim); color:var(--aurora); }
+  .chip.partial{ background:rgba(255,200,90,0.16); color:#FFC85A; }
+  .chip.miss{ background:var(--err-dim); color:var(--err); }
+  .chip .arrow{ font-size:0.9rem; }
+  .uni-hint-labels{ display:grid; grid-template-columns: 1.1fr 0.9fr 0.9fr 0.9fr 0.9fr; gap:5px; font-size:0.65rem; color:var(--star-dim); text-transform:uppercase; letter-spacing:0.05em; padding:0 12px; margin-bottom:6px;}
+  .win-banner{
+    text-align:center; padding:18px; border-radius:16px; margin-bottom:16px;
+    background:var(--nova-dim); border:1px solid rgba(255,138,91,0.35);
+    animation: fade-in-up .4s ease forwards;
+  }
+  .win-banner h3{ font-family:'Space Grotesk'; color:var(--nova); margin-bottom:4px; }
+  .win-banner p{ font-size:0.82rem; color:var(--star-dim); }
+  .guess-count{ font-size:0.8rem; color:var(--star-dim); }
+  .empty-hist{ font-size:0.82rem; color:var(--star-dim); text-align:center; padding:30px 10px; font-weight:300;}
+
+  /* ---------- Difficulty select ---------- */
+  .diff-select{ max-width:680px; margin:0 auto; width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:620px){ .diff-select{ grid-template-columns:repeat(2,1fr); } }
+  .diff-btn{
+    padding:22px 14px; background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:18px; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    cursor:pointer; text-align:center; transition:border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    color:var(--star); font-family:'Outfit';
+  }
+  .diff-btn:hover{ transform:translateY(-3px); }
+  .diff-btn .lvl{ font-family:'Space Grotesk'; font-weight:600; font-size:1rem; margin-bottom:6px; }
+  .diff-btn .lvl-desc{ font-size:0.74rem; color:var(--star-dim); font-weight:300; line-height:1.3; }
+  .diff-btn[data-diff="easy"]:hover{ border-color:var(--aurora); box-shadow:0 12px 30px -14px var(--aurora-dim); }
+  .diff-btn[data-diff="medium"]:hover{ border-color:#FFC85A; box-shadow:0 12px 30px -14px rgba(255,200,90,0.3); }
+  .diff-btn[data-diff="hard"]:hover{ border-color:var(--nova); box-shadow:0 12px 30px -14px var(--nova-dim); }
+  .diff-btn[data-diff="insane"]:hover{ border-color:var(--err); box-shadow:0 12px 30px -14px var(--err-dim); }
+  .diff-btn[data-diff="easy"] .lvl{ color:var(--aurora); }
+  .diff-btn[data-diff="medium"] .lvl{ color:#FFC85A; }
+  .diff-btn[data-diff="hard"] .lvl{ color:var(--nova); }
+  .diff-btn[data-diff="insane"] .lvl{ color:var(--err); }
+  .diff-tag{
+    display:inline-block; margin-bottom:16px; font-size:0.7rem; text-transform:uppercase;
+    letter-spacing:0.16em; padding:5px 14px; border-radius:100px; border:1px solid var(--panel-border);
+    color:var(--star-dim); background:rgba(255,255,255,0.02);
+  }
+
+  /* ---------- Data source badge ---------- */
+  .data-badge{
+    position:absolute; top:14px; right:16px; z-index:3; font-size:0.66rem;
+    letter-spacing:0.05em; text-transform:uppercase; padding:5px 10px; border-radius:100px;
+    background:rgba(0,0,0,0.35); border:1px solid var(--panel-border); color:var(--star-dim);
+    display:flex; align-items:center; gap:6px; backdrop-filter:blur(6px);
+  }
+  .data-badge .pulse{ width:6px; height:6px; border-radius:50%; background:var(--star-dim); }
+  .data-badge.live .pulse{ background:var(--aurora); box-shadow:0 0 8px 1px var(--aurora-dim); animation:pulse-glow 1.6s ease-in-out infinite; }
+  .data-badge.live{ color:var(--aurora); border-color:rgba(110,231,196,0.3); }
+  @keyframes pulse-glow{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+  /* ---------- Scout info card (3D click target) ---------- */
+  .scout-card{
+    position:absolute; bottom:14px; right:14px; z-index:3; width:min(240px, 40vw);
+    background:rgba(10,11,20,0.72); border:1px solid var(--panel-border); border-radius:16px;
+    padding:14px 16px; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    opacity:0; transform:translateY(8px); transition:opacity .25s ease, transform .25s ease; pointer-events:none;
+  }
+  .scout-card.show{ opacity:1; transform:translateY(0); }
+  .scout-card .s-name{ font-family:'Space Grotesk'; font-weight:600; font-size:0.98rem; margin-bottom:2px; }
+  .scout-card .s-type{ font-size:0.66rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--nova); margin-bottom:10px; }
+  .scout-card .s-row{ display:flex; justify-content:space-between; font-size:0.74rem; color:var(--star-dim); padding:3px 0; border-top:1px solid var(--panel-border); }
+  .scout-card .s-row span:last-child{ color:var(--star); font-weight:500; }
+  .scout-hint{
+    position:absolute; top:14px; left:16px; z-index:3; font-size:clamp(0.6rem,1.6vw,0.7rem); color:var(--star-dim);
+    background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:100px; border:1px solid var(--panel-border);
+    max-width:56%;
+  }
+
+  /* ---------- Header action row (info / leaderboard / settings) ---------- */
+  .header-actions{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px;
+  }
+  .chip-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'Outfit'; font-size:0.78rem; color:var(--star-dim);
+    background:var(--panel); border:1px solid var(--panel-border);
+    padding:7px 14px; border-radius:100px; cursor:pointer;
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    transition:all .2s ease;
+  }
+  .chip-btn:hover{ color:var(--star); border-color:var(--aurora); }
+  .chip-btn svg{ width:14px; height:14px; flex-shrink:0; }
+
+  /* ---------- Modal shell ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:100; background:rgba(4,5,10,0.72);
+    display:none; align-items:center; justify-content:center; padding:20px;
+    backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background:var(--void-2); border:1px solid var(--panel-border); border-radius:22px;
+    max-width:520px; width:100%; max-height:82vh; overflow-y:auto;
+    padding:clamp(20px,4vw,32px); position:relative;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.7);
+    animation: fade-in-up .25s ease forwards;
+  }
+  .modal-box h3{ font-size:1.15rem; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .modal-close{
+    position:absolute; top:16px; right:16px; width:30px; height:30px; border-radius:50%;
+    background:rgba(255,255,255,0.05); border:1px solid var(--panel-border); color:var(--star-dim);
+    cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem;
+    transition:all .2s ease;
+  }
+  .modal-close:hover{ color:var(--star); border-color:var(--err); }
+  .modal-box p{ color:var(--star-dim); font-size:0.88rem; line-height:1.6; font-weight:300; margin-bottom:10px; }
+  .modal-box p strong{ color:var(--star); font-weight:500; }
+  .rules-list{ list-style:none; display:flex; flex-direction:column; gap:10px; margin:14px 0; }
+  .rules-list li{
+    display:flex; gap:10px; font-size:0.86rem; color:var(--star-dim); font-weight:300; line-height:1.5;
+    padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid var(--panel-border);
+  }
+  .rules-list li .num{
+    flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--aurora-dim); color:var(--aurora);
+    font-family:'Space Grotesk'; font-weight:600; font-size:0.72rem; display:flex; align-items:center; justify-content:center;
+  }
+  .rules-list li span:last-child{ color:var(--star); }
+
+  /* ---------- Leaderboard ---------- */
+  .lb-tabs{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .lb-tab{
+    font-size:0.76rem; padding:6px 13px; border-radius:100px; cursor:pointer;
+    background:rgba(255,255,255,0.03); border:1px solid var(--panel-border); color:var(--star-dim);
+  }
+  .lb-tab.active{ color:var(--aurora); border-color:var(--aurora); background:var(--aurora-dim); }
+  .lb-table{ display:flex; flex-direction:column; gap:6px; }
+  .lb-row{
+    display:grid; grid-template-columns:26px 1fr auto; gap:10px; align-items:center;
+    padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.02); border:1px solid var(--panel-border);
+    font-size:0.84rem;
+  }
+  .lb-row .rank{ font-family:'Space Grotesk'; font-weight:700; color:var(--star-dim); text-align:center; }
+  .lb-row:nth-child(1) .rank{ color:#FFC85A; }
+  .lb-row:nth-child(2) .rank{ color:#D6D6E0; }
+  .lb-row:nth-child(3) .rank{ color:var(--nova); }
+  .lb-row .lb-name{ font-weight:500; }
+  .lb-row .lb-meta{ font-size:0.72rem; color:var(--star-dim); font-weight:300; }
+  .lb-row .lb-score{ font-family:'Space Grotesk'; font-weight:600; color:var(--aurora); text-align:right; white-space:nowrap; }
+  .lb-empty{ text-align:center; color:var(--star-dim); font-size:0.85rem; padding:26px 10px; font-weight:300; }
+  .lb-clear{ margin-top:16px; }
+
+  /* ---------- Name-capture prompt ---------- */
+  .name-form{ display:flex; gap:8px; margin-top:6px; }
+  .name-form input{
+    flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--panel-border); border-radius:12px;
+    padding:11px 14px; color:var(--star); font-family:'Outfit'; font-size:0.9rem;
+  }
+  .name-form input:focus{ outline:none; border-color:var(--aurora); }
+
+  /* ---------- Universle: timer + guess counter ---------- */
+  .uni-stats{ display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .uni-stat-pill{
+    display:flex; align-items:center; gap:6px; font-size:0.76rem; color:var(--star-dim);
+    background:rgba(255,255,255,0.03); border:1px solid var(--panel-border); padding:6px 12px; border-radius:100px;
+  }
+  .uni-stat-pill b{ color:var(--star); font-family:'Space Grotesk'; font-weight:600; }
+  .uni-stat-pill.warn b{ color:var(--nova); }
+  .uni-stat-pill.danger b{ color:var(--err); }
+  .lose-banner{
+    text-align:center; padding:18px; border-radius:16px; margin-bottom:16px;
+    background:var(--err-dim); border:1px solid rgba(255,107,107,0.35);
+    animation: fade-in-up .4s ease forwards;
+  }
+  .lose-banner h3{ font-family:'Space Grotesk'; color:var(--err); margin-bottom:4px; }
+  .lose-banner p{ font-size:0.82rem; color:var(--star-dim); }
+
+  /* ---------- Settings / API key ---------- */
+  .key-input-row{ display:flex; gap:8px; margin:14px 0 8px; }
+  .key-input-row input{
+    flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--panel-border); border-radius:12px;
+    padding:11px 14px; color:var(--star); font-family:'Outfit'; font-size:0.85rem; letter-spacing:0.02em;
+  }
+  .key-input-row input:focus{ outline:none; border-color:var(--aurora); }
+  .key-status{ font-size:0.78rem; margin-top:4px; display:flex; align-items:center; gap:6px; }
+  .key-status.on{ color:var(--aurora); }
+  .key-status.off{ color:var(--star-dim); }
+  .get-key-link{
+    display:inline-flex; align-items:center; gap:5px; font-size:0.82rem; color:var(--nova);
+    text-decoration:none; margin-top:4px; font-weight:500;
+  }
+  .get-key-link:hover{ text-decoration:underline; }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  .btn-ghost{
+    background:rgba(255,255,255,0.04); border:1px solid var(--panel-border); color:var(--star-dim);
+    font-family:'Outfit'; font-size:0.85rem; padding:10px 18px; border-radius:100px; cursor:pointer;
+    transition:all .2s ease;
+  }
+  .btn-ghost:hover{ color:var(--star); border-color:var(--err); }
+
+  /* ---------- Mobile scaling refinements ---------- */
+  @media (max-width:620px){
+    .data-badge{ top:8px; right:8px; padding:4px 8px; font-size:0.6rem; gap:4px; }
+    .data-badge .pulse{ width:5px; height:5px; }
+    .scout-hint{ top:8px; left:8px; padding:4px 8px; max-width:60%; }
+    .scout-card{ bottom:8px; right:8px; width:min(200px,46vw); padding:11px 12px; }
+    .scout-card .s-name{ font-size:0.86rem; }
+    .scout-card .s-row{ font-size:0.66rem; padding:2px 0; }
+    .viz-caption{ bottom:8px; left:8px; font-size:0.64rem; }
+    .viz-card{ min-height:clamp(240px, 62vw, 340px); }
+    .header-actions{ gap:6px; }
+    .chip-btn{ padding:6px 11px; font-size:0.72rem; }
+    .uni-stats{ gap:6px; }
+    .uni-stat-pill{ padding:5px 10px; font-size:0.7rem; }
+  }
+  @media (max-width:420px){
+    .scout-card{ display:none; } /* avoid overlapping cramped canvas on very small screens */
+    .guess-item{ grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.8fr; font-size:0.68rem; padding:8px 8px; }
+    .uni-hint-labels{ font-size:0.56rem; padding:0 8px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> AstroGames</div>
+    <button class="back-btn" id="backBtn">&larr; Back to launch</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="home">
+      <div class="eyebrow">Two games, one sky</div>
+      <h1>AstroGames</h1>
+      <p class="sub">Test your knowledge of the cosmos, then try to place every planet, moon and dwarf world exactly where it belongs.</p>
+      <div class="orrery">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="orbit-dot d1"><span class="dot"></span></div>
+        <div class="orbit-dot d2"><span class="dot"></span></div>
+        <div class="sun"></div>
+      </div>
+      <div class="game-select">
+        <button class="game-btn" data-game="quiz">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" stroke-linecap="round"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor"/></svg>
+          <h3>Astro Quiz</h3>
+          <p>10 multiple-choice questions, 4 difficulty tiers. Pick the right answer before you second-guess yourself.</p>
+        </button>
+        <button class="game-btn" data-game="universle">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/></svg>
+          <h3>Universle</h3>
+          <p>A mystery planet, moon, or dwarf world is hiding in the 3D field. You get 7 guesses to name it.</p>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="screen" id="screen-quiz">
+    <div class="game-header">
+      <h2>Astro Quiz</h2>
+      <p>Live astronomy trivia, pulled fresh each round. Pick your difficulty.</p>
+      <div class="header-actions">
+        <button class="chip-btn" id="quizInfoBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 8v.01" stroke-linecap="round"/></svg>How this game works</button>
+        <button class="chip-btn" id="quizLbBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 6h2.5a2.5 2.5 0 0 1 0 5H17M7 6H4.5a2.5 2.5 0 0 0 0 5H7"/></svg>Leaderboard</button>
+      </div>
+    </div>
+    <div id="quiz-wrap">
+      <div class="diff-select" id="diffSelect">
+        <button class="diff-btn" data-diff="easy">
+          <div class="lvl">Easy</div>
+          <div class="lvl-desc">Solar system basics, well-known facts</div>
+        </button>
+        <button class="diff-btn" data-diff="medium">
+          <div class="lvl">Medium</div>
+          <div class="lvl-desc">Moons, missions &amp; orbital mechanics</div>
+        </button>
+        <button class="diff-btn" data-diff="hard">
+          <div class="lvl">Hard</div>
+          <div class="lvl-desc">Deep-sky objects &amp; astrophysics</div>
+        </button>
+        <button class="diff-btn" data-diff="insane">
+          <div class="lvl">Insane</div>
+          <div class="lvl-desc">Obscure, numeric, no mercy</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNIVERSLE -->
+  <div class="screen" id="screen-universle">
+    <div class="game-header">
+      <h2>Universle</h2>
+      <p>Type a celestial body. Each guess reveals how close you are &mdash; by type, system, and orbital distance. You have 7 guesses.</p>
+      <div class="header-actions">
+        <button class="chip-btn" id="uniInfoBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 8v.01" stroke-linecap="round"/></svg>How this game works</button>
+        <button class="chip-btn" id="uniLbBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 6h2.5a2.5 2.5 0 0 1 0 5H17M7 6H4.5a2.5 2.5 0 0 0 0 5H7"/></svg>Leaderboard</button>
+        <button class="chip-btn" id="uniSettingsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>Real photo textures</button>
+      </div>
+    </div>
+    <div id="universle-wrap">
+      <div class="glass-card viz-card">
+        <div id="uni-canvas-wrap"></div>
+        <div class="data-badge" id="dataBadge" title="Planet sizes and orbital distances use the same accurate logarithmic scale whether live data loads or the app falls back to its built-in verified dataset."><span class="pulse"></span><span id="dataBadgeText">Loading data&hellip;</span></div>
+        <div class="scout-hint">Drag to orbit &middot; click a body to scout it</div>
+        <div class="scout-card" id="scoutCard"></div>
+        <div class="viz-caption" id="uniCaption">Drag to explore the field</div>
+      </div>
+      <div class="glass-card guess-card">
+        <div class="uni-stats">
+          <span class="uni-stat-pill" id="uniTimerPill">&#9201;&nbsp;<b id="uniTimerVal">0:00</b></span>
+          <span class="uni-stat-pill" id="uniGuessPill">&#127919;&nbsp;<b id="uniGuessVal">0</b>&nbsp;/&nbsp;7 guesses</span>
+        </div>
+        <div id="winBanner"></div>
+        <div class="guess-row">
+          <input type="text" id="uni-input" placeholder="Type a planet, moon, or dwarf planet..." autocomplete="off">
+          <div class="suggestions" id="uniSuggestions"></div>
+        </div>
+        <div class="uni-hint-labels" id="uniLabels" style="display:none;">
+          <span>Body</span><span>Type</span><span>System</span><span>Distance</span><span>Size</span>
+        </div>
+        <div class="guess-history" id="guessHistory">
+          <div class="empty-hist">Your guesses will appear here. Good luck, astronaut.</div>
+        </div>
+        <div style="margin-top:14px; display:flex; justify-content:flex-end; align-items:center;">
+          <button class="back-btn" id="newTargetBtn" style="display:inline-flex;">New target &#8635;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INFO / RULES MODAL -->
+<div class="modal-overlay" id="infoModal">
+  <div class="modal-box">
+    <button class="modal-close" data-close="infoModal">&times;</button>
+    <div id="infoModalBody"></div>
+  </div>
+</div>
+
+<!-- LEADERBOARD MODAL -->
+<div class="modal-overlay" id="lbModal">
+  <div class="modal-box">
+    <button class="modal-close" data-close="lbModal">&times;</button>
+    <h3 id="lbModalTitle">Leaderboard</h3>
+    <div id="lbTabsWrap"></div>
+    <div class="lb-table" id="lbTableBody"></div>
+    <button class="btn-ghost lb-clear" id="lbClearBtn">Clear this leaderboard</button>
+  </div>
+</div>
+
+<!-- NAME CAPTURE MODAL -->
+<div class="modal-overlay" id="nameModal">
+  <div class="modal-box">
+    <button class="modal-close" data-close="nameModal">&times;</button>
+    <h3 id="nameModalTitle">Save your score</h3>
+    <p id="nameModalSub"></p>
+    <form class="name-form" id="nameForm">
+      <input type="text" id="nameInput" maxlength="16" placeholder="Enter a name..." autocomplete="off" required>
+      <button type="submit" class="btn-primary">Save</button>
+    </form>
+  </div>
+</div>
+
+<!-- REAL TEXTURES SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box">
+    <button class="modal-close" data-close="settingsModal">&times;</button>
+    <h3>&#128225; Real photo textures</h3>
+    <p>Universle now maps real NASA-derived photographic textures onto each planet, moon, and the sun in the 3D view &mdash; no API key needed.</p>
+    <p>These are curated equirectangular imagery maps (not random search results), so they wrap cleanly around each sphere instead of looking stretched or warped.</p>
+    <div class="key-input-row" style="align-items:center;">
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+        <input type="checkbox" id="realTexturesToggle" checked style="width:18px; height:18px; accent-color:var(--aurora);">
+        <span>Use real photo textures</span>
+      </label>
+    </div>
+    <div class="key-status on" id="nasaKeyStatus">Real photo textures enabled</div>
+    <p style="font-size:0.8rem; color:var(--star-dim);">A handful of smaller moons and dwarf planets don't have a good real-imagery map available and will keep their solid color.</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* =========================================================
+   BACKGROUND STARFIELD (ambient, all screens)
+========================================================= */
+(function(){
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let w,h,stars=[];
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    stars = [];
+    const count = Math.floor((w*h)/2600);
+    for(let i=0;i<count;i++){
+      stars.push({
+        x:Math.random()*w, y:Math.random()*h,
+        r:Math.random()*1.3+0.2,
+        baseA:Math.random()*0.6+0.2,
+        speed:Math.random()*0.015+0.003,
+        phase:Math.random()*Math.PI*2
+      });
+    }
+  }
+  let t=0;
+  function draw(){
+    t+=1;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = '#07080f';
+    ctx.fillRect(0,0,w,h);
+    for(const s of stars){
+      const a = s.baseA + Math.sin(t*s.speed + s.phase)*0.25;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(237,235,247,${Math.max(0,a)})`;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', resize);
+  resize(); draw();
+})();
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+const screens = {
+  home: document.getElementById('screen-home'),
+  quiz: document.getElementById('screen-quiz'),
+  universle: document.getElementById('screen-universle'),
+};
+const backBtn = document.getElementById('backBtn');
+let currentScreen = 'home';
+
+function showScreen(name){
+  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  screens[name].classList.add('active');
+  currentScreen = name;
+  backBtn.classList.toggle('show', name !== 'home');
+  if(name === 'universle' && !uniInitialized){ initUniverse3D(); }
+}
+document.querySelectorAll('.game-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> showScreen(btn.dataset.game));
+});
+backBtn.addEventListener('click', ()=> showScreen('home'));
+
+/* =========================================================
+   MODAL SYSTEM (info / leaderboard / name-capture / settings)
+========================================================= */
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click', e=>{ if(e.target === overlay) overlay.classList.remove('show'); });
+});
+document.querySelectorAll('.modal-close').forEach(btn=>{
+  btn.addEventListener('click', ()=> closeModal(btn.dataset.close));
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));
+});
+
+const RULES_HTML = {
+  quiz: `
+    <h3>&#127919; How Astro Quiz works</h3>
+    <ul class="rules-list">
+      <li><span class="num">1</span><span>Pick a difficulty &mdash; <strong>Easy</strong> through <strong>Insane</strong>. Each tier blends live trivia questions with a hand-curated astronomy question bank.</span></li>
+      <li><span class="num">2</span><span>You'll get <strong>10 questions</strong>, one at a time. Pick an answer before you can move on &mdash; there's no going back.</span></li>
+      <li><span class="num">3</span><span>Correct answers turn <strong>green</strong>, wrong ones turn <strong>red</strong> and the right answer is revealed, then it auto-advances.</span></li>
+      <li><span class="num">4</span><span>Your final score (e.g. 8/10) is shown at the end. Save it to the <strong>leaderboard</strong>, which is stored locally on this device and ranks by percentage correct, then difficulty.</span></li>
+    </ul>`,
+  universle: `
+    <h3>&#127758; How Universle works</h3>
+    <ul class="rules-list">
+      <li><span class="num">1</span><span>A random real celestial body (planet, moon, or dwarf planet) is chosen as your secret target.</span></li>
+      <li><span class="num">2</span><span>Type a guess. Each guess shows chips for <strong>Type</strong>, <strong>System</strong> (what it orbits), <strong>Distance</strong> from the Sun, and <strong>Size</strong> relative to your guess &mdash; green means match, yellow means close, red means way off.</span></li>
+      <li><span class="num">3</span><span>You have a maximum of <strong>7 guesses</strong> to find the target. Run out and the round ends in a loss, revealing the answer.</span></li>
+      <li><span class="num">4</span><span>A timer tracks how long you take. Your score rewards finding the target in <strong>fewer guesses</strong> and <strong>less time</strong> &mdash; saved to a local leaderboard on this device.</span></li>
+      <li><span class="num">5</span><span>Drag the 3D field to look around, and click any body to scout its real stats. Add a free NASA API key in Settings to see real photo textures instead of flat colors.</span></li>
+    </ul>`
+};
+document.getElementById('quizInfoBtn').addEventListener('click', ()=>{
+  document.getElementById('infoModalBody').innerHTML = RULES_HTML.quiz;
+  openModal('infoModal');
+});
+document.getElementById('uniInfoBtn').addEventListener('click', ()=>{
+  document.getElementById('infoModalBody').innerHTML = RULES_HTML.universle;
+  openModal('infoModal');
+});
+
+/* ---- localStorage-backed leaderboards ---- */
+const LB_KEYS = { quiz:'astrogames_quiz_lb_v1', universle:'astrogames_uni_lb_v1' };
+function loadLB(game){
+  try{ return JSON.parse(localStorage.getItem(LB_KEYS[game])) || []; }catch(e){ return []; }
+}
+function saveLB(game, entries){
+  try{ localStorage.setItem(LB_KEYS[game], JSON.stringify(entries)); }catch(e){ /* storage unavailable */ }
+}
+function addLBEntry(game, entry){
+  const entries = loadLB(game);
+  entries.push(entry);
+  saveLB(game, entries);
+}
+function formatTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+let pendingSave = null; // {game, buildEntry(name)}
+document.getElementById('nameForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const name = document.getElementById('nameInput').value.trim() || 'Astronaut';
+  if(pendingSave){
+    addLBEntry(pendingSave.game, pendingSave.buildEntry(name));
+    pendingSave = null;
+  }
+  document.getElementById('nameInput').value = '';
+  closeModal('nameModal');
+  showLeaderboard(pendingSaveGameCache);
+});
+let pendingSaveGameCache = 'quiz';
+function promptSaveScore(game, subtitle, buildEntry){
+  pendingSave = { game, buildEntry };
+  pendingSaveGameCache = game;
+  document.getElementById('nameModalSub').textContent = subtitle;
+  openModal('nameModal');
+}
+
+let lbActiveTab = 'all';
+function showLeaderboard(game, difficulty){
+  pendingSaveGameCache = game;
+  const title = game === 'quiz' ? 'Astro Quiz Leaderboard' : 'Universle Leaderboard';
+  document.getElementById('lbModalTitle').textContent = title;
+
+  const tabsWrap = document.getElementById('lbTabsWrap');
+  if(game === 'quiz'){
+    const tabs = ['all','easy','medium','hard','insane'];
+    lbActiveTab = difficulty || (tabs.includes(lbActiveTab) ? lbActiveTab : 'all');
+    tabsWrap.innerHTML = `<div class="lb-tabs">${tabs.map(t=>`<span class="lb-tab ${t===lbActiveTab?'active':''}" data-tab="${t}">${t==='all'?'All':t[0].toUpperCase()+t.slice(1)}</span>`).join('')}</div>`;
+    tabsWrap.querySelectorAll('.lb-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{ lbActiveTab = tab.dataset.tab; showLeaderboard('quiz'); });
+    });
+  } else {
+    tabsWrap.innerHTML = '';
+  }
+
+  let entries = loadLB(game);
+  const clearBtn = document.getElementById('lbClearBtn');
+  clearBtn.onclick = ()=>{
+    saveLB(game, []);
+    showLeaderboard(game);
+  };
+
+  const body = document.getElementById('lbTableBody');
+  if(game === 'quiz'){
+    if(lbActiveTab !== 'all') entries = entries.filter(e=>e.difficulty === lbActiveTab);
+    entries.sort((a,b)=> (b.pct - a.pct) || (b.score - a.score));
+    if(!entries.length){
+      body.innerHTML = `<div class="lb-empty">No scores yet ${lbActiveTab==='all'?'':`on ${lbActiveTab}`} &mdash; go play a round!</div>`;
+    } else {
+      body.innerHTML = entries.slice(0,10).map((e,i)=>`
+        <div class="lb-row">
+          <span class="rank">${i+1}</span>
+          <span>
+            <div class="lb-name">${escapeHTML(e.name)}</div>
+            <div class="lb-meta">${e.difficulty} &middot; ${new Date(e.date).toLocaleDateString()}</div>
+          </span>
+          <span class="lb-score">${e.score}/${e.total}</span>
+        </div>`).join('');
+    }
+  } else {
+    // won rounds first, ranked by fewest guesses then fastest time; unsolved rounds sorted after, fastest attempt first
+    entries.sort((a,b)=>{
+      if(a.won !== b.won) return a.won ? -1 : 1;
+      if(a.guesses !== b.guesses) return a.guesses - b.guesses;
+      return a.timeSec - b.timeSec;
+    });
+    if(!entries.length){
+      body.innerHTML = `<div class="lb-empty">No rounds played yet &mdash; go find a target!</div>`;
+    } else {
+      body.innerHTML = entries.slice(0,10).map((e,i)=>`
+        <div class="lb-row">
+          <span class="rank">${i+1}</span>
+          <span>
+            <div class="lb-name">${escapeHTML(e.name)}</div>
+            <div class="lb-meta">${e.won ? `Found ${escapeHTML(e.target)}` : `Missed ${escapeHTML(e.target)}`} &middot; ${e.guesses} guess${e.guesses===1?'':'es'} &middot; ${formatTime(e.timeSec)} &middot; ${new Date(e.date).toLocaleDateString()}</div>
+          </span>
+          <span class="lb-score">${e.won ? e.score : '—'}</span>
+        </div>`).join('');
+    }
+  }
+  openModal('lbModal');
+}
+function escapeHTML(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+document.getElementById('quizLbBtn').addEventListener('click', ()=> showLeaderboard('quiz'));
+document.getElementById('uniLbBtn').addEventListener('click', ()=> showLeaderboard('universle'));
+
+/* ---- Real photo textures toggle (no API key needed) ---- */
+const REAL_TEXTURES_STORAGE = 'astrogames_real_textures_v1';
+function getRealTexturesEnabled(){
+  const v = localStorage.getItem(REAL_TEXTURES_STORAGE);
+  return v === null ? true : v === 'true'; // on by default
+}
+function setRealTexturesEnabled(enabled){
+  try{ localStorage.setItem(REAL_TEXTURES_STORAGE, String(enabled)); }catch(e){ /* storage unavailable */ }
+}
+function refreshNasaKeyStatus(){
+  const statusEl = document.getElementById('nasaKeyStatus');
+  const toggle = document.getElementById('realTexturesToggle');
+  const enabled = getRealTexturesEnabled();
+  if(toggle) toggle.checked = enabled;
+  if(!statusEl) return;
+  if(enabled){
+    statusEl.textContent = 'Real photo textures enabled';
+    statusEl.classList.remove('off'); statusEl.classList.add('on');
+  } else {
+    statusEl.textContent = 'Using solid colors';
+    statusEl.classList.add('off'); statusEl.classList.remove('on');
+  }
+}
+document.getElementById('uniSettingsBtn').addEventListener('click', ()=>{
+  refreshNasaKeyStatus();
+  openModal('settingsModal');
+});
+document.getElementById('realTexturesToggle').addEventListener('change', e=>{
+  setRealTexturesEnabled(e.target.checked);
+  refreshNasaKeyStatus();
+  applyRealTextures();
+});
+
+/* =========================================================
+   ASTRO QUIZ — difficulty tiers, live-fetched + astronomy-filtered
+========================================================= */
+let quizStarted = false;
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizDifficulty = 'easy';
+const quizWrap = document.getElementById('quiz-wrap');
+const diffSelectHTML = quizWrap.innerHTML;
+
+function attachDiffHandler(){
+  const el = document.getElementById('diffSelect');
+  if(el) el.addEventListener('click', e=>{
+    const btn = e.target.closest('.diff-btn');
+    if(btn) startQuiz(btn.dataset.diff);
+  });
+}
+
+function decodeHTML(str){
+  const el = document.createElement('textarea');
+  el.innerHTML = str;
+  return el.value;
+}
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// Words that mark an OpenTDB "Science & Nature" question as astronomy-relevant,
+// since the API has no dedicated astronomy category.
+const ASTRO_KEYWORDS = [
+  'planet','moon','sun','star','galaxy','galaxies','solar system','comet','asteroid',
+  'meteor','orbit','astronaut','space','nasa','esa','mars','venus','mercury','jupiter',
+  'saturn','uranus','neptune','pluto','nebula','black hole','universe','cosmic','telescope',
+  'satellite','constellation','milky way','supernova','exoplanet','astronomer','astronomy',
+  'lunar','solar','eclipse','meteorite','spacecraft','rocket','iss','apollo','hubble',
+  'light-year','light year','gravity','dwarf planet','celestial','interstellar'
+];
+function isAstronomyQuestion(text){
+  const t = text.toLowerCase();
+  return ASTRO_KEYWORDS.some(k => t.includes(k));
+}
+
+// Curated local bank: guarantees real astronomy content and a genuine "insane"
+// tier, since OpenTDB tops out at "hard" and isn't astronomy-specific.
+const LOCAL_ASTRO_BANK = {
+  easy: [
+    {q:"Which planet is known as the Red Planet?", c:"Mars", w:["Venus","Jupiter","Mercury"]},
+    {q:"What is the closest star to Earth?", c:"The Sun", w:["Proxima Centauri","Sirius","Alpha Centauri"]},
+    {q:"How many planets are in our solar system?", c:"8", w:["7","9","10"]},
+    {q:"What galaxy do we live in?", c:"The Milky Way", w:["Andromeda","Triangulum","Whirlpool"]},
+    {q:"Which planet has the most prominent ring system?", c:"Saturn", w:["Jupiter","Uranus","Neptune"]},
+    {q:"What is the largest planet in the solar system?", c:"Jupiter", w:["Saturn","Neptune","Earth"]},
+    {q:"What do we call a rocky object orbiting the Sun that is too small to be a planet?", c:"Asteroid", w:["Comet","Meteor","Nebula"]},
+    {q:"Which is Earth's only natural satellite?", c:"The Moon", w:["Titan","Europa","Phobos"]},
+  ],
+  medium: [
+    {q:"Which moon of Saturn has a thick nitrogen atmosphere?", c:"Titan", w:["Enceladus","Mimas","Iapetus"]},
+    {q:"What force keeps planets in orbit around the Sun?", c:"Gravity", w:["Magnetism","Inertia alone","Solar wind"]},
+    {q:"Which spacecraft first landed humans on the Moon?", c:"Apollo 11", w:["Apollo 8","Gemini 4","Voyager 1"]},
+    {q:"What is the name of the boundary around a black hole beyond which light cannot escape?", c:"Event horizon", w:["Photon sphere","Singularity point","Accretion line"]},
+    {q:"Which dwarf planet was reclassified from full planet status in 2006?", c:"Pluto", w:["Ceres","Eris","Haumea"]},
+    {q:"What type of star will our Sun eventually become after its main sequence?", c:"Red giant", w:["Neutron star","Black hole","Blue supergiant"]},
+    {q:"Which planet rotates on its side, with an axial tilt of about 98 degrees?", c:"Uranus", w:["Neptune","Saturn","Venus"]},
+    {q:"What is the term for the point in an orbit closest to the Sun?", c:"Perihelion", w:["Aphelion","Zenith","Apogee"]},
+  ],
+  hard: [
+    {q:"What is the Chandrasekhar limit approximately equal to, in solar masses?", c:"1.4", w:["3.2","0.8","5.6"]},
+    {q:"Which telescope discovered the first confirmed exoplanet around a Sun-like star (51 Pegasi b)?", c:"It was found using ground-based radial velocity, not a space telescope", w:["Hubble Space Telescope","Kepler Space Telescope","James Webb Space Telescope"]},
+    {q:"What is the name of the theoretical boundary marking the edge of the observable universe?", c:"Cosmological horizon", w:["Schwarzschild radius","Oort cloud edge","Heliopause"]},
+    {q:"Which two forces are balanced in a main-sequence star's hydrostatic equilibrium?", c:"Gravity and radiation pressure", w:["Magnetism and gravity","Inertia and friction","Fusion and fission"]},
+    {q:"What is the name of the process by which stars fuse hydrogen into helium?", c:"Nuclear fusion", w:["Nuclear fission","Photodissociation","Radioactive decay"]},
+    {q:"Which mission was the first to achieve a soft landing on a comet?", c:"Rosetta/Philae", w:["Stardust","Deep Impact","OSIRIS-REx"]},
+    {q:"What is the term for a star's total energy output per second?", c:"Luminosity", w:["Magnitude","Flux density","Albedo"]},
+    {q:"Which region of the solar system is the source of most long-period comets?", c:"The Oort Cloud", w:["The Kuiper Belt","The Asteroid Belt","The Heliosphere"]},
+  ],
+  insane: [
+    {q:"What is the approximate mass of the supermassive black hole Sagittarius A*, in solar masses?", c:"About 4.3 million", w:["About 4.3 thousand","About 4.3 billion","About 430"]},
+    {q:"Which spacecraft became the first human-made object to enter interstellar space?", c:"Voyager 1", w:["Voyager 2","Pioneer 10","New Horizons"]},
+    {q:"What is the Roche limit primarily used to calculate?", c:"The distance at which a celestial body disintegrates due to tidal forces", w:["The escape velocity of a planet","The habitable zone of a star","The rotation period of a moon"]},
+    {q:"What redshift phenomenon provided key early evidence for cosmic inflation and the universe's expansion?", c:"Cosmic microwave background anisotropy", w:["Olbers' paradox","Doppler blueshift","Gravitational lensing"]},
+    {q:"Which effect describes the slight, gradual shift of Mercury's orbital perihelion, explained by general relativity?", c:"Perihelion precession", w:["Nodal regression","Axial libration","Orbital resonance drift"]},
+    {q:"What is the name for the theoretical minimum size a rotating neutron star can have before collapsing into a black hole, based on the Tolman–Oppenheimer–Volkoff limit?", c:"TOV limit mass", w:["Chandrasekhar radius","Schwarzschild floor","Eddington threshold"]},
+    {q:"Which star is used as the archetype for Cepheid variable stars used in measuring cosmic distances?", c:"Delta Cephei", w:["Betelgeuse","Polaris Australis","Vega"]},
+    {q:"What is the term for the faint glow of sunlight scattered by interplanetary dust, visible near the ecliptic before dawn or after dusk?", c:"Zodiacal light", w:["Airglow","Gegenschein halo","Corona discharge"]},
+  ],
+};
+
+function localBankToQuestions(diff){
+  return LOCAL_ASTRO_BANK[diff].map(item=>({
+    category: 'Astronomy',
+    question: item.q,
+    correct: item.c,
+    answers: shuffle([item.c, ...item.w])
+  }));
+}
+
+attachDiffHandler();
+
+async function startQuiz(difficulty){
+  quizDifficulty = difficulty || quizDifficulty;
+  quizStarted = true;
+  quizIndex = 0;
+  quizScore = 0;
+  renderQuizLoading();
+
+  const localQs = localBankToQuestions(quizDifficulty);
+  let liveQs = [];
+
+  try{
+    // "insane" has no native OpenTDB tier, so we pull from its hardest tier
+    // and rely on keyword filtering + the local insane bank to push difficulty further.
+    const apiDifficulty = quizDifficulty === 'insane' ? 'hard' : quizDifficulty;
+    const res = await fetch(`https://opentdb.com/api.php?amount=30&category=17&difficulty=${apiDifficulty}&type=multiple`);
+    const data = await res.json();
+    if(data.results && data.results.length){
+      liveQs = data.results
+        .filter(q => isAstronomyQuestion(decodeHTML(q.question)) || isAstronomyQuestion(decodeHTML(q.category)))
+        .map(q=>{
+          const answers = shuffle([...q.incorrect_answers.map(decodeHTML), decodeHTML(q.correct_answer)]);
+          return {
+            category: decodeHTML(q.category),
+            question: decodeHTML(q.question),
+            correct: decodeHTML(q.correct_answer),
+            answers
+          };
+        });
+    }
+  }catch(e){
+    // network hiccup — we still have the local astronomy bank as a safety net
+  }
+
+  // Blend live (filtered, real, freshly-fetched) with curated local astronomy
+  // questions so every round is on-topic and the requested difficulty is real.
+  const pool = shuffle([...liveQs, ...localQs]);
+  quizQuestions = pool.slice(0, 10);
+  if(quizQuestions.length < 10){
+    // pad out if the live filter came back thin
+    const extra = localQs.filter(l => !quizQuestions.some(q=>q.question===l.question));
+    quizQuestions = shuffle([...quizQuestions, ...extra]).slice(0,10);
+  }
+  renderQuizQuestion();
+}
+
+function renderQuizLoading(){
+  quizWrap.innerHTML = `
+    <div class="glass-card quiz-card loading-state">
+      <div class="spinner"></div>
+      <p>Pulling fresh ${quizDifficulty} astronomy questions from deep space...</p>
+    </div>`;
+}
+
+function renderQuizQuestion(){
+  const q = quizQuestions[quizIndex];
+  const pct = (quizIndex/quizQuestions.length)*100;
+  quizWrap.innerHTML = `
+    <div class="quiz-topline">
+      <span><span class="diff-tag">${quizDifficulty}</span> Question ${quizIndex+1} of ${quizQuestions.length}</span>
+      <span class="score">Score: ${quizScore}</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="glass-card quiz-card">
+      <div class="q-category">${q.category}</div>
+      <div class="q-text">${q.question}</div>
+      <div class="answers" id="answersWrap">
+        ${q.answers.map(a=>`<button class="answer-btn" data-answer="${encodeURIComponent(a)}">${a}</button>`).join('')}
+      </div>
+    </div>
+  `;
+  document.querySelectorAll('.answer-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> handleAnswer(decodeURIComponent(btn.dataset.answer)));
+  });
+}
+
+function handleAnswer(selected){
+  const q = quizQuestions[quizIndex];
+  const buttons = document.querySelectorAll('.answer-btn');
+  buttons.forEach(btn=>{
+    btn.disabled = true;
+    const val = decodeURIComponent(btn.dataset.answer);
+    if(val === q.correct) btn.classList.add('correct');
+    else if(val === selected) btn.classList.add('wrong');
+  });
+  if(selected === q.correct) quizScore++;
+
+  setTimeout(()=>{
+    quizIndex++;
+    if(quizIndex < quizQuestions.length){
+      renderQuizQuestion();
+    }else{
+      renderQuizResult();
+    }
+  }, 1100);
+}
+
+function renderQuizResult(){
+  const total = quizQuestions.length;
+  let verdict = "Solid orbit.";
+  if(quizScore === total) verdict = "Perfect trajectory. Flawless.";
+  else if(quizScore >= total*0.7) verdict = "Strong signal from mission control.";
+  else if(quizScore <= total*0.3) verdict = "Everyone drifts off course sometimes.";
+  quizWrap.innerHTML = `
+    <div class="glass-card result-panel">
+      <p style="color:var(--star-dim); text-transform:uppercase; letter-spacing:0.2em; font-size:0.75rem;">Mission complete &middot; ${quizDifficulty}</p>
+      <div class="big-score">${quizScore}/${total}</div>
+      <p style="color:var(--star-dim); margin-bottom:28px;">${verdict}</p>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn-primary" id="saveQuizScoreBtn">Save score</button>
+        <button class="chip-btn" onclick="startQuiz()">Play again</button>
+        <button class="back-btn show" onclick="quizStarted=false; quizWrap.innerHTML=diffSelectHTML; attachDiffHandler();">Change difficulty</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('saveQuizScoreBtn').addEventListener('click', ()=>{
+    promptSaveScore('quiz', `You scored ${quizScore}/${total} on ${quizDifficulty}. Save it to the leaderboard:`, (name)=>({
+      name, score: quizScore, total, pct: quizScore/total,
+      difficulty: quizDifficulty, date: Date.now()
+    }));
+  });
+}
+
+/* =========================================================
+   REAL SOLAR SYSTEM DATA LAYER
+   Baseline is a verified, hand-curated dataset (NASA fact-sheet values).
+   On load we also attempt a live fetch from the Solar System OpenData API
+   (api.le-systeme-solaire.net) and merge in fresher numbers where available —
+   this is the "scout the system, pull real bodies" data source. If the live
+   call fails (offline, CORS, rate limit) the verified baseline is used as-is,
+   and the badge in the viewer tells you honestly which one is active.
+========================================================= */
+const REAL_BODIES = [
+  {id:'sun', name:'Sun', type:'Star', system:null, distAU:0, meanRadius:696000, gravity:274, avgTemp:5778, moons:0, orbitalPeriodDays:0, discoveredBy:'—', color:0xFF8A5B},
+  {id:'mercury', name:'Mercury', type:'Planet', system:'Sun', distAU:0.39, meanRadius:2439.7, gravity:3.7, avgTemp:440, moons:0, orbitalPeriodDays:88, discoveredBy:'Known since antiquity', color:0xB7ADA2},
+  {id:'venus', name:'Venus', type:'Planet', system:'Sun', distAU:0.72, meanRadius:6051.8, gravity:8.87, avgTemp:737, moons:0, orbitalPeriodDays:225, discoveredBy:'Known since antiquity', color:0xE8CDA2},
+  {id:'earth', name:'Earth', type:'Planet', system:'Sun', distAU:1.00, meanRadius:6371, gravity:9.8, avgTemp:288, moons:1, orbitalPeriodDays:365, discoveredBy:'—', color:0x4D8FD6},
+  {id:'moon', name:'Moon', type:'Moon', system:'Earth', distAU:1.00, meanRadius:1737.4, gravity:1.62, avgTemp:220, moons:0, orbitalPeriodDays:27.3, discoveredBy:'—', color:0xCFCFCF},
+  {id:'mars', name:'Mars', type:'Planet', system:'Sun', distAU:1.52, meanRadius:3389.5, gravity:3.71, avgTemp:210, moons:2, orbitalPeriodDays:687, discoveredBy:'Known since antiquity', color:0xC1440E},
+  {id:'phobos', name:'Phobos', type:'Moon', system:'Mars', distAU:1.52, meanRadius:11.1, gravity:0.0057, avgTemp:233, moons:0, orbitalPeriodDays:0.32, discoveredBy:'Asaph Hall (1877)', color:0x8A7F74},
+  {id:'deimos', name:'Deimos', type:'Moon', system:'Mars', distAU:1.52, meanRadius:6.2, gravity:0.003, avgTemp:233, moons:0, orbitalPeriodDays:1.26, discoveredBy:'Asaph Hall (1877)', color:0x8A7F74},
+  {id:'ceres', name:'Ceres', type:'Dwarf Planet', system:'Sun', distAU:2.77, meanRadius:469.7, gravity:0.27, avgTemp:168, moons:0, orbitalPeriodDays:1682, discoveredBy:'Giuseppe Piazzi (1801)', color:0xABA396},
+  {id:'jupiter', name:'Jupiter', type:'Planet', system:'Sun', distAU:5.20, meanRadius:69911, gravity:24.79, avgTemp:165, moons:95, orbitalPeriodDays:4333, discoveredBy:'Known since antiquity', color:0xD8CA9D},
+  {id:'io', name:'Io', type:'Moon', system:'Jupiter', distAU:5.20, meanRadius:1821.6, gravity:1.796, avgTemp:130, moons:0, orbitalPeriodDays:1.77, discoveredBy:'Galileo Galilei (1610)', color:0xE4D17A},
+  {id:'europa', name:'Europa', type:'Moon', system:'Jupiter', distAU:5.20, meanRadius:1560.8, gravity:1.314, avgTemp:102, moons:0, orbitalPeriodDays:3.55, discoveredBy:'Galileo Galilei (1610)', color:0xD6C9B0},
+  {id:'ganymede', name:'Ganymede', type:'Moon', system:'Jupiter', distAU:5.20, meanRadius:2634.1, gravity:1.428, avgTemp:110, moons:0, orbitalPeriodDays:7.15, discoveredBy:'Galileo Galilei (1610)', color:0x9C9186},
+  {id:'callisto', name:'Callisto', type:'Moon', system:'Jupiter', distAU:5.20, meanRadius:2410.3, gravity:1.235, avgTemp:134, moons:0, orbitalPeriodDays:16.7, discoveredBy:'Galileo Galilei (1610)', color:0x6B6259},
+  {id:'saturn', name:'Saturn', type:'Planet', system:'Sun', distAU:9.58, meanRadius:58232, gravity:10.44, avgTemp:134, moons:146, orbitalPeriodDays:10759, discoveredBy:'Known since antiquity', color:0xE4D2A7},
+  {id:'titan', name:'Titan', type:'Moon', system:'Saturn', distAU:9.58, meanRadius:2574.7, gravity:1.352, avgTemp:94, moons:0, orbitalPeriodDays:15.9, discoveredBy:'Christiaan Huygens (1655)', color:0xE0B96E},
+  {id:'enceladus', name:'Enceladus', type:'Moon', system:'Saturn', distAU:9.58, meanRadius:252.1, gravity:0.113, avgTemp:75, moons:0, orbitalPeriodDays:1.37, discoveredBy:'William Herschel (1789)', color:0xF0F0F0},
+  {id:'uranus', name:'Uranus', type:'Planet', system:'Sun', distAU:19.19, meanRadius:25362, gravity:8.69, avgTemp:76, moons:28, orbitalPeriodDays:30687, discoveredBy:'William Herschel (1781)', color:0xA7D8D8},
+  {id:'titania', name:'Titania', type:'Moon', system:'Uranus', distAU:19.19, meanRadius:788.4, gravity:0.37, avgTemp:70, moons:0, orbitalPeriodDays:8.7, discoveredBy:'William Herschel (1787)', color:0x9C9AA0},
+  {id:'neptune', name:'Neptune', type:'Planet', system:'Sun', distAU:30.07, meanRadius:24622, gravity:11.15, avgTemp:72, moons:16, orbitalPeriodDays:60190, discoveredBy:'Johann Galle (1846)', color:0x4166F5},
+  {id:'triton', name:'Triton', type:'Moon', system:'Neptune', distAU:30.07, meanRadius:1353.4, gravity:0.779, avgTemp:38, moons:0, orbitalPeriodDays:5.88, discoveredBy:'William Lassell (1846)', color:0xC9D6E0},
+  {id:'pluto', name:'Pluto', type:'Dwarf Planet', system:'Sun', distAU:39.48, meanRadius:1188.3, gravity:0.62, avgTemp:44, moons:5, orbitalPeriodDays:90560, discoveredBy:'Clyde Tombaugh (1930)', color:0xCBB8A3},
+  {id:'charon', name:'Charon', type:'Moon', system:'Pluto', distAU:39.48, meanRadius:606, gravity:0.288, avgTemp:53, moons:0, orbitalPeriodDays:6.39, discoveredBy:'James Christy (1978)', color:0x8F8579},
+  {id:'haumea', name:'Haumea', type:'Dwarf Planet', system:'Sun', distAU:43.13, meanRadius:816, gravity:0.44, avgTemp:32, moons:2, orbitalPeriodDays:103774, discoveredBy:'Mike Brown et al. (2004)', color:0xD8D4CC},
+  {id:'makemake', name:'Makemake', type:'Dwarf Planet', system:'Sun', distAU:45.79, meanRadius:715, gravity:0.5, avgTemp:30, moons:1, orbitalPeriodDays:111845, discoveredBy:'Mike Brown et al. (2005)', color:0xC9A27A},
+  {id:'eris', name:'Eris', type:'Dwarf Planet', system:'Sun', distAU:67.86, meanRadius:1163, gravity:0.82, avgTemp:30, moons:1, orbitalPeriodDays:203830, discoveredBy:'Mike Brown et al. (2005)', color:0xE8E4DC},
+];
+
+let liveDataActive = false;
+let dataReadyPromise = null;
+
+function withTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise((_,rej)=> setTimeout(()=>rej(new Error('timeout')), ms))
+  ]);
+}
+
+async function loadSolarSystemData(){
+  const badge = document.getElementById('dataBadge');
+  const badgeText = document.getElementById('dataBadgeText');
+  try{
+   const API_KEY = "1749e463-d01a-4452-8f3d-363027890d6e";
+
+const res = await fetch(
+    "https://api.le-systeme-solaire.net/rest/bodies/",
+    {
+        headers: {
+            Authorization: `Bearer ${API_KEY}`
+        }
+    }
+);
+    const json = await res.json();
+    const byEnglishName = {};
+    (json.bodies || []).forEach(b=>{ if(b.englishName) byEnglishName[b.englishName.toLowerCase()] = b; });
+
+    let matched = 0;
+    REAL_BODIES.forEach(body=>{
+      const live = byEnglishName[body.name.toLowerCase()];
+      if(!live) return;
+      matched++;
+      if(live.meanRadius) body.meanRadius = live.meanRadius;
+      if(typeof live.gravity === 'number' && live.gravity > 0) body.gravity = live.gravity;
+      if(live.semimajorAxis){
+        // moons keep their host planet's heliocentric distance for game logic,
+        // so only remap distance for bodies that orbit the Sun directly.
+        if(!live.aroundPlanet) body.distAU = live.semimajorAxis / 149597870.7;
+      }
+      if(Array.isArray(live.moons)) body.moons = live.moons.length;
+      if(live.discoveredBy) body.discoveredBy = live.discoveredBy + (live.discoveryDate ? ` (${live.discoveryDate})` : '');
+      if(live.sideralOrbit) body.orbitalPeriodDays = live.sideralOrbit;
+    });
+
+    liveDataActive = matched >= 10; // require a meaningful match before trusting it
+    if(badge){
+      badge.classList.toggle('live', liveDataActive);
+      badgeText.textContent = liveDataActive
+        ? `Live feed · Système Solaire API (${matched} bodies)`
+        : 'Built-in verified dataset';
+    }
+  }catch(e){
+    liveDataActive = false;
+    if(badge){ badge.classList.remove('live'); badgeText.textContent = 'Built-in verified dataset (offline)'; }
+  }
+  return REAL_BODIES;
+}
+
+function ensureDataLoaded(){
+  if(!dataReadyPromise) dataReadyPromise = loadSolarSystemData();
+  return dataReadyPromise;
+}
+
+/* =========================================================
+   UNIVERSLE — 3D SOLAR SYSTEM SCOUT (Three.js, real bodies)
+========================================================= */
+let uniInitialized = false;
+let uniRenderer, uniScene, uniCamera, uniField;
+let scoutMeshes = []; // clickable meshes for raycasting {mesh, body}
+let camDist = 34;
+
+const nasaTextureCache = {}; // body.id -> THREE.Texture (or 'failed')
+function resetMeshToColor(mesh, body){
+  mesh.material.map = null;
+  mesh.material.color.setHex(body.color);
+  mesh.material.needsUpdate = true;
+}
+async function applyRealTextures(){
+  if(!scoutMeshes.length) return;
+  const enabled = getRealTexturesEnabled();
+  const statusEl = document.getElementById('nasaKeyStatus');
+  if(!enabled){
+    scoutMeshes.forEach(({mesh, body})=> resetMeshToColor(mesh, body));
+    return;
+  }
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+  let i = 0;
+  let okCount = 0, failCount = 0, total = 0;
+  const reportProgress = ()=>{
+    if(!statusEl) return;
+    if(failCount + okCount < total) return; // still in flight
+    if(okCount > 0){
+      statusEl.textContent = `Loaded ${okCount}/${total} real photo textures${failCount ? ` (${failCount} fell back to color — see console for why)` : ''}`;
+      statusEl.classList.remove('off'); statusEl.classList.add('on');
+    } else {
+      statusEl.textContent = `0/${total} textures loaded — open the browser console for the error (likely CORS or no image found)`;
+      statusEl.classList.remove('on'); statusEl.classList.add('off');
+    }
+  };
+  for(const {mesh, body} of scoutMeshes){
+    if(body.type === 'Star') continue; // keep the Sun as an emissive glow
+    total++;
+    const cached = nasaTextureCache[body.id];
+    if(cached && cached !== 'failed'){
+      mesh.material.map = cached;
+      mesh.material.color.setHex(0xffffff);
+      mesh.material.needsUpdate = true;
+      okCount++; reportProgress();
+      continue;
+    }
+    if(cached === 'failed'){ resetMeshToColor(mesh, body); failCount++; reportProgress(); continue; }
+    const delay = i * 180; i++;
+    setTimeout(async ()=>{
+      // textures may have been toggled off while this was queued — bail out cleanly
+      if(!getRealTexturesEnabled()) return;
+      try{
+        const q = body.type === 'Moon' ? `${body.name} moon ${body.system}` : `${body.name} planet`;
+        const res = await withTimeout(fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(q)}&media_type=image`), 7000);
+        if(!res.ok){ throw new Error(`NASA search returned HTTP ${res.status} for "${q}"`); }
+        const json = await res.json();
+        const item = json.collection && json.collection.items && json.collection.items[0];
+        const url = item && item.links && item.links[0] && item.links[0].href;
+        if(!url) throw new Error(`no image found for "${q}"`);
+        loader.load(url, texture=>{
+          nasaTextureCache[body.id] = texture;
+          mesh.material.map = texture;
+          mesh.material.color.setHex(0xffffff);
+          mesh.material.needsUpdate = true;
+          okCount++; reportProgress();
+        }, undefined, (err)=>{
+          console.error(`[AstroGames] Texture load failed for ${body.name} (${url}) — likely a CORS block on the image host.`, err);
+          nasaTextureCache[body.id] = 'failed';
+          resetMeshToColor(mesh, body);
+          failCount++; reportProgress();
+        });
+      }catch(e){
+        console.error(`[AstroGames] NASA image lookup failed for ${body.name}:`, e);
+        nasaTextureCache[body.id] = 'failed';
+        resetMeshToColor(mesh, body);
+        failCount++; reportProgress();
+      }
+    }, delay);
+  }
+}
+
+function sizeForRadius(km){
+  return Math.max(0.28, Math.min(3.2, 0.32 + Math.log10(km + 1) * 0.62));
+}
+function orbitRadiusForAU(au){
+  if(!au || au <= 0) return 0;
+  return 4.2 + Math.log(au * 8 + 1) * 3.1;
+}
+
+async function initUniverse3D(){
+  uniInitialized = true;
+  const container = document.getElementById('uni-canvas-wrap');
+  const w = container.clientWidth, h = container.clientHeight;
+
+  uniScene = new THREE.Scene();
+  uniCamera = new THREE.PerspectiveCamera(55, w/h, 0.1, 1000);
+  uniCamera.position.set(0,0,camDist);
+
+  uniRenderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  uniRenderer.setSize(w,h);
+  uniRenderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  container.appendChild(uniRenderer.domElement);
+
+  // background starfield particles
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 1000;
+  const positions = new Float32Array(starCount*3);
+  for(let i=0;i<starCount;i++){
+    const r = 70 + Math.random()*100;
+    const theta = Math.random()*Math.PI*2;
+    const phi = Math.acos((Math.random()*2)-1);
+    positions[i*3] = r*Math.sin(phi)*Math.cos(theta);
+    positions[i*3+1] = r*Math.sin(phi)*Math.sin(theta);
+    positions[i*3+2] = r*Math.cos(phi);
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  const starMat = new THREE.PointsMaterial({color:0xEDEBF7, size:0.35, transparent:true, opacity:0.7});
+  uniField = new THREE.Points(starGeo, starMat);
+  uniScene.add(uniField);
+
+  // wait for real data (live fetch or verified fallback) before building bodies
+  const bodies = await ensureDataLoaded();
+
+  bodies.forEach(body=>{
+    const size = body.type === 'Star' ? 2.4 : sizeForRadius(body.meanRadius);
+    const geo = new THREE.SphereGeometry(size, 28, 28);
+    const mat = body.type === 'Star'
+      ? new THREE.MeshBasicMaterial({color: body.color})
+      : new THREE.MeshStandardMaterial({color: body.color, roughness:0.85, metalness:0.05, emissive: body.color, emissiveIntensity:0.06});
+    const mesh = new THREE.Mesh(geo, mat);
+
+    if(body.type === 'Moon'){
+      const parent = bodies.find(b=>b.name === body.system);
+      const parentSize = parent ? (parent.type==='Star'?2.4:sizeForRadius(parent.meanRadius)) : 1;
+      const idx = bodies.filter(b=>b.type==='Moon' && b.system===body.system).indexOf(body);
+      mesh.userData = {
+        body, size, isMoon:true, parentName: body.system,
+        orbitR: parentSize * 1.7 + idx * 0.65,
+        angle: Math.random()*Math.PI*2,
+        speed: 0.5 + Math.random()*0.3
+      };
+    } else {
+      const orbitR = orbitRadiusForAU(body.distAU);
+      mesh.userData = { body, size, isMoon:false, orbitR, angle: Math.random()*Math.PI*2, speed: body.distAU>0 ? 0.06 + 0.16/Math.sqrt(body.distAU+0.2) : 0 };
+      if(orbitR > 0){
+        const ringPts = [];
+        for(let i=0;i<=64;i++){
+          const a = (i/64)*Math.PI*2;
+          ringPts.push(new THREE.Vector3(Math.cos(a)*orbitR, 0, Math.sin(a)*orbitR));
+        }
+        const ringGeo = new THREE.BufferGeometry().setFromPoints(ringPts);
+        const ringMat = new THREE.LineBasicMaterial({color:0xEDEBF7, transparent:true, opacity:0.1});
+        uniScene.add(new THREE.LineLoop(ringGeo, ringMat));
+      }
+    }
+    uniScene.add(mesh);
+    scoutMeshes.push({mesh, body});
+  });
+
+  // gentle light so real-colored planet materials aren't flat
+  const sunLight = new THREE.PointLight(0xffffff, 1.6, 300);
+  uniScene.add(sunLight);
+  uniScene.add(new THREE.AmbientLight(0x556, 0.7));
+
+  // load real photo textures if the toggle is enabled
+  applyRealTextures();
+
+  // drag to orbit camera, click (no-drag) to scout a body
+  let dragging = false, moved = false, lastX=0, lastY=0, rotY=0, rotX=0.22;
+  const dom = uniRenderer.domElement;
+  const raycaster = new THREE.Raycaster();
+  const scoutCard = document.getElementById('scoutCard');
+
+  dom.style.cursor = 'grab';
+  dom.addEventListener('pointerdown', e=>{ dragging=true; moved=false; lastX=e.clientX; lastY=e.clientY; dom.style.cursor='grabbing'; });
+  window.addEventListener('pointerup', e=>{
+    if(dragging && !moved){
+      const rect = dom.getBoundingClientRect();
+      const ndc = new THREE.Vector2(
+        ((e.clientX-rect.left)/rect.width)*2-1,
+        -((e.clientY-rect.top)/rect.height)*2+1
+      );
+      raycaster.setFromCamera(ndc, uniCamera);
+      const hit = raycaster.intersectObjects(scoutMeshes.map(s=>s.mesh))[0];
+      if(hit){
+        const found = scoutMeshes.find(s=>s.mesh === hit.object);
+        showScoutCard(found.body);
+      } else {
+        scoutCard.classList.remove('show');
+      }
+    }
+    dragging=false; dom.style.cursor='grab';
+  });
+  window.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    if(Math.abs(e.clientX-lastX) + Math.abs(e.clientY-lastY) > 3) moved = true;
+    rotY += (e.clientX-lastX)*0.005;
+    rotX += (e.clientY-lastY)*0.005;
+    rotX = Math.max(-1.2, Math.min(1.2, rotX));
+    lastX=e.clientX; lastY=e.clientY;
+  });
+  dom.addEventListener('wheel', e=>{
+    e.preventDefault();
+    camDist = Math.max(10, Math.min(70, camDist + e.deltaY*0.03));
+  }, {passive:false});
+
+  function showScoutCard(body){
+    const earth = REAL_BODIES.find(b=>b.id==='earth');
+    const radiusRatio = (body.meanRadius / earth.meanRadius).toFixed(body.meanRadius > earth.meanRadius*10 ? 1 : 2);
+    const orbitLabel = body.orbitalPeriodDays > 0
+      ? (body.orbitalPeriodDays > 700 ? (body.orbitalPeriodDays/365).toFixed(1)+' yrs' : Math.round(body.orbitalPeriodDays)+' days')
+      : '—';
+    scoutCard.innerHTML = `
+      <div class="s-name">${body.name}</div>
+      <div class="s-type">${body.type}${body.system ? ' · orbits ' + body.system : ''}</div>
+      <div class="s-row"><span>Radius</span><span>${body.meanRadius.toLocaleString()} km (${radiusRatio}× Earth)</span></div>
+      <div class="s-row"><span>Gravity</span><span>${body.gravity} m/s²</span></div>
+      <div class="s-row"><span>Avg. temp</span><span>${body.avgTemp ? Math.round(body.avgTemp) + ' K' : '—'}</span></div>
+      ${body.type !== 'Moon' ? `<div class="s-row"><span>Moons</span><span>${body.moons}</span></div>` : ''}
+      <div class="s-row"><span>Orbital period</span><span>${orbitLabel}</span></div>
+      <div class="s-row"><span>Discovered</span><span>${body.discoveredBy}</span></div>
+    `;
+    scoutCard.classList.add('show');
+  }
+
+  function animate(){
+    requestAnimationFrame(animate);
+    uniField.rotation.y += 0.0006;
+
+    const positionsByName = {};
+    scoutMeshes.forEach(({mesh})=>{
+      const ud = mesh.userData;
+      if(ud.isMoon) return; // moons positioned after their parent, below
+      ud.angle += ud.speed*0.01;
+      const x = Math.cos(ud.angle)*ud.orbitR, z = Math.sin(ud.angle)*ud.orbitR;
+      mesh.position.set(x, 0, z);
+      positionsByName[ud.body.name] = mesh.position;
+    });
+    scoutMeshes.forEach(({mesh})=>{
+      const ud = mesh.userData;
+      if(!ud.isMoon) return;
+      ud.angle += ud.speed*0.02;
+      const parentPos = positionsByName[ud.parentName] || new THREE.Vector3(0,0,0);
+      mesh.position.set(
+        parentPos.x + Math.cos(ud.angle)*ud.orbitR,
+        parentPos.y + Math.sin(ud.angle*0.7)*ud.orbitR*0.2,
+        parentPos.z + Math.sin(ud.angle)*ud.orbitR
+      );
+    });
+
+    uniCamera.position.x = Math.sin(rotY)*camDist*Math.cos(rotX);
+    uniCamera.position.z = Math.cos(rotY)*camDist*Math.cos(rotX);
+    uniCamera.position.y = Math.sin(rotX)*camDist;
+    uniCamera.lookAt(0,0,0);
+    uniRenderer.render(uniScene, uniCamera);
+  }
+  animate();
+
+  window.addEventListener('resize', ()=>{
+    const w2 = container.clientWidth, h2 = container.clientHeight;
+    if(!w2||!h2) return;
+    uniCamera.aspect = w2/h2;
+    uniCamera.updateProjectionMatrix();
+    uniRenderer.setSize(w2,h2);
+  });
+
+  startUniverleRound();
+}
+
+/* =========================================================
+   UNIVERSLE — GAME LOGIC (guesses real, live-sourced bodies)
+========================================================= */
+const MAX_GUESSES = 7;
+let uniTarget = null;
+let uniGuesses = [];
+let uniWon = false;
+let uniOver = false; // true once won OR out of guesses
+let uniStartTime = 0;
+let uniTimerInterval = null;
+let uniElapsedSec = 0;
+
+function startUniTimer(){
+  stopUniTimer();
+  uniStartTime = Date.now();
+  uniElapsedSec = 0;
+  updateTimerDisplay();
+  uniTimerInterval = setInterval(()=>{
+    uniElapsedSec = Math.floor((Date.now()-uniStartTime)/1000);
+    updateTimerDisplay();
+  }, 1000);
+}
+function stopUniTimer(){
+  if(uniTimerInterval){ clearInterval(uniTimerInterval); uniTimerInterval = null; }
+}
+function updateTimerDisplay(){
+  const el = document.getElementById('uniTimerVal');
+  if(el) el.textContent = formatTime(uniElapsedSec);
+}
+function updateGuessPill(){
+  const el = document.getElementById('uniGuessVal');
+  const pill = document.getElementById('uniGuessPill');
+  if(!el) return;
+  el.textContent = uniGuesses.length;
+  pill.classList.remove('warn','danger');
+  if(uniGuesses.length >= MAX_GUESSES-1) pill.classList.add('danger');
+  else if(uniGuesses.length >= MAX_GUESSES-3) pill.classList.add('warn');
+}
+
+async function startUniverleRound(){
+  const bodies = await ensureDataLoaded();
+  const guessable = bodies.filter(b=>b.type !== 'Star');
+  uniTarget = guessable[Math.floor(Math.random()*guessable.length)];
+  uniGuesses = [];
+  uniWon = false;
+  uniOver = false;
+  document.getElementById('guessHistory').innerHTML = `<div class="empty-hist">Your guesses will appear here. Good luck, astronaut.</div>`;
+  document.getElementById('winBanner').innerHTML = '';
+  document.getElementById('uniLabels').style.display = 'none';
+  document.getElementById('uni-input').value = '';
+  document.getElementById('uni-input').disabled = false;
+  document.getElementById('uniCaption').textContent = 'Drag to explore the field';
+  document.getElementById('scoutCard').classList.remove('show');
+  updateGuessPill();
+  startUniTimer();
+}
+document.getElementById('newTargetBtn').addEventListener('click', startUniverleRound);
+
+const uniInput = document.getElementById('uni-input');
+const uniSuggestions = document.getElementById('uniSuggestions');
+
+function guessableBodies(){
+  return REAL_BODIES.filter(b=>b.type !== 'Star');
+}
+
+uniInput.addEventListener('input', ()=>{
+  const val = uniInput.value.trim().toLowerCase();
+  if(!val){ uniSuggestions.classList.remove('show'); return; }
+  const guessedNames = uniGuesses.map(g=>g.name);
+  const matches = guessableBodies().filter(b =>
+    b.name.toLowerCase().includes(val) && !guessedNames.includes(b.name)
+  ).slice(0,6);
+  if(!matches.length){ uniSuggestions.classList.remove('show'); return; }
+  uniSuggestions.innerHTML = matches.map(m=>`<div class="suggestion-item" data-name="${m.name}">${m.name}</div>`).join('');
+  uniSuggestions.classList.add('show');
+});
+uniSuggestions.addEventListener('click', e=>{
+  const item = e.target.closest('.suggestion-item');
+  if(!item) return;
+  submitGuess(item.dataset.name);
+});
+uniInput.addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){
+    const val = uniInput.value.trim();
+    const match = guessableBodies().find(b=>b.name.toLowerCase() === val.toLowerCase());
+    if(match) submitGuess(match.name);
+  }
+});
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.guess-row')) uniSuggestions.classList.remove('show');
+});
+
+function computeUniScore(guessCount, timeSec){
+  // Fewer guesses and less time score higher. Base 1000, decays with guesses and seconds.
+  return Math.max(50, Math.round(1000 - (guessCount-1)*110 - timeSec*2.5));
+}
+
+function submitGuess(name){
+  if(uniOver || !uniTarget) return;
+  const body = guessableBodies().find(b=>b.name === name);
+  if(!body) return;
+  uniInput.value = '';
+  uniSuggestions.classList.remove('show');
+
+  const typeMatch = body.type === uniTarget.type;
+  const systemMatch = body.system === uniTarget.system;
+  const distDiff = body.distAU - uniTarget.distAU;
+  const sizeDiff = body.meanRadius - uniTarget.meanRadius;
+  const isCorrect = body.name === uniTarget.name;
+
+  let distChip, sizeChip;
+  if(isCorrect){
+    distChip = {cls:'match', label:`${uniTarget.distAU.toFixed(2)} AU`};
+    sizeChip = {cls:'match', label:`${uniTarget.meanRadius.toLocaleString()} km`};
+  }else{
+    const distArrow = distDiff > 0 ? '&darr; closer to Sun' : '&uarr; farther out';
+    distChip = {cls: Math.abs(distDiff) < 1 ? 'partial' : 'miss', label: distArrow};
+    const sizeArrow = sizeDiff > 0 ? '&darr; smaller' : '&uarr; larger';
+    sizeChip = {cls: Math.abs(sizeDiff) < uniTarget.meanRadius*0.15 ? 'partial' : 'miss', label: sizeArrow};
+  }
+
+  uniGuesses.unshift({
+    name: body.name,
+    typeChip: {cls: typeMatch ? 'match' : 'miss', label: body.type},
+    systemChip: {cls: systemMatch ? 'match' : 'miss', label: body.system || 'Sun'},
+    distChip,
+    sizeChip,
+    correct: isCorrect
+  });
+
+  renderGuessHistory();
+
+  if(isCorrect){
+    uniWon = true;
+    uniOver = true;
+    stopUniTimer();
+    uniInput.disabled = true;
+    const score = computeUniScore(uniGuesses.length, uniElapsedSec);
+    document.getElementById('winBanner').innerHTML = `
+      <div class="win-banner">
+        <h3>Target acquired: ${uniTarget.name}</h3>
+        <p>Found it in ${uniGuesses.length} guess${uniGuesses.length===1?'':'es'} &middot; ${formatTime(uniElapsedSec)} &middot; ${uniTarget.distAU.toFixed(2)} AU from the Sun, radius ${uniTarget.meanRadius.toLocaleString()} km.</p>
+        <p style="margin-top:8px;"><strong style="color:var(--nova);">Score: ${score}</strong></p>
+      </div>`;
+    document.getElementById('uniCaption').textContent = uniTarget.name + ' — locked in view';
+
+    const finalGuesses = uniGuesses.length, finalTime = uniElapsedSec, targetName = uniTarget.name;
+    setTimeout(()=>{
+      promptSaveScore('universle', `Found ${targetName} in ${finalGuesses} guess${finalGuesses===1?'':'es'} and ${formatTime(finalTime)}. Save it:`, (playerName)=>({
+        name: playerName, won:true, target: targetName, guesses: finalGuesses,
+        timeSec: finalTime, score, date: Date.now()
+      }));
+    }, 500);
+  } else if(uniGuesses.length >= MAX_GUESSES){
+    uniOver = true;
+    stopUniTimer();
+    uniInput.disabled = true;
+    document.getElementById('winBanner').innerHTML = `
+      <div class="lose-banner">
+        <h3>Out of guesses</h3>
+        <p>The target was <strong style="color:var(--star);">${uniTarget.name}</strong> &middot; ${uniTarget.distAU.toFixed(2)} AU from the Sun, radius ${uniTarget.meanRadius.toLocaleString()} km.</p>
+      </div>`;
+    document.getElementById('uniCaption').textContent = uniTarget.name + ' — revealed';
+
+    const finalTime = uniElapsedSec, targetName = uniTarget.name;
+    setTimeout(()=>{
+      promptSaveScore('universle', `Missed it &mdash; the target was ${targetName}. Save the attempt:`, (playerName)=>({
+        name: playerName, won:false, target: targetName, guesses: MAX_GUESSES,
+        timeSec: finalTime, score:0, date: Date.now()
+      }));
+    }, 500);
+  }
+}
+
+function renderGuessHistory(){
+  document.getElementById('uniLabels').style.display = 'grid';
+  updateGuessPill();
+  document.getElementById('guessHistory').innerHTML = uniGuesses.map(g => `
+    <div class="guess-item">
+      <span class="name">${g.name}</span>
+      <span class="chip ${g.typeChip.cls}">${g.typeChip.label}</span>
+      <span class="chip ${g.systemChip.cls}">${g.systemChip.label}</span>
+      <span class="chip ${g.distChip.cls}">${g.distChip.label}</span>
+      <span class="chip ${g.sizeChip.cls}">${g.sizeChip.label}</span>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>

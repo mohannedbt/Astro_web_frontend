@@ -14,6 +14,8 @@ import Events from './components/Events';
 import Landing from './components/Landing';
 import AdminPanel from './components/AdminPanel';
 import Tour from './components/Tour';
+import AstroGames from './components/AstroGames';
+import AstronomicalCalendar from './components/AstronomicalCalendar';
 import './App.css';
 
 const parseJwt = (token) => {
@@ -29,6 +31,7 @@ const parseJwt = (token) => {
 
 function App() {
   const [collapsed, setCollapsed] = useState(false);
+  const [siteTheme, setSiteTheme] = useState('blue');
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [user, setUser] = useState(() => parseJwt(localStorage.getItem('token') || ''));
   const navigate = useNavigate();
@@ -77,6 +80,10 @@ function App() {
         return 'account';
       case '/admin':
         return 'admin';
+      case '/astrogames':
+        return 'astrogames';
+      case '/calendar':
+        return 'calendar';
       default:
         return 'dashboard';
     }
@@ -106,6 +113,10 @@ function App() {
         return '/account';
       case 'admin':
         return '/admin';
+      case 'astrogames':
+        return '/astrogames';
+      case 'calendar':
+        return '/calendar';
       default:
         return '/dashboard';
     }
@@ -126,6 +137,13 @@ function App() {
       setUser(null);
     }
   }, [token]);
+
+  useEffect(() => {
+    document.body.dataset.theme = siteTheme;
+    return () => {
+      document.body.removeAttribute('data-theme');
+    };
+  }, [siteTheme]);
 
   const handleLoginSuccess = (newToken) => {
     setToken(newToken);
@@ -157,6 +175,10 @@ function App() {
         return user?.is_admin ? <AdminPanel token={token} /> : <Dashboard setActivePage={setActivePage} user={user} />;
       case 'events':
         return <Events />;
+      case 'astrogames':
+        return <AstroGames user={user} profile={profile} />;
+      case 'calendar':
+        return <AstronomicalCalendar />;
       case 'login':
         return <Login setActivePage={setActivePage} onLogin={handleLoginSuccess} />;
       case 'register':
@@ -193,6 +215,8 @@ function App() {
               setCollapsed={setCollapsed}
               activePage={activePage}
               user={user}
+              theme={siteTheme}
+              setTheme={setSiteTheme}
             />
             <Tour />
             {renderContent()}

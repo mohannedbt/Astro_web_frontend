@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { LogIn, Sparkles, Star } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Sparkles, Star } from 'lucide-react';
 import { login } from '../services/api';
 
 const Login = ({ setActivePage, onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -81,7 +82,12 @@ const Login = ({ setActivePage, onLogin }) => {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', marginBottom: '8px', color: 'var(--text-secondary)' }}>Password</label>
-                <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Enter your password" style={{ width: '100%', padding: '13px 14px', borderRadius: '14px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', outline: 'none' }} required />
+                <div style={{ position: 'relative' }}>
+                  <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} placeholder="Enter your password" style={{ width: '100%', padding: '13px 14px', paddingRight: '44px', borderRadius: '14px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', outline: 'none' }} required />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
               {error && <div style={{ color: 'var(--text-secondary)', fontSize: '13px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', padding: '10px 12px', borderRadius: '12px' }}>{error}</div>}
               <button type="submit" className="btn-join" style={{ width: '100%', marginTop: '8px', justifyContent: 'center', padding: '12px 16px', borderRadius: '14px' }}>

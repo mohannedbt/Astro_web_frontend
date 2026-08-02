@@ -199,10 +199,17 @@ async function initDatabase() {
     ensureColumn('prerequisites', 'TEXT');
     ensureColumn('agenda', 'TEXT');
 
-    db.prepare(`ALTER TABLE events ADD COLUMN IF NOT EXISTS location TEXT`).run();
-    db.prepare(`ALTER TABLE events ADD COLUMN IF NOT EXISTS time TEXT`).run();
-    db.prepare(`ALTER TABLE events ADD COLUMN IF NOT EXISTS status TEXT`).run();
-    db.prepare(`ALTER TABLE events ADD COLUMN IF NOT EXISTS capacity INTEGER DEFAULT 0`).run();
+    const existingEventColumns = db.prepare('PRAGMA table_info(events)').all().map((row) => row.name);
+    const ensureEventColumn = (name, def) => {
+      if (!existingEventColumns.includes(name)) {
+        db.prepare(`ALTER TABLE events ADD COLUMN ${name} ${def}`).run();
+      }
+    };
+
+    ensureEventColumn('location', 'TEXT');
+    ensureEventColumn('time', 'TEXT');
+    ensureEventColumn('status', 'TEXT');
+    ensureEventColumn('capacity', 'INTEGER DEFAULT 0');
 
     const existingUserColumns = db.prepare('PRAGMA table_info(users)').all().map((row) => row.name);
     const ensureUserColumn = (name, def) => {
