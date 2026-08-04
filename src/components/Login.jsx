@@ -18,7 +18,7 @@ const Login = ({ setActivePage, onLogin }) => {
         return;
       }
       if (onLogin) {
-        onLogin(res.token);
+        onLogin(res.token, res.user);
       } else {
         localStorage.setItem('token', res.token);
         setActivePage('dashboard');

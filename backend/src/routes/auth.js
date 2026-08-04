@@ -10,7 +10,7 @@ function authRoutes(app) {
     if (is_admin) return res.status(403).json({ error: 'Admin registration is disabled. Use the seeded admin account.' });
 
     const hash = await bcrypt.hash(password, 10);
-    const avatarSeed = username || email;
+    const avatarSeed = `${(username || email || 'astro').toString().trim()}-${Math.random().toString(36).slice(2, 10)}`;
 
     try {
       if (usingPostgres) {
@@ -56,6 +56,8 @@ function authRoutes(app) {
         email: row.email,
         name: row.name || '',
         username: row.username || '',
+        bio: row.bio || '',
+        location: row.location || '',
         avatar_seed: row.avatar_seed || '',
         is_admin: !!row.is_admin,
       };

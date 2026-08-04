@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Settings, Shield, Bell, LogOut, Eye, EyeOff } from 'lucide-react';
+import { buildAvatarUrl, createAvatarSeed } from '../utils/avatar';
 
 const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
   const [section, setSection] = useState('profile');
@@ -17,21 +18,22 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
 
   const avatarOptions = [
     '',
-    'https://api.dicebear.com/7.x/geometric/svg?scale=80&seed=astro1',
-    'https://api.dicebear.com/7.x/geometric/svg?scale=80&seed=astro2',
-    'https://api.dicebear.com/7.x/geometric/svg?scale=80&seed=astro3',
-    'https://api.dicebear.com/7.x/geometric/svg?scale=80&seed=astro4',
-    'https://api.dicebear.com/7.x/geometric/svg?scale=80&seed=astro5'
+    buildAvatarUrl('astro1'),
+    buildAvatarUrl('astro2'),
+    buildAvatarUrl('astro3'),
+    buildAvatarUrl('astro4'),
+    buildAvatarUrl('astro5')
   ];
 
-  // Generate personal abstract avatar based on username
   const getPersonalAvatar = () => {
-    const seed = username || email || 'user';
-    return `https://api.dicebear.com/7.x/geometric/svg?scale=80&seed=${encodeURIComponent(seed)}`;
+    const seed = profile?.avatar_seed || username || email || 'user';
+    return buildAvatarUrl(seed);
   };
 
   const handleSave = () => {
-    updateProfile({ name, username, email, avatar, bio, location });
+    const nextAvatarSeed = profile?.avatar_seed || createAvatarSeed(username || email || name);
+    const nextAvatar = avatar || buildAvatarUrl(nextAvatarSeed);
+    updateProfile({ name, username, email, avatar: nextAvatar, avatar_seed: nextAvatarSeed, bio, location });
     setMessage('Profile saved successfully!');
     setTimeout(() => setMessage(''), 3000);
   };

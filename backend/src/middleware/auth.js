@@ -10,6 +10,8 @@ function signToken(user) {
       email: user.email,
       name: user.name || '',
       username: user.username || '',
+      bio: user.bio || '',
+      location: user.location || '',
       avatar_seed: user.avatar_seed || '',
       is_admin: !!user.is_admin,
     },

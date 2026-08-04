@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Star, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { register } from '../services/api';
+import { buildAvatarUrl, createAvatarSeed } from '../utils/avatar';
 
 const Register = ({ setActivePage, onLogin }) => {
   const [name, setName] = useState('');
@@ -46,13 +47,15 @@ const Register = ({ setActivePage, onLogin }) => {
         setError('Registration failed. Please try again.');
         return;
       }
+      const avatarSeed = data?.user?.avatar_seed || createAvatarSeed(username || email);
+      const defaultAvatar = buildAvatarUrl(avatarSeed);
+      const profileData = { name, username, email, avatar: defaultAvatar, avatar_seed: avatarSeed };
+
       if (onLogin) {
-        onLogin(data.token);
+        onLogin(data.token, data.user);
       } else {
         localStorage.setItem('token', data.token);
-        // Save profile info to localStorage with auto-generated avatar
-        const defaultAvatar = `https://api.dicebear.com/7.x/geometric/svg?scale=80&seed=${encodeURIComponent(username)}`;
-        localStorage.setItem('profile', JSON.stringify({ name, username, email, avatar: defaultAvatar }));
+        localStorage.setItem('profile', JSON.stringify(profileData));
         setActivePage('dashboard');
       }
     } catch (err) {

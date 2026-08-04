@@ -1,5 +1,6 @@
 import React from 'react';
 import { Compass, BookOpen, Map, Mic, User, Calendar, Gamepad2 } from 'lucide-react';
+import { buildAvatarUrl } from '../utils/avatar';
 
 const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
   const navItems = [
@@ -23,10 +24,9 @@ const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
     },
   ];
 
-  // Generate abstract avatar URL based on username/email
   const getAbstractAvatar = () => {
-    const seed = profile?.username || user?.email || 'user';
-    return `https://api.dicebear.com/7.x/geometric/svg?seed=${encodeURIComponent(seed)}&scale=80`;
+    const seed = profile?.avatar_seed || profile?.username || user?.avatar_seed || user?.email || 'user';
+    return buildAvatarUrl(seed);
   };
 
   return (

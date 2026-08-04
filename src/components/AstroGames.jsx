@@ -572,6 +572,11 @@ const AstroGames = ({ user, profile }) => {
     setQuizLoading(true);
     setView('quiz');
     setSavePayload(null);
+    setQuizFinished(false);
+    setChosenAnswer(null);
+    setQuizFeedback(null);
+    setQuizInterlude(null);
+    setQuizInterludeCountdown(3);
 
     const liveQuestions = await fetchLiveAstronomyQuestions(selectedDifficulty);
     const baseQuestions = liveQuestions || quizBank[selectedDifficulty] || quizBank.easy;
@@ -607,6 +612,11 @@ const AstroGames = ({ user, profile }) => {
   // player faces the same questions. Practice: quick 3-question easy warmup.
   const startChallenge = async (mode) => {
     setChallengeMode(mode);
+    setQuizFinished(false);
+    setChosenAnswer(null);
+    setQuizFeedback(null);
+    setQuizInterlude(null);
+    setQuizInterludeCountdown(3);
     const isPractice = mode === 'practice';
     const questionCount = isPractice ? 3 : 5;
     const difficultyTier = isPractice ? 'easy' : 'medium';
@@ -1107,27 +1117,76 @@ const AstroGames = ({ user, profile }) => {
                 <h2 style={{ fontSize: '28px', color: 'var(--text-primary)' }}>A polished astronomy arcade built into the portal.</h2>
                 <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>Choose a challenge and play right away. Your scores can be saved to a shared leaderboard and stay synced with the backend when it is available.</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', padding: '8px 28px 28px' }}>
-                <button
-                  onClick={() => { setView('quiz'); setQuizQuestions([]); setQuizFinished(false); setQuizLoading(false); }}
-                  className="btn btn-primary"
-                  style={{ justifyContent: 'flex-start', padding: '20px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', color: 'var(--text-primary)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Gamepad2 size={18} /> Astro Quiz</div>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'left' }}>Five astronomy questions with four difficulty tiers and an instant score reveal.</span>
-                </button>
-                <button onClick={() => startChallenge('daily')} className="btn btn-secondary" style={{ justifyContent: 'flex-start', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Sparkles size={18} /> Daily challenge</div>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'left' }}>A shared challenge stored in the backend and ranked in the daily leaderboard.</span>
-                </button>
-                <button onClick={() => startChallenge('practice')} className="btn btn-secondary" style={{ justifyContent: 'flex-start', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><RotateCcw size={18} /> Practice challenge</div>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'left' }}>A lighter replayable round you can warm up with anytime.</span>
-                </button>
-                <button onClick={startUniversle} className="btn btn-secondary" style={{ justifyContent: 'flex-start', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Orbit size={18} /> Universle</div>
-                  <span style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'left' }}>Guess the hidden body by type, system, distance and size before you run out of turns.</span>
-                </button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', padding: '8px 28px 28px' }}>
+                {[
+                  {
+                    key: 'quiz',
+                    title: 'Astro Quiz',
+                    blurb: 'Quick-fire astronomy questions with difficulty levels and a score reveal.',
+                    icon: Gamepad2,
+                    accent: 'linear-gradient(135deg, rgba(56,189,248,0.2), rgba(167,139,250,0.18))',
+                    action: () => { setView('quiz'); setQuizQuestions([]); setQuizFinished(false); setQuizLoading(false); setChallengeMode(null); },
+                    primary: true,
+                  },
+                  {
+                    key: 'daily',
+                    title: 'Daily challenge',
+                    blurb: 'A shared challenge that feels like a daily streak builder.',
+                    icon: Sparkles,
+                    accent: 'linear-gradient(135deg, rgba(167,139,250,0.2), rgba(34,197,94,0.14))',
+                    action: () => startChallenge('daily'),
+                  },
+                  {
+                    key: 'practice',
+                    title: 'Practice round',
+                    blurb: 'A lighter replayable warm-up for quick training sessions.',
+                    icon: RotateCcw,
+                    accent: 'linear-gradient(135deg, rgba(34,197,94,0.2), rgba(56,189,248,0.12))',
+                    action: () => startChallenge('practice'),
+                  },
+                  {
+                    key: 'universle',
+                    title: 'Universle',
+                    blurb: 'Uncover the hidden body by piecing together clues from the cosmos.',
+                    icon: Orbit,
+                    accent: 'linear-gradient(135deg, rgba(251,191,36,0.16), rgba(248,113,113,0.14))',
+                    action: startUniversle,
+                  },
+                ].map((card) => {
+                  const Icon = card.icon;
+                  return (
+                    <button
+                      key={card.key}
+                      onClick={card.action}
+                      className={`btn ${card.primary ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{
+                        justifyContent: 'flex-start',
+                        padding: '18px',
+                        borderRadius: '18px',
+                        background: card.primary ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.04)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        gap: '8px',
+                        minHeight: '148px',
+                        boxShadow: card.primary ? '0 12px 26px rgba(56,189,248,0.12)' : undefined,
+                      }}
+                    >
+                      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ width: '34px', height: '34px', borderRadius: '12px', display: 'grid', placeItems: 'center', background: card.accent, border: '1px solid var(--border)' }}>
+                            <Icon size={16} />
+                          </span>
+                          <span style={{ fontWeight: 700 }}>{card.title}</span>
+                        </div>
+                        <ArrowRight size={16} color="var(--text-secondary)" />
+                      </div>
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: 1.6 }}>{card.blurb}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1142,9 +1201,12 @@ const AstroGames = ({ user, profile }) => {
                 </div>
               ) : !quizQuestions.length ? (
                 <div style={{ display: 'grid', gap: '14px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '20px', marginBottom: '4px' }}>Choose a difficulty</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>Five questions, live from Open Trivia DB when possible, with an offline backup bank if the connection drops.</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div>
+                      <h3 style={{ fontSize: '20px', marginBottom: '4px' }}>Choose a difficulty</h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>Five questions, live from Open Trivia DB when possible, with an offline backup bank if the connection drops.</p>
+                    </div>
+                    <button className="btn btn-secondary" onClick={() => { setView('home'); setActivePanel('play'); setQuizQuestions([]); setQuizFinished(false); }} style={{ padding: '8px 12px' }}>Back to games</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
                     {[

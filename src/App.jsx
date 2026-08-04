@@ -16,6 +16,7 @@ import AdminPanel from './components/AdminPanel';
 import Tour from './components/Tour';
 import AstroGames from './components/AstroGames';
 import AstronomicalCalendar from './components/AstronomicalCalendar';
+import { buildAvatarUrl } from './utils/avatar';
 import './App.css';
 
 const parseJwt = (token) => {
@@ -46,6 +47,35 @@ function App() {
     return null;
   });
 
+  const persistProfile = (source = null) => {
+    const stored = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('profile') || '{}');
+      } catch (e) {
+        return {};
+      }
+    })();
+
+    const seed = source?.avatar_seed || source?.username || source?.email || stored?.avatar_seed || stored?.username || stored?.email || 'astro';
+    const next = {
+      ...(stored || {}),
+      ...(source || {}),
+      name: source?.name || stored?.name || '',
+      username: source?.username || stored?.username || '',
+      email: source?.email || stored?.email || '',
+      bio: source?.bio || stored?.bio || '',
+      location: source?.location || stored?.location || '',
+      avatar_seed: seed,
+      avatar: source?.avatar || stored?.avatar || buildAvatarUrl(seed),
+    };
+
+    setProfile(next);
+    try {
+      localStorage.setItem('profile', JSON.stringify(next));
+    } catch (e) {}
+    return next;
+  };
+
   const updateProfile = (updates) => {
     const next = { ...(profile || {}), ...updates };
     setProfile(next);
@@ -57,36 +87,22 @@ function App() {
   const pathToPage = (path) => {
     if (!path) return 'landing';
     const p = path.replace(/\/$/, '');
-    switch (p) {
-      case '':
-      case '/':
-      case '/landing':
-        return 'landing';
-      case '/dashboard':
-        return 'dashboard';
-      case '/magazine':
-        return 'magazine';
-      case '/skymap':
-        return 'skymap';
-      case '/workshops':
-        return 'workshops';
-      case '/events':
-        return 'events';
-      case '/login':
-        return 'login';
-      case '/register':
-        return 'register';
-      case '/account':
-        return 'account';
-      case '/admin':
-        return 'admin';
-      case '/astrogames':
-        return 'astrogames';
-      case '/calendar':
-        return 'calendar';
-      default:
-        return 'dashboard';
-    }
+    if (p === '' || p === '/' || p === '/landing') return 'landing';
+    if (p === '/dashboard') return 'dashboard';
+    if (p === '/magazine') return 'magazine';
+    if (p === '/skymap') return 'skymap';
+    if (p === '/workshops') return 'workshops';
+    if (p === '/events') return 'events';
+    if (p === '/login') return 'login';
+    if (p === '/register') return 'register';
+    if (p === '/account') return 'account';
+    if (p === '/admin') return 'admin';
+    if (p === '/astrogames') return 'astrogames';
+    if (p === '/calendar') return 'calendar';
+    if (p === '/games' || p.startsWith('/games/')) return 'astrogames';
+    if (p === '/game' || p.startsWith('/game/')) return 'astrogames';
+    if (p.startsWith('/astrogames')) return 'astrogames';
+    return 'dashboard';
   };
 
   const activePage = pathToPage(location.pathname);
@@ -124,7 +140,7 @@ function App() {
 
   const setActivePage = (page) => {
     const path = pageToPath(page);
-    navigate(path);
+    navigate(path, { replace: false });
   };
 
   useEffect(() => {
@@ -132,6 +148,7 @@ function App() {
     if (parsed) {
       localStorage.setItem('token', token);
       setUser(parsed);
+      persistProfile(parsed);
     } else {
       localStorage.removeItem('token');
       setUser(null);
@@ -145,8 +162,12 @@ function App() {
     };
   }, [siteTheme]);
 
-  const handleLoginSuccess = (newToken) => {
+  const handleLoginSuccess = (newToken, authUser = null) => {
     setToken(newToken);
+    const decoded = authUser || parseJwt(newToken);
+    if (decoded) {
+      persistProfile(decoded);
+    }
     setActivePage('dashboard');
   };
 
