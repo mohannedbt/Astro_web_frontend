@@ -162,6 +162,20 @@ function App() {
     };
   }, [siteTheme]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+
+    if (!redirect) return;
+
+    const normalized = redirect.startsWith('/') ? redirect : `/${redirect}`;
+    const cleanPath = normalized.split('?')[0];
+
+    if (cleanPath && cleanPath !== location.pathname) {
+      navigate(cleanPath + (window.location.hash || ''), { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
   const handleLoginSuccess = (newToken, authUser = null) => {
     setToken(newToken);
     const decoded = authUser || parseJwt(newToken);
