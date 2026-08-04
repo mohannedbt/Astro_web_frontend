@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const logger = require('../utils/logger');
 const { dbGet, dbRun, usingPostgres } = require('../middleware/database');
 const { signToken, authMiddleware } = require('../middleware/auth');
 
@@ -28,7 +29,7 @@ function authRoutes(app) {
       const user = await dbGet('SELECT id, email, name, username, bio, location, avatar_seed, is_admin FROM users WHERE id = ?', [info.lastInsertRowid]);
       return res.json({ token: signToken(user), user });
     } catch (e) {
-      console.error('register error', e.message || e);
+      logger.error('Registration failed', { message: e.message, stack: e.stack, email });
       return res.status(400).json({ error: e.message && e.message.includes('unique') ? 'Email or username already exists' : 'Registration failed' });
     }
   });
@@ -40,13 +41,13 @@ function authRoutes(app) {
     try {
       const row = await dbGet('SELECT * FROM users WHERE email = ?', [email]);
       if (!row) {
-        console.warn('Login failed: no user found for email', email);
+        logger.warn('Login failed: no user found', { email });
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
       const ok = await bcrypt.compare(password, row.password_hash);
       if (!ok) {
-        console.warn('Login failed: bad password for email', email);
+        logger.warn('Login failed: bad password', { email });
         return res.status(400).json({ error: 'Invalid credentials' });
       }
 
@@ -61,7 +62,7 @@ function authRoutes(app) {
 
       return res.json({ token: signToken(user), user });
     } catch (e) {
-      console.error('login error', e.message || e);
+      logger.error('Login failed', { message: e.message, stack: e.stack, email });
       return res.status(500).json({ error: 'internal' });
     }
   });

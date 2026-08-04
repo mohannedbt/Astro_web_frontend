@@ -1,5 +1,17 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+export const reportClientLog = async (level = 'info', message = 'Client log', details = {}) => {
+  try {
+    await fetch(`${API_BASE}/api/logs/client`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ level, message, details }),
+    });
+  } catch (error) {
+    console.warn('Failed to report client log', error);
+  }
+};
+
 async function safeFetch(url, opts = {}) {
   try {
     const res = await fetch(url, opts);
@@ -10,6 +22,13 @@ async function safeFetch(url, opts = {}) {
     }
     return data;
   } catch (e) {
+    const details = {
+      url,
+      method: opts.method || 'GET',
+      message: e.message,
+      stack: e.stack,
+    };
+    reportClientLog('warn', 'frontend fetch failed', details);
     console.warn('fetch failed', url, e.message);
     throw e;
   }

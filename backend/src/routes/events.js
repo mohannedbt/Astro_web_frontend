@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const { dbAll } = require('../middleware/database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 const { fetchFacebookEvents } = require('../services/facebook');
@@ -17,6 +18,7 @@ function eventRoutes(app) {
       const count = await fetchFacebookEvents(pageId, token);
       res.json({ fetched: count });
     } catch (e) {
+      logger.error('Failed to fetch Facebook events', { message: e.message, stack: e.stack, pageId });
       res.status(500).json({ error: e.message });
     }
   });

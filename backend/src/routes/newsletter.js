@@ -1,3 +1,4 @@
+const logger = require('../utils/logger');
 const { dbAll, dbRun } = require('../middleware/database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
 const { sendNewsletterService, getNewsletterTemplate, saveNewsletterTemplate, renderNewsletterHtml, DEFAULT_NEWSLETTER_TEMPLATES, NEWSLETTER_TEMPLATE_KEYS } = require('../services/newsletter');
@@ -11,7 +12,7 @@ const SMTP_FROM = process.env.SMTP_FROM || 'insatastroclub@gmail.com';
 const nodemailer = require('nodemailer');
 
 function logNewsletterServiceError(error, context) {
-  console.error(`newsletter service integration failed [${context}]`, {
+  logger.error(`newsletter service integration failed [${context}]`, {
     message: error?.message,
     stack: error?.stack,
     code: error?.code,
@@ -47,7 +48,7 @@ function newsletterRoutes(app) {
 
       return res.json({ success: true });
     } catch (e) {
-      console.error('newsletter subscribe error', e.message || e);
+      logger.error('newsletter subscribe error', { message: e.message, stack: e.stack, email });
       return res.status(500).json({ error: 'Unable to subscribe' });
     }
   });
@@ -86,7 +87,7 @@ function newsletterRoutes(app) {
       await saveNewsletterTemplate(templateKey, subject, body);
       res.json({ success: true });
     } catch (e) {
-      console.error('newsletter template save error', e.message || e);
+      logger.error('newsletter template save error', { message: e.message, stack: e.stack, templateKey });
       res.status(500).json({ error: 'Unable to save newsletter template' });
     }
   });
@@ -134,7 +135,7 @@ function newsletterRoutes(app) {
         } catch (err) {
           failed++;
           errors.push({ email: sub.email, error: err.message });
-          console.error(`Failed to send to ${sub.email}:`, err.message);
+          logger.warn('Failed to send newsletter email', { email: sub.email, message: err.message, stack: err.stack });
         }
       }
 
@@ -147,7 +148,7 @@ function newsletterRoutes(app) {
         errors: errors.length > 0 ? errors : undefined,
       });
     } catch (e) {
-      console.error('newsletter broadcast error', e.message || e);
+      logger.error('newsletter broadcast error', { message: e.message, stack: e.stack });
       res.status(500).json({ error: 'Newsletter broadcast failed' });
     }
   });

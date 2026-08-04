@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('redis');
 
+const logger = require('./src/utils/logger');
 const { initDatabase } = require('./src/middleware/database');
 const { seedAdmin } = require('./seedAdmin');
 const { authRoutes } = require('./src/routes/auth');
@@ -29,12 +30,13 @@ async function initRedis() {
   };
 
   if (!process.env.REDIS_URL) {
+    logger.info('Redis disabled, using in-memory fallback');
     return memoryRedis;
   }
 
   try {
     const redisClient = createClient({ url: REDIS_URL });
-    redisClient.on('error', (err) => console.warn('Redis unavailable, using in-memory fallback:', err.message));
+    redisClient.on('error', (err) => logger.warn('Redis unavailable, using in-memory fallback', err.message));
 
     const connectPromise = redisClient.connect();
     const timeoutPromise = new Promise((_, reject) => {
@@ -42,16 +44,23 @@ async function initRedis() {
     });
 
     await Promise.race([connectPromise, timeoutPromise]);
-    console.log('Redis connected');
+    logger.info('Redis connected');
     return redisClient;
   } catch (error) {
-    console.warn('Redis unavailable, using in-memory fallback:', error.message);
+    logger.warn('Redis unavailable, using in-memory fallback', error.message);
     return memoryRedis;
   }
 }
 
 (async () => {
+  logger.info('Starting backend', {
+    port: PORT,
+    nodeEnv: process.env.NODE_ENV || 'development',
+    logFile: process.env.LOG_FILE || 'disabled',
+  });
+
   await initDatabase();
+  logger.info('Database initialization complete');
   await seedAdmin();
 
   const redis = await initRedis();
@@ -59,6 +68,42 @@ async function initRedis() {
   const app = express();
   app.use(cors());
   app.use(express.json());
+
+  app.use((req, res, next) => {
+    const start = Date.now();
+    const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    req.requestId = requestId;
+
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      logger.info('HTTP request completed', {
+        requestId,
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: res.statusCode,
+        durationMs: duration,
+      });
+    });
+
+    res.on('close', () => {
+      if (!res.headersSent) {
+        logger.warn('HTTP request closed early', {
+          requestId,
+          method: req.method,
+          path: req.originalUrl,
+        });
+      }
+    });
+
+    next();
+  });
+
+  app.post('/api/logs/client', (req, res) => {
+    const { level = 'info', message = 'Client log', details } = req.body || {};
+    const normalizedLevel = ['debug', 'info', 'warn', 'error'].includes(level) ? level : 'info';
+    logger[normalizedLevel](message, details);
+    res.json({ ok: true });
+  });
 
   authRoutes(app);
   workshopRoutes(app);
@@ -70,7 +115,40 @@ async function initRedis() {
   astrogamesRoutes(app);
   astronomyEventsRoutes(app);
 
-  app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+  app.get('/api/health', (req, res) => {
+    logger.info('Health check requested', { requestId: req.requestId });
+    res.json({ status: 'ok' });
+  });
 
-  app.listen(PORT, () => console.log(`Backend listening on ${PORT}`));
+  app.use((err, req, res, next) => {
+    if (res.headersSent) {
+      return next(err);
+    }
+
+    logger.error('Unhandled error', {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({ error: 'Internal server error' });
+  });
+
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught exception', {
+      message: error.message,
+      stack: error.stack,
+    });
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    const message = reason instanceof Error ? reason.message : String(reason);
+    const stack = reason instanceof Error ? reason.stack : undefined;
+    logger.error('Unhandled promise rejection', { message, stack });
+  });
+
+  app.listen(PORT, () => {
+    logger.info(`Backend listening on ${PORT}`);
+  });
 })();

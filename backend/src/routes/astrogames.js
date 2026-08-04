@@ -1,4 +1,5 @@
 ﻿const axios = require('axios');
+const logger = require('../utils/logger');
 const { dbRun, dbAll, dbGet, usingPostgres } = require('../middleware/database');
 
 const DAILY_QUESTION_POOL = [
@@ -310,7 +311,7 @@ function astrogamesRoutes(app) {
         Number(timeMs) || 0,
         date || new Date().toISOString(),
       ];
-      console.log('INSERT PARAMS', insertParams.map((value) => `${typeof value}:${String(value)}`));
+      logger.debug('Saving leaderboard entry', { game, name, score: insertParams[2], total: insertParams[3], difficulty });
 
       let saved;
       if (usingPostgres) {
@@ -324,7 +325,7 @@ function astrogamesRoutes(app) {
 
       res.json(saved);
     } catch (error) {
-      console.error('Unable to save leaderboard entry', error);
+      logger.error('Unable to save leaderboard entry', { message: error.message, stack: error.stack, game, name });
       res.status(500).json({ error: 'Unable to save leaderboard entry' });
     }
   });

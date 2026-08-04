@@ -1,4 +1,5 @@
 const axios = require('axios');
+const logger = require('../utils/logger');
 
 function newsRoutes(app, redis) {
   // News caching: avoid calling external news API twice
@@ -21,7 +22,7 @@ function newsRoutes(app, redis) {
       await redis.set(cacheKey, JSON.stringify(resp.data), { EX: 60 * 5 });
       res.json(resp.data);
     } catch (e) {
-      console.error('news fetch error', e.message);
+      logger.error('news fetch error', { message: e.message, stack: e.stack, limit });
       return res.status(502).json({ error: 'news fetch failed' });
     }
   });
