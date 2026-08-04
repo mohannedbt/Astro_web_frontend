@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import '../styles/AstronomicalCalendar.css';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
@@ -76,7 +78,7 @@ export default function AstronomicalCalendar() {
       try {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
-        const response = await fetch(`/api/astronomy-events?year=${year}&month=${month}`);
+        const response = await fetch(`${API_BASE}/api/astronomy-events?year=${year}&month=${month}`);
         if (!response.ok) throw new Error('Failed to fetch events');
         const data = await response.json();
         setMonthEvents(data.events || {});
