@@ -74,56 +74,53 @@ const getUniversleSuggestions = (value, max = 8) => {
 const getStateTone = (state) => {
   switch (state) {
     case 'match':
-      return { background: 'rgba(34, 197, 94, 0.16)', color: '#4ade80', label: 'Match' };
-    case 'partial':
-      return { background: 'rgba(245, 158, 11, 0.16)', color: '#fbbf24', label: 'Partial' };
+    case 'right':
+    case 'exact':
+      return { background: 'rgba(34, 197, 94, 0.16)', color: '#4ade80', label: state === 'exact' ? 'Exact' : 'Right' };
+    case 'wrong':
+    case 'miss':
+      return { background: 'rgba(248, 113, 113, 0.16)', color: '#f87171', label: 'Wrong' };
+    case 'up':
+      return { background: 'rgba(56, 189, 248, 0.16)', color: '#38bdf8', label: 'Up' };
+    case 'down':
+      return { background: 'rgba(245, 158, 11, 0.16)', color: '#fbbf24', label: 'Down' };
     default:
-      return { background: 'rgba(248, 113, 113, 0.16)', color: '#f87171', label: 'Miss' };
+      return { background: 'rgba(255, 255, 255, 0.08)', color: 'var(--text-secondary)', label: state };
   }
 };
 
 const getStatus = (guess, target) => {
   const typeMatch = guess.type === target.type;
   const systemMatch = guess.system === target.system;
-  const distDiff = Math.abs(guess.distAU - target.distAU);
-  const sizeDiff = Math.abs(guess.radius - target.radius);
-  const tempDiff = Math.abs((guess.tempC ?? 0) - (target.tempC ?? 0));
 
-  let distanceState = 'miss';
-  if (distDiff <= target.distAU * 0.15) distanceState = 'match';
-  else if (distDiff <= target.distAU * 0.35) distanceState = 'partial';
+  const typeState = typeMatch ? 'right' : 'wrong';
+  const systemState = systemMatch ? 'right' : 'wrong';
 
-  let sizeState = 'miss';
-  if (sizeDiff <= 0.1) sizeState = 'match';
-  else if (sizeDiff <= 0.4) sizeState = 'partial';
+  let distanceState = 'exact';
+  if (guess.distAU < target.distAU) distanceState = 'up';
+  else if (guess.distAU > target.distAU) distanceState = 'down';
 
-  let temperatureState = 'miss';
-  if (tempDiff <= 80) temperatureState = 'match';
-  else if (tempDiff <= 180) temperatureState = 'partial';
+  let sizeState = 'exact';
+  if (guess.radius < target.radius) sizeState = 'up';
+  else if (guess.radius > target.radius) sizeState = 'down';
 
-  const distanceLabel = guess.distAU === 0
-    ? 'No orbit data yet'
-    : guess.distAU < target.distAU
-      ? `Needs to be farther from the Sun than ${guess.distAU.toFixed(2)} AU`
-      : guess.distAU > target.distAU
-        ? `Needs to be closer to the Sun than ${guess.distAU.toFixed(2)} AU`
-        : 'Distance from the Sun is spot on';
+  const guessTemp = guess.tempC ?? 0;
+  const targetTemp = target.tempC ?? 0;
+  let temperatureState = 'exact';
+  if (guessTemp < targetTemp) temperatureState = 'up';
+  else if (guessTemp > targetTemp) temperatureState = 'down';
 
-  const temperatureLabel = guess.tempC === undefined
-    ? 'Temperature not known'
-    : tempDiff <= 80
-      ? 'Temperature is a close match'
-      : tempDiff <= 180
-        ? 'Temperature is in the right ballpark'
-        : 'Temperature is much different';
+  const distanceLabel = distanceState === 'exact' ? 'Exact' : distanceState === 'up' ? 'Up' : 'Down';
+  const temperatureLabel = temperatureState === 'exact' ? 'Exact' : temperatureState === 'up' ? 'Up' : 'Down';
+  const sizeLabel = sizeState === 'exact' ? 'Exact' : sizeState === 'up' ? 'Up' : 'Down';
 
   // Proximity points for this single guess (used in global score)
   const proximityPoints =
     (typeMatch ? 30 : 0) +
     (systemMatch ? 20 : 0) +
-    (distanceState === 'match' ? 25 : distanceState === 'partial' ? 12 : 0) +
-    (sizeState === 'match' ? 15 : sizeState === 'partial' ? 7 : 0) +
-    (temperatureState === 'match' ? 10 : temperatureState === 'partial' ? 5 : 0);
+    (distanceState === 'exact' ? 25 : 10) +
+    (sizeState === 'exact' ? 15 : 5) +
+    (temperatureState === 'exact' ? 10 : 2);
 
   return {
     typeMatch,
@@ -134,12 +131,17 @@ const getStatus = (guess, target) => {
     distanceLabel,
     temperatureLabel,
     proximityPoints,
+    typeState,
+    systemState,
+    sizeLabel,
+    typeLabel: typeMatch ? 'Right' : 'Wrong',
+    systemLabel: systemMatch ? 'Right' : 'Wrong',
     summary: [
-      typeMatch ? 'type match' : 'type mismatch',
-      systemMatch ? 'system match' : `system should be ${target.system}`,
-      distanceState === 'match' ? 'distance match' : distanceLabel,
-      sizeState === 'match' ? 'size match' : sizeState === 'partial' ? 'size is close' : 'size mismatch',
-      temperatureState === 'match' ? 'temperature match' : temperatureLabel,
+      `Type: ${typeMatch ? 'Right' : 'Wrong'}`,
+      `System: ${systemMatch ? 'Right' : 'Wrong'}`,
+      `Distance: ${distanceLabel}`,
+      `Size: ${sizeLabel}`,
+      `Temp: ${temperatureLabel}`,
     ].join(' · '),
   };
 };
@@ -481,7 +483,7 @@ const PlanetScene = ({ targetBody, bodies = universleBodies }) => {
   return <div ref={containerRef} style={{ width: '100%', minHeight: '320px', borderRadius: '20px', overflow: 'hidden', background: 'radial-gradient(circle at top, rgba(167, 139, 250, 0.16), transparent 35%)' }} />;
 };
 
-const AstroGames = ({ user, profile }) => {
+const AstroGames = ({ user, profile, setActivePage }) => {
   const [view, setView] = useState('home');
   const [activePanel, setActivePanel] = useState('play');
   const [leaderboardView, setLeaderboardView] = useState('all');
@@ -992,17 +994,16 @@ const AstroGames = ({ user, profile }) => {
   const quizProgress = quizQuestions.length ? ((quizFinished ? quizQuestions.length : quizIndex + 1) / quizQuestions.length) * 100 : 0;
   const universleMultiplier = useMemo(() => {
     if (!universleFeedback) return 1;
-    if (universleFeedback.distanceState === 'match' && universleFeedback.sizeState === 'match' && universleFeedback.temperatureState === 'match') return 2.5;
-    if (universleFeedback.distanceState === 'partial' || universleFeedback.sizeState === 'partial' || universleFeedback.temperatureState === 'partial') return 1.4;
+    if (universleFeedback.distanceState === 'exact' && universleFeedback.sizeState === 'exact' && universleFeedback.temperatureState === 'exact') return 2.5;
     return 1;
   }, [universleFeedback]);
   const universleHintRows = useMemo(() => {
     if (!universleTarget || !universleFeedback) return [];
     return [
-      { label: 'Type', state: universleFeedback.typeMatch ? 'match' : 'miss', detail: universleFeedback.typeMatch ? `${universleTarget.type} is correct` : `Needs ${universleTarget.type}` },
-      { label: 'System', state: universleFeedback.systemMatch ? 'match' : 'miss', detail: universleFeedback.systemMatch ? `Orbiting ${universleTarget.system}` : `Belongs to ${universleTarget.system}` },
+      { label: 'Type', state: universleFeedback.typeState, detail: universleFeedback.typeLabel },
+      { label: 'System', state: universleFeedback.systemState, detail: universleFeedback.systemLabel },
       { label: 'Distance', state: universleFeedback.distanceState, detail: universleFeedback.distanceLabel },
-      { label: 'Size', state: universleFeedback.sizeState, detail: universleFeedback.sizeState === 'match' ? 'Size is spot on' : universleFeedback.sizeState === 'partial' ? 'Size is close' : 'Size is off' },
+      { label: 'Size', state: universleFeedback.sizeState, detail: universleFeedback.sizeLabel },
       { label: 'Temp', state: universleFeedback.temperatureState, detail: universleFeedback.temperatureLabel },
     ];
   }, [universleFeedback, universleTarget]);
@@ -1069,7 +1070,7 @@ const AstroGames = ({ user, profile }) => {
   [leaderboard.universle]);
 
   return (
-    <div className="page-content astrogames-page">
+    <div className="page-content astrogames-page" style={{ overflowX: 'hidden' }}>
       {/* ── Hero header ── */}
       <section className="hero astrogames-hero">
         <div className="hero-content">
@@ -1079,6 +1080,14 @@ const AstroGames = ({ user, profile }) => {
           <h1 className="hero-title">AstroGames</h1>
           <p className="hero-sub">Two cosmic challenges in one portal — a shared daily sprint, a replayable practice run, and a planetary guessing game built for fast rounds and clean visuals.</p>
           <div className="hero-actions">
+            {setActivePage && (
+              <button
+                className="btn btn-secondary"
+                onClick={() => setActivePage('dashboard')}
+              >
+                Back to Dashboard
+              </button>
+            )}
             <button
               className={`btn ${activePanel === 'play' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => { setActivePanel('play'); setView('home'); }}
@@ -1158,21 +1167,7 @@ const AstroGames = ({ user, profile }) => {
                     <button
                       key={card.key}
                       onClick={card.action}
-                      className={`btn ${card.primary ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{
-                        justifyContent: 'flex-start',
-                        padding: '18px',
-                        borderRadius: '18px',
-                        background: card.primary ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.04)',
-                        color: 'var(--text-primary)',
-                        border: '1px solid var(--border)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        gap: '8px',
-                        minHeight: '148px',
-                        boxShadow: card.primary ? '0 12px 26px rgba(56,189,248,0.12)' : undefined,
-                      }}
+                      className={`astrogame-selection-card ${card.primary ? 'primary' : ''}`}
                     >
                       <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1237,13 +1232,13 @@ const AstroGames = ({ user, profile }) => {
                     const { isCorrect, pts, streak, answer, isLast } = quizInterlude;
                     const motivations = {
                       correct: [
-                        { streak: 0, msg: 'Nice one! Keep it up! 🚀', sub: 'Every correct answer counts.' },
-                        { streak: 2, msg: 'Great streak! You\'re on fire! 🔥', sub: 'Two in a row — the cosmos is with you.' },
-                        { streak: 3, msg: 'Unstoppable! 🌟', sub: 'Three correct — you\'re a star.' },
-                        { streak: 5, msg: 'LEGENDARY! 🏆', sub: 'Five in a row. You know the universe.' },
+                        { streak: 0, msg: 'Correct response. Keep the momentum going.', sub: 'Every correct answer counts.' },
+                        { streak: 2, msg: 'Excellent streak. Two correct answers in a row.', sub: 'The cosmos is with you.' },
+                        { streak: 3, msg: 'Outstanding streak. Three correct answers in a row.', sub: 'Your knowledge of the stars is proving true.' },
+                        { streak: 5, msg: 'Legendary accuracy. Five consecutive correct answers.', sub: 'You have mastered this set of space trivia.' },
                       ],
                       wrong: [
-                        { msg: 'Not this time — but you\'ve got this! 💫', sub: `Correct answer: ${answer}` },
+                        { msg: 'Incorrect response. Adjust and focus for the next round.', sub: `Correct answer: ${answer}` },
                       ],
                     };
                     let motivation;
@@ -1283,9 +1278,13 @@ const AstroGames = ({ user, profile }) => {
                           @keyframes interludeCountSpin { from{stroke-dashoffset:${circumference}} to{stroke-dashoffset:0} }
                         `}</style>
 
-                        {/* Big emoji / result icon */}
-                        <div style={{ animation: 'interlundeZoomIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards', fontSize: '64px', lineHeight: 1 }}>
-                          {isCorrect ? (streak >= 5 ? '🏆' : streak >= 3 ? '🌟' : streak >= 2 ? '🔥' : '✅') : '❌'}
+                        {/* Big SVG/Icon / result icon */}
+                        <div style={{ animation: 'interlundeZoomIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards', color: isCorrect ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {isCorrect ? (
+                            streak >= 5 ? <Trophy size={64} /> : streak >= 3 ? <Sparkles size={64} /> : <CheckCircle2 size={64} />
+                          ) : (
+                            <XCircle size={64} />
+                          )}
                         </div>
 
                         {/* Motivational text */}
@@ -1319,8 +1318,11 @@ const AstroGames = ({ user, profile }) => {
                               background: 'rgba(167,139,250,0.16)',
                               color: '#a78bfa',
                               border: '1px solid rgba(167,139,250,0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
                             }}>
-                              🔥 {streak}× streak
+                              <Sparkles size={16} /> {streak}× streak
                             </div>
                           )}
                         </div>
@@ -1328,13 +1330,13 @@ const AstroGames = ({ user, profile }) => {
                         {/* Stats row */}
                         <div style={{ animation: 'interludeSlideUp 0.4s ease 0.45s both', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', fontSize: '13px' }}>
                           <span style={{ padding: '6px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
-                            ⭐ Total: <strong style={{ color: 'var(--text-primary)' }}>{quizGlobalScore.toLocaleString()} pts</strong>
+                            Score: <strong style={{ color: 'var(--text-primary)' }}>{quizGlobalScore.toLocaleString()} pts</strong>
                           </span>
                           <span style={{ padding: '6px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
-                            ✓ {quizScore}/{quizQuestions.length} correct
+                            Accuracy: {quizScore}/{quizQuestions.length} correct
                           </span>
                           <span style={{ padding: '6px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
-                            🏅 Best streak {bestStreak}
+                            Best streak: {bestStreak}
                           </span>
                         </div>
 
@@ -1412,15 +1414,15 @@ const AstroGames = ({ user, profile }) => {
                             disabled={Boolean(chosenAnswer)}
                             style={{
                               justifyContent: 'flex-start',
-                              padding: '14px 16px',
-                              borderRadius: '16px',
+                              padding: '16px 18px',
+                              borderRadius: '18px',
                               textAlign: 'left',
                               transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease',
                               transform: isSelected ? 'scale(1.01)' : 'scale(1)',
                               animation: isRevealed ? 'astrogamesFadeIn 0.3s ease' : undefined,
-                              background: isCorrectAnswer ? 'rgba(34,197,94,0.12)' : isWrongSelection ? 'rgba(248,113,113,0.12)' : undefined,
-                              borderColor: isCorrectAnswer ? 'rgba(34,197,94,0.4)' : isWrongSelection ? 'rgba(248,113,113,0.4)' : undefined,
-                              boxShadow: isCorrectAnswer ? '0 0 0 1px rgba(34,197,94,0.25)' : isWrongSelection ? '0 0 0 1px rgba(248,113,113,0.25)' : undefined,
+                              background: isCorrectAnswer ? 'rgba(34,197,94,0.12)' : isWrongSelection ? 'rgba(248,113,113,0.12)' : 'linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))',
+                              borderColor: isCorrectAnswer ? 'rgba(34,197,94,0.4)' : isWrongSelection ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.08)',
+                              boxShadow: isCorrectAnswer ? '0 0 0 1px rgba(34,197,94,0.25)' : isWrongSelection ? '0 0 0 1px rgba(248,113,113,0.25)' : 'inset 0 1px 0 rgba(255,255,255,0.06)',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '12px',
@@ -1452,7 +1454,7 @@ const AstroGames = ({ user, profile }) => {
                     {quizFeedback && (
                       <div style={{ marginTop: '16px', padding: '14px 16px', borderRadius: '14px', border: `1px solid ${quizFeedback.isCorrect ? 'rgba(34,197,94,0.35)' : 'rgba(248,113,113,0.35)'}`, background: quizFeedback.isCorrect ? 'rgba(34,197,94,0.08)' : 'rgba(248,113,113,0.08)', animation: 'astrogamesFadeIn 0.3s ease', display: 'grid', gap: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ fontWeight: 700, fontSize: '15px' }}>{quizFeedback.isCorrect ? '✓ Correct!' : '✗ Incorrect'}</div>
+                          <div style={{ fontWeight: 700, fontSize: '15px' }}>{quizFeedback.isCorrect ? 'Correct' : 'Incorrect'}</div>
                           <div style={{ fontWeight: 800, fontSize: '18px', color: quizFeedback.isCorrect ? '#4ade80' : '#f87171' }}>
                             {quizFeedback.isCorrect ? `+${quizFeedback.questionGlobalScore}` : `−${quizFeedback.errorPenalty}`} pts
                           </div>
@@ -1460,8 +1462,8 @@ const AstroGames = ({ user, profile }) => {
                         <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Answer: <strong style={{ color: 'var(--text-primary)' }}>{quizFeedback.answer}</strong>{!quizFeedback.isCorrect && <> · Your pick: {quizFeedback.selected}</>} · Time: {(quizFeedback.timeMs / 1000).toFixed(1)}s</div>
                         {quizFeedback.isCorrect && (
                           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '12px' }}>
-                            <span style={{ padding: '3px 8px', borderRadius: '999px', background: 'rgba(56,189,248,0.12)', color: '#38bdf8' }}>⚡ Speed +{quizFeedback.speedBonus}</span>
-                            <span style={{ padding: '3px 8px', borderRadius: '999px', background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>🔥 Streak ×{(1 + Math.min(quizFeedback.streak, 5) * 0.3).toFixed(1)}</span>
+                            <span style={{ padding: '3px 8px', borderRadius: '999px', background: 'rgba(56,189,248,0.12)', color: '#38bdf8' }}>Speed +{quizFeedback.speedBonus}</span>
+                            <span style={{ padding: '3px 8px', borderRadius: '999px', background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}>Streak ×{(1 + Math.min(quizFeedback.streak, 5) * 0.3).toFixed(1)}</span>
                             <span style={{ padding: '3px 8px', borderRadius: '999px', background: 'rgba(34,197,94,0.12)', color: '#4ade80' }}>Combo {quizFeedback.streak}</span>
                           </div>
                         )}
@@ -1492,11 +1494,11 @@ const AstroGames = ({ user, profile }) => {
                     </h3>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '14px' }}>{quizScore}/{quizQuestions.length} correct · {quizQuestions.length - quizScore} errors</div>
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '14px' }}>
-                      <span className="admin-summary-item" style={{ padding: '8px 12px' }}>✓ Accuracy {(quizScore / quizQuestions.length * 100).toFixed(0)}%</span>
-                      <span className="admin-summary-item" style={{ padding: '8px 12px' }}>⚡ Last answer {quizAnswerTime ? `${(quizAnswerTime / 1000).toFixed(1)}s` : '—'}</span>
-                      <span className="admin-summary-item" style={{ padding: '8px 12px' }}>🔥 Best streak {bestStreak}</span>
-                      <span className="admin-summary-item" style={{ padding: '8px 12px', textTransform: 'capitalize' }}>📚 {difficulty}</span>
-                      <span className="admin-summary-item" style={{ padding: '8px 12px', color: '#f87171' }}>✗ Errors −{(quizQuestions.length - quizScore) * (QUIZ_ERROR_PENALTY[difficulty] || 30)}</span>
+                      <span className="admin-summary-item" style={{ padding: '8px 12px' }}>Accuracy {(quizScore / quizQuestions.length * 100).toFixed(0)}%</span>
+                      <span className="admin-summary-item" style={{ padding: '8px 12px' }}>Last answer {quizAnswerTime ? `${(quizAnswerTime / 1000).toFixed(1)}s` : '—'}</span>
+                      <span className="admin-summary-item" style={{ padding: '8px 12px' }}>Best streak {bestStreak}</span>
+                      <span className="admin-summary-item" style={{ padding: '8px 12px', textTransform: 'capitalize' }}>Difficulty: {difficulty}</span>
+                      <span className="admin-summary-item" style={{ padding: '8px 12px', color: '#f87171' }}>Errors −{(quizQuestions.length - quizScore) * (QUIZ_ERROR_PENALTY[difficulty] || 30)}</span>
                     </div>
                     <div style={{ padding: '10px 14px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: 1.7 }}>
                       <strong style={{ color: 'var(--text-primary)' }}>Score formula:</strong> (base × difficulty × streak) + speed bonus − error penalties<br />
@@ -1558,15 +1560,11 @@ const AstroGames = ({ user, profile }) => {
                     <Sparkles size={16} /> How to play
                   </div>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.7, margin: 0 }}>
-                    A planet, moon, or dwarf planet is hidden in the scene on the left. Type a name below — even a single letter surfaces matching worlds — and submit a guess. You have 7 attempts. Each guess reveals five clues compared against the target:
+                    A hidden world is waiting in the scene on the left. Type a name below — even a single letter surfaces matching worlds — and submit a guess. You have 7 attempts. Each guess focuses on one clue: temperature.
                   </p>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
                     {[
-                      { label: 'Type', detail: 'Planet, Moon, or Dwarf Planet — exact match or miss' },
-                      { label: 'System', detail: 'Which body it orbits — exact match or miss' },
-                      { label: 'Distance', detail: 'Distance from the Sun, with closer/farther hints' },
-                      { label: 'Size', detail: 'Relative radius compared to Earth' },
-                      { label: 'Temp', detail: 'Average surface temperature' },
+                      { label: 'Temperature', detail: 'Warmer or colder than the target, with closer hints as you narrow it down' },
                     ].map((item) => (
                       <div key={item.label} style={{ padding: '10px 12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
                         <div style={{ fontWeight: 700, fontSize: '13px' }}>{item.label}</div>
@@ -1582,29 +1580,29 @@ const AstroGames = ({ user, profile }) => {
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '20px' }}>
-                <div className="admin-card" style={{ minHeight: '360px', padding: '0', overflow: 'hidden', position: 'relative' }}>
+              <div className="universle-layout-grid">
+                <div className="admin-card" style={{ minHeight: '320px', padding: '0', overflow: 'hidden', position: 'relative' }}>
                   <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 2, padding: '6px 10px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(9, 9, 11, 0.72)', fontSize: '12px', color: 'var(--text-secondary)' }}>
                     Drag to orbit • target highlighted
                   </div>
                   <PlanetScene targetBody={universleTarget} bodies={universleBodies} />
                 </div>
                 <div style={{ display: 'grid', gap: '12px' }}>
-                  <form onSubmit={(event) => submitUniversleGuess(event)} style={{ display: 'grid', gap: '10px' }}>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      <input className="admin-input" value={universleGuess} onChange={handleUniversleGuessChange} placeholder="Type a planet, moon or dwarf" />
+                  <form onSubmit={(event) => submitUniversleGuess(event)} style={{ display: 'grid', gap: '10px', position: 'relative' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', position: 'relative', width: '100%' }}>
+                      <input className="admin-input" value={universleGuess} onChange={handleUniversleGuessChange} placeholder="Type a planet, moon or dwarf" autoComplete="off" style={{ flex: 1 }} />
                       <button type="submit" className="btn btn-primary">Guess</button>
+                      {universleSuggestions.length > 0 && (
+                        <div className="universle-suggestions-list">
+                          {universleSuggestions.map((body) => (
+                            <button key={body.id} type="button" className="btn btn-secondary" onClick={() => selectUniversleSuggestion(body)} style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', width: '100%', display: 'flex', marginBottom: '4px' }}>
+                              <span>{body.name}</span>
+                              <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{body.type}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {universleSuggestions.length > 0 && (
-                      <div style={{ display: 'grid', gap: '8px' }}>
-                        {universleSuggestions.map((body) => (
-                          <button key={body.id} type="button" className="btn btn-secondary" onClick={() => selectUniversleSuggestion(body)} style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '12px' }}>
-                            <span>{body.name}</span>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{body.type}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </form>
                   {universleTarget && !universleFinished && (
                     <div style={{ padding: '12px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '13px' }}>
@@ -1612,7 +1610,7 @@ const AstroGames = ({ user, profile }) => {
                         <div style={{ fontWeight: 700, color: '#a78bfa' }}>Clue board</div>
                         <span style={{ padding: '4px 8px', borderRadius: '999px', background: 'rgba(167, 139, 250, 0.16)', color: '#a78bfa', fontSize: '12px' }}>Multiplier ×{universleMultiplier.toFixed(1)}</span>
                       </div>
-                      <div style={{ marginBottom: '10px' }}>Target: {universleTarget.type} in the {universleTarget.system} system. Compare type, system, distance from the Sun, temperature and size.</div>
+                      <div style={{ marginBottom: '10px' }}>Target: {universleTarget.type} in the {universleTarget.system} system. The feedback is focused on temperature so you can narrow it down cleanly.</div>
                       {universleHintRows.length > 0 && (
                         <div style={{ overflowX: 'auto' }}>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -1646,8 +1644,8 @@ const AstroGames = ({ user, profile }) => {
                     {universleHistory.length ? [...universleHistory].reverse().map((entry, reversedIndex) => {
                       const guessNumber = universleHistory.length - reversedIndex;
                       const attributes = [
-                        { label: 'Type', state: entry.status.typeMatch ? 'match' : 'miss' },
-                        { label: 'System', state: entry.status.systemMatch ? 'match' : 'miss' },
+                        { label: 'Type', state: entry.status.typeState || (entry.status.typeMatch ? 'right' : 'wrong') },
+                        { label: 'System', state: entry.status.systemState || (entry.status.systemMatch ? 'right' : 'wrong') },
                         { label: 'Dist', state: entry.status.distanceState },
                         { label: 'Size', state: entry.status.sizeState },
                         { label: 'Temp', state: entry.status.temperatureState },

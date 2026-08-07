@@ -31,7 +31,7 @@ const parseJwt = (token) => {
 };
 
 function App() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [siteTheme, setSiteTheme] = useState('blue');
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [user, setUser] = useState(() => parseJwt(localStorage.getItem('token') || ''));
@@ -211,7 +211,7 @@ function App() {
       case 'events':
         return <Events />;
       case 'astrogames':
-        return <AstroGames user={user} profile={profile} />;
+        return <AstroGames user={user} profile={profile} setActivePage={setActivePage} />;
       case 'calendar':
         return <AstronomicalCalendar />;
       case 'login':
@@ -225,7 +225,7 @@ function App() {
     }
   };
 
-  const noShellPages = ['landing', 'login', 'register'];
+  const noShellPages = ['landing', 'login', 'register', 'astrogames'];
   const requiresAuth = ['dashboard', 'admin', 'account'];
   const showShell = !noShellPages.includes(activePage) && !(requiresAuth.includes(activePage) && !user);
 
