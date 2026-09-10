@@ -46,6 +46,18 @@ const Topbar = ({ collapsed, setCollapsed, activePage, theme, setTheme }) => {
             Activities / <span>Events</span>
           </>
         );
+      case 'astrogames':
+        return (
+          <>
+            Club Space / <span>AstroGames</span>
+          </>
+        );
+      case 'calendar':
+        return (
+          <>
+            Activities / <span>Astro Calendar</span>
+          </>
+        );
       default:
         return (
           <>

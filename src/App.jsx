@@ -15,7 +15,6 @@ import Landing from './components/Landing';
 import AdminPanel from './components/AdminPanel';
 import Tour from './components/Tour';
 import AstroGames from './components/AstroGames';
-import AstronomicalCalendar from './components/AstronomicalCalendar';
 import { buildAvatarUrl } from './utils/avatar';
 import './App.css';
 
@@ -98,7 +97,6 @@ function App() {
     if (p === '/account') return 'account';
     if (p === '/admin') return 'admin';
     if (p === '/astrogames') return 'astrogames';
-    if (p === '/calendar') return 'calendar';
     if (p === '/games' || p.startsWith('/games/')) return 'astrogames';
     if (p === '/game' || p.startsWith('/game/')) return 'astrogames';
     if (p.startsWith('/astrogames')) return 'astrogames';
@@ -131,8 +129,6 @@ function App() {
         return '/admin';
       case 'astrogames':
         return '/astrogames';
-      case 'calendar':
-        return '/calendar';
       default:
         return '/dashboard';
     }
@@ -212,8 +208,6 @@ function App() {
         return <Events />;
       case 'astrogames':
         return <AstroGames user={user} profile={profile} setActivePage={setActivePage} />;
-      case 'calendar':
-        return <AstronomicalCalendar />;
       case 'login':
         return <Login setActivePage={setActivePage} onLogin={handleLoginSuccess} />;
       case 'register':
@@ -225,7 +219,7 @@ function App() {
     }
   };
 
-  const noShellPages = ['landing', 'login', 'register', 'astrogames'];
+  const noShellPages = ['landing', 'login', 'register'];
   const requiresAuth = ['dashboard', 'admin', 'account'];
   const showShell = !noShellPages.includes(activePage) && !(requiresAuth.includes(activePage) && !user);
 

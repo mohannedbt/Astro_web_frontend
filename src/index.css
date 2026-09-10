@@ -5,6 +5,12 @@
   --bg-base:        #09090b; 
   --bg-surface:     #18181b; 
   --bg-hover:       #27272a; 
+  --color-success:  #22c55e;
+  --color-error:    #ef4444;
+  --color-success-bg: rgba(34, 197, 94, 0.12);
+  --color-error-bg:   rgba(239, 68, 68, 0.12);
+  --color-success-border: rgba(34, 197, 94, 0.4);
+  --color-error-border:   rgba(239, 68, 68, 0.4); 
   --border:         rgba(255, 255, 255, 0.08);
   --border-hover:   rgba(255, 255, 255, 0.15);
   --text-primary:   #fafafa; 
@@ -355,9 +361,97 @@ h1, h2, h3, h4, .font-heading {
   box-shadow: 0 8px 28px rgba(248, 113, 113, 0.2);
 }
 
-/* AstroGames page — inherits page-content layout */
 .astrogames-page {
-  /* page-content supplies padding, max-width & gap — nothing extra needed */
+  /* Fits beautifully within the standard page-content max-width layout */
+}
+
+.astro-quiz-intro,
+.astro-quiz-panel,
+.astro-result,
+.astro-leaderboards {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.72));
+  box-shadow: 0 22px 55px rgba(2, 6, 23, 0.22);
+  border-radius: 20px;
+}
+.astro-quiz-intro { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; padding: 32px; margin-top: 18px; }
+.astro-name-field { display: grid; gap: 7px; max-width: 430px; margin-top: 22px; color: var(--text-primary); font-size: 13px; font-weight: 700; }
+.astro-name-field span { color: #67e8f9; text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; }
+.astro-name-field input { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid rgba(103, 232, 249, 0.28); border-radius: 12px; outline: none; background: rgba(15, 23, 42, 0.72); color: var(--text-primary); font: inherit; }
+.astro-name-field input:focus { border-color: #67e8f9; box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.12); }
+.astro-start-button { margin-top: 12px; }
+.astro-start-button:disabled { cursor: not-allowed; opacity: 0.45; }
+.astro-kicker { color: #67e8f9; font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+.astro-quiz-intro h2, .astro-result h2 { color: var(--text-primary); font-size: clamp(26px, 4vw, 42px); margin: 10px 0; }
+.astro-quiz-intro p, .astro-result p { color: var(--text-secondary); line-height: 1.7; max-width: 560px; }
+.astro-tier-list { display: grid; gap: 10px; }
+.astro-tier { display: flex; align-items: center; gap: 12px; padding: 13px 15px; border: 1px solid rgba(148, 163, 184, 0.16); border-radius: 13px; background: rgba(15, 23, 42, 0.56); }
+.astro-tier > span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #0f172a; font-weight: 900; }
+.astro-tier strong, .astro-tier small { display: block; }
+.astro-tier small { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+.astro-quiz-panel { width: min(920px, 100%); justify-self: center; padding: clamp(22px, 5vw, 48px); margin: 26px auto 0; }
+.astrogames-page.quiz-active { min-height: calc(100vh - 110px); display: flex; flex-direction: column; justify-content: center; }
+.quiz-active .astro-quiz-panel { margin: auto; }
+.astro-quiz-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-secondary); font-size: 13px; flex-wrap: wrap; }
+.astro-quiz-meta strong { color: #67e8f9; font-size: 15px; }
+.astro-quiz-topline { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 20px; }
+.astro-quiz-topline > div:first-child { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.astro-difficulty { border: 1px solid; border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+.astro-question-count { color: var(--text-secondary); font-size: 13px; }
+.astro-timer { min-width: 118px; padding: 10px 16px; text-align: center; border: 1px solid rgba(103, 232, 249, 0.35); border-radius: 14px; background: rgba(103, 232, 249, 0.09); box-shadow: 0 0 24px rgba(103, 232, 249, 0.1); }
+.astro-timer small { display: block; color: #67e8f9; font-size: 10px; font-weight: 800; letter-spacing: 0.16em; }
+.astro-timer strong { display: block; color: #f8fafc; font-size: 28px; line-height: 1.05; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.astro-live-score { color: #f6ad55; font-size: 15px; white-space: nowrap; }
+.astro-progress { height: 5px; border-radius: 99px; background: rgba(148, 163, 184, 0.14); margin: 20px 0 34px; overflow: hidden; }
+.astro-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #67e8f9, #f6ad55); transition: width 180ms ease; }
+.astro-quiz-panel h2 { color: var(--text-primary); font-size: clamp(24px, 4vw, 38px); line-height: 1.15; max-width: 850px; margin: 0 0 26px; }
+.astro-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.astro-option { display: flex; align-items: center; gap: 14px; min-height: 70px; padding: 14px 18px; border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 14px; background: rgba(15, 23, 42, 0.48); color: var(--text-primary); text-align: left; font: inherit; cursor: pointer; transition: transform 160ms ease, border-color 160ms ease, background 160ms ease; }
+.astro-option:hover { transform: translateY(-2px); border-color: #67e8f9; background: rgba(103, 232, 249, 0.1); }
+.astro-option:disabled { cursor: default; opacity: 1; }
+.astro-option.correct { border-color: rgba(104, 211, 145, 0.8); background: rgba(104, 211, 145, 0.14); color: #dcfce7; }
+.astro-option.wrong { border-color: rgba(252, 129, 129, 0.8); background: rgba(252, 129, 129, 0.14); color: #fee2e2; }
+.astro-option.correct span { background: #68d391; }
+.astro-option.wrong span { background: #fc8181; }
+.astro-answer-review { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 18px; margin-top: 22px; padding: 18px; border: 1px solid rgba(103, 232, 249, 0.25); border-radius: 15px; background: rgba(15, 23, 42, 0.7); }
+.astro-answer-review.is-correct { border-color: rgba(104, 211, 145, 0.45); }
+.astro-answer-review.is-wrong { border-color: rgba(252, 129, 129, 0.45); }
+.astro-answer-review small, .astro-answer-review strong { display: block; }
+.astro-answer-review small { color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 5px; }
+.astro-answer-review strong { color: var(--text-primary); font-size: 14px; line-height: 1.4; }
+.astro-next-countdown { color: var(--text-secondary); font-size: 12px; text-align: right; white-space: nowrap; }
+.astro-next-countdown strong { display: inline; color: #67e8f9; font-size: 12px; }
+.astro-option span { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 8px; color: #0f172a; background: #67e8f9; font-weight: 900; flex: 0 0 auto; }
+.astro-exit { margin-top: 24px; }
+.astro-result { text-align: center; padding: 46px 24px; margin-top: 18px; background: radial-gradient(circle at 50% 0%, rgba(103, 232, 249, 0.18), transparent 55%), linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.8)); }
+.astro-result-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 22px; margin: 0 auto 18px; color: #f6ad55; background: rgba(246, 173, 85, 0.14); }
+.astro-result h2 { font-size: clamp(54px, 10vw, 92px); line-height: 1; margin: 16px 0 8px; color: #f8fafc; }
+.astro-result h2 small { color: var(--text-secondary); font-size: 18px; font-weight: 500; }
+.astro-save-status { color: #67e8f9; min-height: 22px; margin: 16px 0; font-size: 13px; }
+.astro-leaderboards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; padding: 26px; margin-top: 18px; }
+.astro-section-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: #67e8f9; }
+.astro-section-heading h2 { color: var(--text-primary); font-size: 18px; margin: 0; }
+.astro-score-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid rgba(148, 163, 184, 0.14); color: var(--text-secondary); font-size: 13px; }
+.astro-score-row strong { color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.astro-score-row b { color: #f6ad55; }
+.astro-empty { color: var(--text-secondary); font-size: 13px; }
+@media (max-width: 700px) {
+  .astro-quiz-intro, .astro-leaderboards { grid-template-columns: 1fr; padding: 22px; }
+  .astro-options { grid-template-columns: 1fr; }
+  .astro-quiz-panel { padding: 22px; }
+  .astrogames-page.quiz-active { min-height: auto; }
+  .astro-quiz-topline { grid-template-columns: 1fr auto; }
+  .astro-live-score { grid-column: 1 / -1; }
+  .astro-answer-review { grid-template-columns: 1fr; }
+  .astro-next-countdown { text-align: left; }
+}
+@keyframes quizShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+.quiz-shake {
+  animation: quizShake 0.4s ease-in-out;
 }
 .astrogames-hero {
   /* Reuse the shared .hero card; give it a purple accent glow */

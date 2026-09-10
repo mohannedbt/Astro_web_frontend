@@ -17,7 +17,6 @@ const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
       section: 'Activities',
       items: [
         { id: 'workshops', label: 'Workshops', icon: Mic },
-        { id: 'calendar', label: 'Astro Calendar', icon: Calendar },
         { id: 'events', label: 'Events', icon: Calendar },
         { id: 'admin', label: 'Admin', icon: User, adminOnly: true },
       ],

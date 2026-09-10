@@ -1,4 +1,4 @@
-﻿const axios = require('axios');
+const axios = require('axios');
 const logger = require('../utils/logger');
 const { dbRun, dbAll, dbGet, usingPostgres } = require('../middleware/database');
 
@@ -157,6 +157,53 @@ async function ensureScoresTable() {
   }
 }
 
+async function ensureQuizResultTables() {
+  const highScoresSql = usingPostgres
+    ? `CREATE TABLE IF NOT EXISTS astrogames_high_scores (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
+        correct INTEGER NOT NULL DEFAULT 0,
+        total INTEGER NOT NULL DEFAULT 5,
+        user_id INTEGER DEFAULT NULL,
+        user_email TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    : `CREATE TABLE IF NOT EXISTS astrogames_high_scores (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
+        correct INTEGER NOT NULL DEFAULT 0,
+        total INTEGER NOT NULL DEFAULT 5,
+        user_id INTEGER DEFAULT NULL,
+        user_email TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`;
+  const winnersSql = usingPostgres
+    ? `CREATE TABLE IF NOT EXISTS astrogames_winners (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        score INTEGER NOT NULL DEFAULT 375,
+        correct INTEGER NOT NULL DEFAULT 5,
+        total INTEGER NOT NULL DEFAULT 5,
+        user_id INTEGER DEFAULT NULL,
+        user_email TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    : `CREATE TABLE IF NOT EXISTS astrogames_winners (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        score INTEGER NOT NULL DEFAULT 375,
+        correct INTEGER NOT NULL DEFAULT 5,
+        total INTEGER NOT NULL DEFAULT 5,
+        user_id INTEGER DEFAULT NULL,
+        user_email TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`;
+  await dbRun(highScoresSql);
+  await dbRun(winnersSql);
+}
+
 function decodeHtmlEntities(value) {
   return String(value || '')
     .replace(/&quot;/g, '"')
@@ -177,6 +224,77 @@ function shuffleArray(items) {
   return copy;
 }
 
+const BACKEND_QUIZ_BANK = {
+  easy: [
+    { question: 'Which planet is known as the Red Planet?', options: ['Mars', 'Venus', 'Mercury', 'Jupiter'], answer: 'Mars' },
+    { question: 'What is the closest star to Earth?', options: ['The Sun', 'Sirius', 'Proxima Centauri', 'Alpha Centauri'], answer: 'The Sun' },
+    { question: 'How many planets are in our solar system?', options: ['8', '7', '9', '10'], answer: '8' },
+    { question: 'What galaxy do we live in?', options: ['The Milky Way', 'Andromeda', 'Triangulum', 'Whirlpool'], answer: 'The Milky Way' },
+    { question: 'Which planet has the most prominent ring system?', options: ['Saturn', 'Jupiter', 'Uranus', 'Neptune'], answer: 'Saturn' },
+    { question: 'Which planet is the largest in our solar system?', options: ['Jupiter', 'Saturn', 'Uranus', 'Neptune'], answer: 'Jupiter' },
+    { question: "What is the name of Earth's natural satellite?", options: ['The Moon', 'Titan', 'Europa', 'Phobos'], answer: 'The Moon' },
+    { question: 'What is the brightest object in the night sky after the Moon?', options: ['Venus', 'Jupiter', 'Mars', 'Sirius'], answer: 'Venus' },
+    { question: 'What do we call a rocky body orbiting the Sun, mostly found between Mars and Jupiter?', options: ['Asteroid', 'Comet', 'Meteorite', 'Dwarf planet'], answer: 'Asteroid' },
+    { question: 'What is a shooting star actually made of?', options: ['A meteoroid burning in the atmosphere', 'A piece of a dying star', 'A comet fragment', 'Solar debris'], answer: 'A meteoroid burning in the atmosphere' },
+    { question: 'Which planet is smallest in our solar system?', options: ['Mercury', 'Mars', 'Venus', 'Earth'], answer: 'Mercury' },
+    { question: 'What is the name of the force that keeps planets in orbit?', options: ['Gravity', 'Magnetism', 'Friction', 'Nuclear force'], answer: 'Gravity' },
+    { question: 'What is the Sun made of mostly?', options: ['Hydrogen and Helium', 'Oxygen and Carbon', 'Iron and Nickel', 'Methane and Ammonia'], answer: 'Hydrogen and Helium' },
+    { question: 'Which planet spins on its side with an extreme axial tilt?', options: ['Uranus', 'Saturn', 'Neptune', 'Jupiter'], answer: 'Uranus' },
+    { question: 'What type of galaxy is the Milky Way?', options: ['Spiral', 'Elliptical', 'Irregular', 'Ring'], answer: 'Spiral' },
+  ],
+  medium: [
+    { question: 'Which moon of Saturn has a thick nitrogen atmosphere?', options: ['Titan', 'Enceladus', 'Mimas', 'Iapetus'], answer: 'Titan' },
+    { question: 'What is the term for the point in an orbit closest to the Sun?', options: ['Perihelion', 'Aphelion', 'Zenith', 'Apogee'], answer: 'Perihelion' },
+    { question: 'Which spacecraft first landed humans on the Moon?', options: ['Apollo 11', 'Apollo 8', 'Gemini 4', 'Voyager 1'], answer: 'Apollo 11' },
+    { question: 'Which dwarf planet was reclassified from full planet status in 2006?', options: ['Pluto', 'Ceres', 'Eris', 'Haumea'], answer: 'Pluto' },
+    { question: 'What is the name of the region of space beyond Neptune filled with icy objects?', options: ['Kuiper Belt', 'Oort Cloud', 'Asteroid Belt', 'Heliosphere'], answer: 'Kuiper Belt' },
+    { question: 'Which planet has the Great Red Spot?', options: ['Jupiter', 'Mars', 'Saturn', 'Neptune'], answer: 'Jupiter' },
+    { question: 'What is the surface temperature of the Sun approximately?', options: ['5,500°C', '1,000°C', '10,000°C', '50,000°C'], answer: '5,500°C' },
+    { question: "What is the name of Mars's largest volcano?", options: ['Olympus Mons', 'Mauna Loa', 'Tharsis', 'Elysium Mons'], answer: 'Olympus Mons' },
+    { question: 'Which moon of Jupiter is thought to have a subsurface ocean?', options: ['Europa', 'Io', 'Callisto', 'Ganymede'], answer: 'Europa' },
+    { question: 'What is the term for a cloud of gas and dust in space where new stars form?', options: ['Nebula', 'Quasar', 'Pulsar', 'Nova'], answer: 'Nebula' },
+    { question: 'How long does light from the Sun take to reach Earth?', options: ['About 8 minutes', 'About 8 seconds', 'About 8 hours', 'About 8 days'], answer: 'About 8 minutes' },
+    { question: 'What is the name of the first artificial satellite launched into orbit?', options: ['Sputnik 1', 'Explorer 1', 'Vostok 1', 'Luna 1'], answer: 'Sputnik 1' },
+    { question: 'Which telescope was launched into orbit in 1990 and revolutionized astronomy?', options: ['Hubble Space Telescope', 'James Webb Telescope', 'Chandra X-ray', 'Spitzer Space Telescope'], answer: 'Hubble Space Telescope' },
+    { question: 'What phenomenon occurs when the Moon passes between Earth and the Sun?', options: ['Solar eclipse', 'Lunar eclipse', 'Transit', 'Occultation'], answer: 'Solar eclipse' },
+    { question: 'What is the Asteroid Belt mostly composed of?', options: ['Rocky debris from the early solar system', 'Ice and frozen gases', 'Iron meteorites', 'Cometary dust'], answer: 'Rocky debris from the early solar system' },
+  ],
+  hard: [
+    { question: 'What is the Chandrasekhar limit approximately equal to, in solar masses?', options: ['1.4', '3.2', '0.8', '5.6'], answer: '1.4' },
+    { question: 'Which region of the solar system is the source of most long-period comets?', options: ['The Oort Cloud', 'The Kuiper Belt', 'The Asteroid Belt', 'The Heliosphere'], answer: 'The Oort Cloud' },
+    { question: "What is a star's total energy output per second called?", options: ['Luminosity', 'Magnitude', 'Flux density', 'Albedo'], answer: 'Luminosity' },
+    { question: 'Which mission was the first to achieve a soft landing on a comet?', options: ['Rosetta/Philae', 'Stardust', 'Deep Impact', 'OSIRIS-REx'], answer: 'Rosetta/Philae' },
+    { question: 'What is the name of the process by which stars fuse hydrogen into helium?', options: ['Nuclear fusion', 'Nuclear fission', 'Photodissociation', 'Radioactive decay'], answer: 'Nuclear fusion' },
+    { question: 'What type of object forms when a massive star collapses after a supernova?', options: ['Neutron star or black hole', 'White dwarf', 'Red giant', 'Planetary nebula'], answer: 'Neutron star or black hole' },
+    { question: "What is the Hertzsprung-Russell diagram used to classify?", options: ['Stars by luminosity and temperature', 'Galaxies by size', 'Planets by mass', 'Nebulae by composition'], answer: 'Stars by luminosity and temperature' },
+    { question: "What does the term 'redshift' indicate about a galaxy?", options: ['It is moving away from us', 'It is moving toward us', 'It is spinning faster', 'It contains more red stars'], answer: 'It is moving away from us' },
+    { question: 'Which planet has the fastest rotation in the solar system?', options: ['Jupiter', 'Saturn', 'Neptune', 'Uranus'], answer: 'Jupiter' },
+    { question: 'What is the primary composition of a comet nucleus?', options: ['Ice, dust, and rocky material', 'Iron and silicate rock', 'Liquid hydrogen', 'Carbon dioxide only'], answer: 'Ice, dust, and rocky material' },
+    { question: "What force counteracts gravity inside a main-sequence star?", options: ['Radiation pressure from nuclear fusion', 'Magnetic force', 'Centrifugal force', 'Electromagnetic repulsion'], answer: 'Radiation pressure from nuclear fusion' },
+    { question: "What is the name of the first exoplanet confirmed around a sun-like star?", options: ['51 Pegasi b', 'Kepler-22b', 'HD 209458 b', 'Tau Boötis b'], answer: '51 Pegasi b' },
+    { question: "Which telescope is designed specifically to detect gravitational waves?", options: ['LIGO', 'Hubble', 'Chandra', 'James Webb'], answer: 'LIGO' },
+    { question: "What is the 'habitable zone' of a star also known as?", options: ['The Goldilocks Zone', 'The Life Belt', 'The Frost Line', 'The Roche Zone'], answer: 'The Goldilocks Zone' },
+    { question: "What element was first discovered in the Sun's spectrum before being found on Earth?", options: ['Helium', 'Hydrogen', 'Neon', 'Carbon'], answer: 'Helium' },
+  ],
+  insane: [
+    { question: 'What is the approximate mass of the supermassive black hole Sagittarius A*?', options: ['About 4.3 million solar masses', 'About 4.3 thousand', 'About 4.3 billion', 'About 430'], answer: 'About 4.3 million solar masses' },
+    { question: 'Which spacecraft became the first human-made object to enter interstellar space?', options: ['Voyager 1', 'Voyager 2', 'Pioneer 10', 'New Horizons'], answer: 'Voyager 1' },
+    { question: 'What is the Roche limit primarily used to calculate?', options: ['The distance at which a celestial body disintegrates due to tidal forces', 'The escape velocity of a planet', 'The habitable zone of a star', 'The rotation period of a moon'], answer: 'The distance at which a celestial body disintegrates due to tidal forces' },
+    { question: "What is the term for the faint glow of sunlight scattered by interplanetary dust?", options: ['Zodiacal light', 'Airglow', 'Gegenschein halo', 'Corona discharge'], answer: 'Zodiacal light' },
+    { question: "Mercury's orbital perihelion shift is explained by which theory?", options: ["General Relativity", "Special Relativity", "Newtonian Mechanics", "Quantum Gravity"], answer: "General Relativity" },
+    { question: "What physical phenomenon causes pulsars to emit regular radio pulses?", options: ["Rapid rotation with a strong magnetic field", "Nuclear oscillation in the core", "Binary star interaction", "Accretion disk turbulence"], answer: "Rapid rotation with a strong magnetic field" },
+    { question: "What is the Schwarzschild radius of an object?", options: ["The radius at which it becomes a black hole", "Its equatorial circumference", "Its Roche limit distance", "Its event horizon temperature"], answer: "The radius at which it becomes a black hole" },
+    { question: "Which type of supernova occurs when a white dwarf in a binary system accretes enough mass?", options: ["Type Ia", "Type II", "Type Ib", "Type Ic"], answer: "Type Ia" },
+    { question: "What is the Jeans instability condition related to?", options: ["When a gas cloud collapses under gravity to form a star", "When a star explodes as a supernova", "When two galaxies merge", "When a neutron star becomes a pulsar"], answer: "When a gas cloud collapses under gravity to form a star" },
+    { question: "What is the cosmic microwave background radiation a remnant of?", options: ["The Big Bang", "The first supernova explosion", "Quasar formation", "The first galaxy merger"], answer: "The Big Bang" },
+    { question: "What is the approximate age of the universe?", options: ["13.8 billion years", "4.5 billion years", "100 billion years", "1 trillion years"], answer: "13.8 billion years" },
+    { question: "Which telescope was launched in 2021 and observes in near-infrared?", options: ["James Webb Space Telescope", "Hubble Space Telescope", "Chandra X-ray Observatory", "TESS"], answer: "James Webb Space Telescope" },
+    { question: "What is the name of the process that converts four hydrogen nuclei into one helium nucleus inside stars?", options: ["Proton-proton chain", "CNO cycle", "Triple-alpha process", "Fission chain"], answer: "Proton-proton chain" },
+    { question: "Which moon of Neptune has a retrograde orbit, suggesting it was captured?", options: ["Triton", "Proteus", "Nereid", "Despina"], answer: "Triton" },
+    { question: "What is dark energy thought to be responsible for?", options: ["The accelerating expansion of the universe", "Galaxy formation", "Black hole growth", "Pulsar emissions"], answer: "The accelerating expansion of the universe" },
+  ],
+};
+
 async function fetchLiveAstronomyQuestions(difficultyTier = 'medium', amount = 5) {
   const apiDifficulty = difficultyTier === 'insane' ? 'hard' : difficultyTier;
   try {
@@ -196,54 +314,93 @@ async function fetchLiveAstronomyQuestions(difficultyTier = 'medium', amount = 5
       category: decodeHtmlEntities(item.category),
     }));
 
+    // Strictly filter to ensure 100% astronomy/space-focused
     const astronomyMatches = decoded.filter((entry) => ASTRO_KEYWORDS.some((keyword) => entry.question.toLowerCase().includes(keyword)));
     const seen = new Set();
-    const pool = [...astronomyMatches, ...decoded];
     const unique = [];
-    for (const entry of pool) {
+    for (const entry of astronomyMatches) {
       if (seen.has(entry.question)) continue;
       seen.add(entry.question);
       unique.push(entry);
       if (unique.length >= amount) break;
     }
 
-    if (unique.length < amount) throw new Error('Not enough live questions');
+    // If we don't have enough 100% astronomy questions, fall back to our local curated pool
+    if (unique.length < amount) {
+      const fallbackPool = BACKEND_QUIZ_BANK[difficultyTier] || BACKEND_QUIZ_BANK.easy;
+      const shuffledFallback = shuffleArray(fallbackPool);
+      for (const entry of shuffledFallback) {
+        if (!seen.has(entry.question)) {
+          seen.add(entry.question);
+          unique.push(entry);
+          if (unique.length >= amount) break;
+        }
+      }
+    }
+
     return unique;
   } catch (error) {
-    return null;
+    // If API fails entirely, fall back to our high quality curated astronomy questions
+    const fallbackPool = BACKEND_QUIZ_BANK[difficultyTier] || BACKEND_QUIZ_BANK.easy;
+    return shuffleArray(fallbackPool).slice(0, amount);
   }
 }
 
 function astrogamesRoutes(app) {
-  app.get('/api/astrogames/challenge', async (req, res) => {
+  app.get('/api/astrogames/quiz-results', async (req, res) => {
     try {
-      await ensureChallengeTable();
-      const type = (req.query.type || 'daily').toLowerCase();
-      const challengeKey = type === 'daily' ? new Date().toISOString().slice(0, 10) : 'practice';
-      const existing = await dbGet('SELECT payload, expires_at FROM astrogames_challenges WHERE mode = ? AND challenge_key = ?', [type, challengeKey]);
-      const now = new Date();
-      if (existing && (!existing.expires_at || new Date(existing.expires_at) > now)) {
-        return res.json(JSON.parse(existing.payload));
-      }
-      const payload = buildChallengePayload(type, challengeKey);
-      const expiresAt = type === 'daily'
-        ? new Date(new Date().setHours(23, 59, 59, 999)).toISOString()
-        : null;
-      await dbRun(
-        `INSERT INTO astrogames_challenges (mode, challenge_key, title, description, difficulty, payload, created_at, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(mode, challenge_key) DO UPDATE SET
-           title = excluded.title,
-           description = excluded.description,
-           difficulty = excluded.difficulty,
-           payload = excluded.payload,
-           created_at = excluded.created_at,
-           expires_at = excluded.expires_at`,
-        [type, challengeKey, payload.title, payload.description, payload.difficulty, JSON.stringify(payload), new Date().toISOString(), expiresAt]
-      );
-      res.json(payload);
+      await ensureQuizResultTables();
+      const scores = await dbAll('SELECT * FROM astrogames_high_scores ORDER BY score DESC, created_at ASC LIMIT 20');
+      const winners = await dbAll('SELECT * FROM astrogames_winners ORDER BY created_at DESC LIMIT 20');
+      res.json({ scores, winners });
     } catch (error) {
-      res.status(500).json({ error: 'Challenge unavailable' });
+      logger.error('Unable to load quiz results', { message: error.message, stack: error.stack });
+      res.status(500).json({ error: 'Quiz results unavailable' });
+    }
+  });
+
+  app.post('/api/astrogames/quiz-results', async (req, res) => {
+    const { name, score, total, correct, userId, userEmail } = req.body;
+    const safeName = String(name || '').trim().slice(0, 120);
+    const safeScore = Math.max(0, Math.min(250, Number(score) || 0));
+    const safeTotal = 5;
+    const safeCorrect = Math.max(0, Math.min(safeTotal, Number(correct) || 0));
+    if (!safeName) return res.status(400).json({ error: 'name required' });
+
+    try {
+      await ensureQuizResultTables();
+      const values = [safeName, safeScore, safeCorrect, safeTotal, userId || null, userEmail || null, new Date().toISOString()];
+      const scoreSql = usingPostgres
+        ? 'INSERT INTO astrogames_high_scores (name, score, correct, total, user_id, user_email, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *'
+        : 'INSERT INTO astrogames_high_scores (name, score, correct, total, user_id, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
+      let savedScore;
+      if (usingPostgres) {
+        const result = await dbRun(scoreSql, values);
+        savedScore = result.rows?.[0];
+      } else {
+        await dbRun(scoreSql, values);
+        const lastId = await dbGet('SELECT last_insert_rowid() AS id');
+        savedScore = await dbGet('SELECT * FROM astrogames_high_scores WHERE id = ?', [lastId?.id]);
+      }
+
+      let savedWinner = null;
+      if (safeCorrect === safeTotal) {
+        const winnerSql = usingPostgres
+          ? 'INSERT INTO astrogames_winners (name, score, correct, total, user_id, user_email, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *'
+          : 'INSERT INTO astrogames_winners (name, score, correct, total, user_id, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        if (usingPostgres) {
+          const result = await dbRun(winnerSql, values);
+          savedWinner = result.rows?.[0];
+        } else {
+          await dbRun(winnerSql, values);
+          const lastId = await dbGet('SELECT last_insert_rowid() AS id');
+          savedWinner = await dbGet('SELECT * FROM astrogames_winners WHERE id = ?', [lastId?.id]);
+        }
+      }
+      res.json({ score: savedScore, winner: savedWinner });
+    } catch (error) {
+      logger.error('Unable to save quiz result', { message: error.message, stack: error.stack, name: safeName });
+      res.status(500).json({ error: 'Unable to save quiz result' });
     }
   });
 
@@ -252,7 +409,7 @@ function astrogamesRoutes(app) {
       const difficulty = (req.query.difficulty || 'medium').toLowerCase();
       const amount = Number(req.query.amount || 5);
       const questions = await fetchLiveAstronomyQuestions(difficulty, amount);
-      if (!questions) {
+      if (!questions || !questions.length) {
         return res.status(502).json({ error: 'Unable to fetch astronomy questions' });
       }
       res.json({ questions });
