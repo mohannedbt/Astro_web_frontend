@@ -362,7 +362,7 @@ function astrogamesRoutes(app) {
   app.post('/api/astrogames/quiz-results', async (req, res) => {
     const { name, score, total, correct, userId, userEmail } = req.body;
     const safeName = String(name || '').trim().slice(0, 120);
-    const safeScore = Math.max(0, Math.min(250, Number(score) || 0));
+    const safeScore = Math.max(0, Math.min(375, Number(score) || 0));
     const safeTotal = 5;
     const safeCorrect = Math.max(0, Math.min(safeTotal, Number(correct) || 0));
     if (!safeName) return res.status(400).json({ error: 'name required' });

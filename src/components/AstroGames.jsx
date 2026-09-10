@@ -115,6 +115,7 @@ const tierColors = { easy: '#68d391', medium: '#63b3ed', hard: '#f6ad55', expert
 const shuffle = (items) => [...items].sort(() => Math.random() - 0.5);
 const playerName = (user, profile) => profile?.name || profile?.username || user?.name || user?.email?.split('@')[0] || 'Astronaut';
 const formatElapsed = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'https://astro-web-frontend.onrender.com');
 
 const AstroGames = ({ user, profile, setActivePage }) => {
   const [questions, setQuestions] = useState([]);
@@ -130,7 +131,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
 
   const loadLeaderboard = async () => {
     try {
-      const response = await fetch('/api/astrogames/quiz-results');
+      const response = await fetch(`${API_BASE}/api/astrogames/quiz-results`);
       if (!response.ok) throw new Error('Leaderboard unavailable');
       const payload = await response.json();
       setLeaderboard({
@@ -191,7 +192,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
     const score = nextAnswers.reduce((sum, entry, index) => sum + (entry === questions[index].answer ? (index + 1) * 25 : 0), 0);
     setSaveState('saving');
     try {
-      const response = await fetch('/api/astrogames/quiz-results', {
+      const response = await fetch(`${API_BASE}/api/astrogames/quiz-results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: quizName.trim(), score, total: 375, correct, userId: user?.id, userEmail: user?.email || profile?.email }),
