@@ -229,7 +229,7 @@ function App() {
       <div className="ambient-glow"></div>
 
       {showShell ? (
-        <div className="shell">
+        <div className={`shell ${activePage === 'astrogames' ? 'quiz-shell' : ''}`}>
           <Sidebar
             collapsed={collapsed}
             activePage={activePage}
