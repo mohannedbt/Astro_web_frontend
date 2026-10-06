@@ -23,18 +23,20 @@ export const buildAvatarUrl = (seed = '', scale = 80) => {
   const normalizedSeed = (seed || 'astro').toString().trim();
   const rand = createSeededRandom(normalizedSeed);
   const size = Math.max(24, Math.min(96, scale));
-  const cell = Math.max(4, Math.round(size / 8));
-  const sizePx = Math.floor(size / cell) * cell;
-  const palette = ['#0f172a', '#1d4ed8', '#7c3aed', '#f59e0b', '#ef4444', '#14b8a6', '#f8fafc'];
+  const cell = size / 4;
+  const hue = Math.floor(rand() * 360);
+  const color = `hsl(${hue} 68% 46%)`;
 
   const squares = [];
-  for (let y = 0; y < sizePx; y += cell) {
-    for (let x = 0; x < sizePx; x += cell) {
-      const color = palette[Math.floor(rand() * palette.length)];
-      squares.push(`<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${color}" />`);
+  for (let row = 0; row < 4; row += 1) {
+    for (let column = 0; column < 4; column += 1) {
+      const x = column * cell;
+      const y = row * cell;
+      const fill = rand() > 0.5 ? color : '#ffffff';
+      squares.push(`<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${fill}" />`);
     }
   }
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${sizePx} ${sizePx}"><rect width="100%" height="100%" fill="#020617"/>${squares.join('')}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="100%" height="100%" fill="#ffffff"/>${squares.join('')}</svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 };

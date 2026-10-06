@@ -12,6 +12,7 @@ import Register from './components/Register';
 import Account from './components/Account';
 import Events from './components/Events';
 import Landing from './components/Landing';
+import Committee from './components/Committee';
 import AdminPanel from './components/AdminPanel';
 import Tour from './components/Tour';
 import AstroGames from './components/AstroGames';
@@ -92,6 +93,7 @@ function App() {
     if (p === '/skymap') return 'skymap';
     if (p === '/workshops') return 'workshops';
     if (p === '/events') return 'events';
+    if (p === '/committee') return 'committee';
     if (p === '/login') return 'login';
     if (p === '/register') return 'register';
     if (p === '/account') return 'account';
@@ -119,6 +121,8 @@ function App() {
         return '/workshops';
       case 'events':
         return '/events';
+      case 'committee':
+        return '/committee';
       case 'login':
         return '/login';
       case 'register':
@@ -178,7 +182,7 @@ function App() {
     if (decoded) {
       persistProfile(decoded);
     }
-    setActivePage('dashboard');
+    setActivePage(location.pathname === '/events' ? 'events' : 'dashboard');
   };
 
   const handleLogout = () => {
@@ -187,7 +191,7 @@ function App() {
   };
 
   const renderContent = () => {
-    if ((activePage === 'dashboard' || activePage === 'admin' || activePage === 'account') && !user) {
+    if ((activePage === 'dashboard' || activePage === 'admin' || activePage === 'account' || activePage === 'events') && !user) {
       return <Login setActivePage={setActivePage} onLogin={handleLoginSuccess} />;
     }
 
@@ -195,7 +199,7 @@ function App() {
       case 'landing':
         return <Landing setActivePage={setActivePage} />;
       case 'dashboard':
-        return <Dashboard setActivePage={setActivePage} user={user} />;
+        return <Dashboard setActivePage={setActivePage} user={user} token={token} />;
       case 'magazine':
         return <Magazine />;
       case 'skymap':
@@ -205,7 +209,9 @@ function App() {
       case 'admin':
         return user?.is_admin ? <AdminPanel token={token} /> : <Dashboard setActivePage={setActivePage} user={user} />;
       case 'events':
-        return <Events />;
+        return <Events token={token} />;
+      case 'committee':
+        return <Committee setActivePage={setActivePage} />;
       case 'astrogames':
         return <AstroGames user={user} profile={profile} setActivePage={setActivePage} />;
       case 'login':
@@ -219,8 +225,8 @@ function App() {
     }
   };
 
-  const noShellPages = ['landing', 'login', 'register'];
-  const requiresAuth = ['dashboard', 'admin', 'account'];
+  const noShellPages = ['landing', 'committee', 'login', 'register'];
+  const requiresAuth = ['dashboard', 'admin', 'account', 'events'];
   const showShell = !noShellPages.includes(activePage) && !(requiresAuth.includes(activePage) && !user);
 
   return (
@@ -229,14 +235,16 @@ function App() {
       <div className="ambient-glow"></div>
 
       {showShell ? (
-        <div className={`shell ${activePage === 'astrogames' ? 'quiz-shell' : ''}`}>
+        <div className="shell">
           <Sidebar
             collapsed={collapsed}
+            setCollapsed={setCollapsed}
             activePage={activePage}
             setActivePage={setActivePage}
             user={user}
             profile={profile}
           />
+          {!collapsed && <button className="sidebar-backdrop" aria-label="Close navigation" onClick={() => setCollapsed(true)} />}
 
           <main className={`main ${collapsed ? 'expanded' : ''}`} id="main-content">
             <Topbar

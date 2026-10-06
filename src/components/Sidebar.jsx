@@ -1,8 +1,7 @@
-import React from 'react';
 import { Compass, BookOpen, Map, Mic, User, Calendar, Gamepad2 } from 'lucide-react';
 import { buildAvatarUrl } from '../utils/avatar';
 
-const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
+const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, profile }) => {
   const navItems = [
     {
       section: 'Club Space',
@@ -57,7 +56,20 @@ const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
               <div
                 className={`nav-item ${isActive ? 'active' : ''}`}
                 key={item.id}
-                onClick={() => setActivePage(item.id)}
+                onClick={() => {
+                  setActivePage(item.id);
+                  if (window.matchMedia('(max-width: 980px)').matches) setCollapsed(true);
+                }}
+                role="button"
+                tabIndex={0}
+                title={collapsed ? item.label : undefined}
+                aria-label={item.label}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    setActivePage(item.id);
+                    if (window.matchMedia('(max-width: 980px)').matches) setCollapsed(true);
+                  }
+                }}
               >
                 <IconComponent />
                 <span>{item.label}</span>
@@ -67,7 +79,7 @@ const Sidebar = ({ collapsed, activePage, setActivePage, user, profile }) => {
         </div>
       ))}
 
-      <div className="sidebar-user" style={{ cursor: 'pointer' }}>
+      <div className="sidebar-user" style={{ cursor: 'pointer' }} title={collapsed ? profile?.name || user?.email || 'Account' : undefined}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => setActivePage('account')}>
           <div className="user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', borderRadius: '50%', overflow: 'hidden' }}>
             {profile?.avatar ? (

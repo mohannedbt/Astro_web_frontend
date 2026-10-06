@@ -1,0 +1,69 @@
+.committee-page {
+  min-height: 100vh;
+  padding: 0 max(24px, calc((100vw - 1180px) / 2));
+  color: #f3f5ee;
+  background: linear-gradient(135deg, #081722, #101e24 58%, #18241f);
+}
+
+.committee-header {
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgba(243, 245, 238, 0.18);
+}
+
+.committee-brand { display: inline-flex; align-items: center; gap: 11px; color: #f3f5ee; text-align: left; }
+.committee-brand img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.committee-brand strong, .committee-brand small { display: block; }
+.committee-brand strong { font-size: 16px; }
+.committee-brand small { margin-top: 3px; color: rgba(243, 245, 238, 0.65); font-size: 11px; }
+.committee-header nav { display: flex; align-items: center; gap: 22px; }
+.committee-header nav button { display: inline-flex; align-items: center; gap: 7px; color: rgba(243, 245, 238, 0.82); font-size: 12px; }
+.committee-header nav button:hover { color: #fff; }
+
+.committee-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(200px, 0.75fr);
+  align-items: center;
+  gap: 52px;
+  padding: 86px 0 78px;
+  border-bottom: 1px solid rgba(243, 245, 238, 0.18);
+}
+
+.committee-intro-copy { max-width: 740px; }
+.committee-eyebrow { color: #b8d6c9; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; }
+.committee-intro h1 { max-width: 680px; margin: 17px 0; font-size: 52px; font-weight: 500; line-height: 1.08; }
+.committee-intro-copy p { max-width: 650px; margin: 0; color: rgba(243, 245, 238, 0.75); font-size: 15px; line-height: 1.8; }
+.committee-emblem-wrap { display: flex; align-items: center; flex-direction: column; gap: 15px; }
+.committee-emblem-wrap img { width: min(100%, 270px); aspect-ratio: 1; border: 1px solid rgba(243, 245, 238, 0.18); border-radius: 50%; object-fit: cover; }
+.committee-emblem-wrap span { color: rgba(243, 245, 238, 0.56); font-size: 9px; letter-spacing: 0.1em; text-align: center; }
+
+.committee-roster-section { padding: 60px 0 72px; }
+.committee-roster-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.committee-roster-heading h2 { margin-top: 10px; font-size: 28px; font-weight: 500; }
+.committee-roster-heading > p { margin: 0 0 3px; color: rgba(243, 245, 238, 0.62); font-size: 12px; }
+.committee-roster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; margin: 0; padding: 0; list-style: none; }
+.committee-roster li { display: grid; grid-template-columns: 34px minmax(0, 1fr) 20px; align-items: center; gap: 14px; min-height: 94px; border-top: 1px solid rgba(243, 245, 238, 0.2); }
+.committee-number { color: #b8d6c9; font-size: 10px; font-variant-numeric: tabular-nums; }
+.committee-role { color: rgba(243, 245, 238, 0.57); font-size: 11px; }
+.committee-roster h3 { margin-top: 5px; font-size: 17px; font-weight: 500; }
+.committee-row-mark { color: rgba(243, 245, 238, 0.35); }
+.committee-join { display: flex; align-items: flex-start; flex-direction: column; gap: 14px; padding: 42px 0 56px; border-top: 1px solid rgba(243, 245, 238, 0.18); }
+.committee-join p { max-width: 640px; margin: 0; font-size: 24px; line-height: 1.4; }
+.committee-join button { display: inline-flex; min-height: 44px; align-items: center; gap: 10px; padding: 0 16px; background: #e7eddf; color: #101e24; font-size: 12px; font-weight: 700; }
+.committee-footer { display: flex; justify-content: space-between; gap: 16px; padding: 20px 0 24px; border-top: 1px solid rgba(243, 245, 238, 0.18); color: rgba(243, 245, 238, 0.5); font-size: 9px; letter-spacing: 0.08em; }
+
+@media (max-width: 700px) {
+  .committee-header { min-height: 70px; }
+  .committee-header nav { gap: 12px; }
+  .committee-intro { grid-template-columns: 1fr; gap: 28px; padding: 58px 0; }
+  .committee-intro h1 { font-size: 38px; }
+  .committee-emblem-wrap { align-items: flex-start; }
+  .committee-emblem-wrap img { width: 136px; }
+  .committee-roster-heading { align-items: flex-start; flex-direction: column; }
+  .committee-roster { grid-template-columns: 1fr; }
+  .committee-join p { font-size: 20px; }
+  .committee-footer { flex-direction: column; }
+}

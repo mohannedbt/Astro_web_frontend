@@ -1,4 +1,3 @@
-import React from 'react';
 import { Menu, Search, Bell, Maximize, Palette } from 'lucide-react';
 
 const Topbar = ({ collapsed, setCollapsed, activePage, theme, setTheme }) => {
@@ -95,8 +94,8 @@ const Topbar = ({ collapsed, setCollapsed, activePage, theme, setTheme }) => {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button className="toggle-sidebar" onClick={() => setCollapsed(!collapsed)}>
-          <Menu />
+        <button className="toggle-sidebar" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Open navigation' : 'Collapse navigation'} title={collapsed ? 'Open navigation' : 'Collapse navigation'}>
+          <Menu size={20} />
         </button>
         <div className="breadcrumbs">{getBreadcrumbs()}</div>
       </div>

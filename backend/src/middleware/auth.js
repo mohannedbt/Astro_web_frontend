@@ -22,9 +22,10 @@ function signToken(user) {
 
 function authMiddleware(req, res, next) {
   const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: 'Missing auth' });
+  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Missing bearer token' });
 
-  const token = auth.split(' ')[1];
+  const token = auth.slice('Bearer '.length).trim();
+  if (!token) return res.status(401).json({ error: 'Missing bearer token' });
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;

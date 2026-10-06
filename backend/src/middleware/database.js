@@ -48,7 +48,8 @@ async function initDatabase() {
       registered_count INTEGER DEFAULT 0,
       presentation_link TEXT,
       prerequisites TEXT,
-      agenda TEXT
+      agenda TEXT,
+      image_url TEXT
     )`);
 
     await pgPool.query(`CREATE TABLE IF NOT EXISTS events (
@@ -92,11 +93,15 @@ async function initDatabase() {
     await pgPool.query(`ALTER TABLE workshops ADD COLUMN IF NOT EXISTS presentation_link TEXT`);
     await pgPool.query(`ALTER TABLE workshops ADD COLUMN IF NOT EXISTS prerequisites TEXT`);
     await pgPool.query(`ALTER TABLE workshops ADD COLUMN IF NOT EXISTS agenda TEXT`);
+    await pgPool.query(`ALTER TABLE workshops ADD COLUMN IF NOT EXISTS image_url TEXT`);
 
     await pgPool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS location TEXT`);
     await pgPool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS time TEXT`);
     await pgPool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS status TEXT`);
     await pgPool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS capacity INTEGER DEFAULT 0`);
+    await pgPool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS image_url TEXT`);
+    await pgPool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS category TEXT`);
+    await pgPool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS gallery TEXT`);
 
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT DEFAULT ''`);
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT UNIQUE`);
@@ -140,7 +145,8 @@ async function initDatabase() {
       registered_count INTEGER DEFAULT 0,
       presentation_link TEXT,
       prerequisites TEXT,
-      agenda TEXT
+      agenda TEXT,
+      image_url TEXT
     )`).run();
 
     db.prepare(`CREATE TABLE IF NOT EXISTS events (
@@ -198,6 +204,7 @@ async function initDatabase() {
     ensureColumn('presentation_link', 'TEXT');
     ensureColumn('prerequisites', 'TEXT');
     ensureColumn('agenda', 'TEXT');
+    ensureColumn('image_url', 'TEXT');
 
     const existingEventColumns = db.prepare('PRAGMA table_info(events)').all().map((row) => row.name);
     const ensureEventColumn = (name, def) => {
@@ -210,6 +217,9 @@ async function initDatabase() {
     ensureEventColumn('time', 'TEXT');
     ensureEventColumn('status', 'TEXT');
     ensureEventColumn('capacity', 'INTEGER DEFAULT 0');
+    ensureEventColumn('image_url', 'TEXT');
+    ensureEventColumn('category', 'TEXT');
+    ensureEventColumn('gallery', 'TEXT');
 
     const existingUserColumns = db.prepare('PRAGMA table_info(users)').all().map((row) => row.name);
     const ensureUserColumn = (name, def) => {

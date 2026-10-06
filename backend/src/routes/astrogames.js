@@ -420,17 +420,23 @@ function astrogamesRoutes(app) {
 
   app.get('/api/astrogames/leaderboard', async (req, res) => {
     try {
+      await ensureScoresTable();
       const userId = req.query.userId;
       const userEmail = req.query.userEmail;
-      let rows;
+      const game = String(req.query.game || '').trim().slice(0, 60);
+      const filters = [];
+      const params = [];
       if (userId || userEmail) {
-        rows = await dbAll(
-          'SELECT * FROM astrogames_scores WHERE (user_id = ? OR user_email = ?) ORDER BY created_at DESC LIMIT 40',
-          [userId || '', userEmail || '']
-        );
-      } else {
-        rows = await dbAll('SELECT * FROM astrogames_scores ORDER BY created_at DESC LIMIT 20');
+        filters.push('(user_id = ? OR user_email = ?)');
+        params.push(userId || '', userEmail || '');
       }
+      if (game) {
+        filters.push('game = ?');
+        params.push(game);
+      }
+      const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+      const limit = userId || userEmail ? 40 : 20;
+      const rows = await dbAll(`SELECT * FROM astrogames_scores ${where} ORDER BY created_at DESC LIMIT ${limit}`, params);
       res.json(rows);
     } catch (error) {
       res.status(500).json({ error: 'Leaderboard unavailable' });

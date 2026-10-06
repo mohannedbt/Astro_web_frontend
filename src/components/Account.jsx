@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, Settings, Shield, Bell, LogOut, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { User, Shield, LogOut, Eye, EyeOff, Upload } from 'lucide-react';
 import { buildAvatarUrl, createAvatarSeed } from '../utils/avatar';
 
 const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
@@ -28,6 +28,33 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
   const getPersonalAvatar = () => {
     const seed = profile?.avatar_seed || username || email || 'user';
     return buildAvatarUrl(seed);
+  };
+
+  const handleAvatarUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
+      setMessage('Choose an image smaller than 5 MB.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, 256 / Math.max(image.width, image.height));
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+        setAvatar(canvas.toDataURL('image/jpeg', 0.82));
+        setMessage('');
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
   };
 
   const handleSave = () => {
@@ -121,7 +148,7 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
                       )}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '8px', color: 'var(--text-secondary)' }}>Avatar Image URL</label>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '8px', color: 'var(--text-secondary)' }}>Avatar image URL</label>
                       <input 
                         placeholder="https://example.com/avatar.jpg" 
                         value={avatar} 
@@ -129,6 +156,10 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', outline: 'none', fontSize: '14px', marginBottom: '12px' }} 
                       />
                       <button onClick={() => setAvatar('')} style={{ padding: '8px 14px', background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px' }}>Clear Avatar</button>
+                      <label className="avatar-upload-button">
+                        <Upload size={15} /> Upload photo
+                        <input type="file" accept="image/*" onChange={handleAvatarUpload} />
+                      </label>
                       <div style={{ marginTop: '16px' }}>
                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '10px' }}>Abstract avatars (like GitHub):</p>
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
