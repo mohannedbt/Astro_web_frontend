@@ -3118,3 +3118,185 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   .vintage-timeline-scroll-track { scroll-behavior: auto; }
   .vintage-event-frame, .vintage-photo-img, .scroll-hint-arrow svg { transition: none; animation: none; }
 }
+
+/* Phone layouts: keep every page inside the viewport and preserve readable controls. */
+@media (max-width: 640px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  #starfield {
+    width: 100vw;
+    height: 100dvh;
+  }
+
+  .shell,
+  .main,
+  .main.expanded,
+  .page-content {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .main,
+  .main.expanded {
+    overflow-x: clip;
+  }
+
+  .topbar {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+    padding: 8px 10px;
+  }
+
+  .topbar-left { flex: 1 1 auto; min-width: 0; }
+  .breadcrumbs { flex: 1 1 auto; max-width: 100%; font-size: 11px; }
+  .topbar-actions { gap: 4px; }
+  .topbar-action,
+  .topbar-auth { min-width: 34px; }
+
+  .page-content {
+    gap: 20px;
+    padding: 18px 14px 30px;
+  }
+
+  .page-content > *,
+  .admin-panel-grid > *,
+  .account-settings-layout > *,
+  .admin-form-row-2 > *,
+  .admin-form-row-3 > *,
+  .account-profile-row > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .page-content h1 { font-size: clamp(24px, 7vw, 32px); line-height: 1.15; }
+  .page-content h2 { font-size: clamp(20px, 5.8vw, 26px); line-height: 1.2; }
+  .page-content h3 { font-size: clamp(16px, 4.8vw, 20px); line-height: 1.3; }
+  .page-content p { overflow-wrap: anywhere; }
+
+  .btn,
+  .page-content button:not(.nav-item):not(.toggle-sidebar) {
+    min-height: 40px;
+  }
+
+  .page-content input,
+  .page-content select,
+  .page-content textarea {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .main-grid,
+  .editorial-grid,
+  .map-layout,
+  .universle-layout-grid,
+  .dashboard-hero-telemetry,
+  .meteor-analytics-grid,
+  .admin-panel-grid,
+  .admin-events-builder-grid,
+  .modal-grid-2col {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .magazine-grid,
+  .sub-articles-grid,
+  .workshops-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .mag-card.featured { grid-column: auto; }
+  .search-input-wrapper { width: 100%; min-width: 0; }
+  .featured-post { height: min(420px, 112vw); min-height: 300px; }
+  .featured-content { padding: 20px; }
+  .featured-title { font-size: clamp(24px, 7vw, 32px); }
+  .map-container { height: min(62dvh, 520px); min-height: 300px; }
+  .modal-overlay { align-items: flex-end; padding: 8px; }
+  .modal-container { max-height: 92dvh; border-radius: 18px 18px 10px 10px; }
+  .modal-header-sec,
+  .modal-body-sec { padding: 20px 16px; }
+  .modal-footer { padding: 14px 16px; }
+
+  .admin-page { padding: 16px 12px 28px; }
+  .admin-panel-header { gap: 12px; }
+  .admin-panel-header h2 { font-size: 24px; }
+  .admin-panel-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-side-button { min-height: 42px; justify-content: flex-start; gap: 7px; padding: 8px; font-size: 11px; }
+  .admin-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .admin-summary-item { padding: 12px; font-size: 11px; }
+  .admin-summary-amount { margin-top: 8px; font-size: 24px; }
+  .admin-card,
+  .admin-card-form,
+  .admin-card-table { padding: 16px; }
+  .admin-form-row-2,
+  .admin-form-row-3,
+  .admin-card-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .admin-form-actions { flex-direction: row; align-items: stretch; }
+  .admin-form-actions .btn { flex: 1 1 auto; justify-content: center; padding: 10px; }
+  .admin-table-wrapper { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  .admin-table { min-width: 640px; }
+  .admin-table th,
+  .admin-table td { padding: 10px 8px; font-size: 12px; }
+  .admin-events-builder-grid { display: flex; flex-direction: column; }
+  .admin-media-manager { min-width: 0; padding: 11px; }
+  .admin-photo-preset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-editor-actions { grid-template-columns: 1fr; }
+  .admin-live-preview-card { width: 100%; }
+  .preview-info-row { flex-wrap: wrap; }
+  .admin-image-field { grid-template-columns: minmax(0, 1fr); }
+
+  .account-settings-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .account-settings-nav button { justify-content: flex-start; }
+  .account-settings-card { padding: 16px; }
+  .account-avatar-section { grid-template-columns: 1fr; }
+  .account-profile-row { grid-template-columns: minmax(0, 1fr); }
+  .account-profile-actions { position: sticky; bottom: 6px; }
+
+  .astro-quiz-topline { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .astro-options { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .arcade-game-grid { grid-template-columns: minmax(0, 1fr); }
+  .arcade-lobby { padding: 24px 0 40px; }
+  .arcade-game-card { min-height: 230px; padding: 18px; }
+  .memory-board { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+  .memory-record-row { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 8px; padding: 12px 2px; }
+  .memory-record-row > :nth-child(n + 4) { display: none; }
+  .gameover-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-hero-telemetry { padding: 20px 16px; }
+  .analytics-card { padding: 16px; }
+  .hero-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .telemetry-card { padding: 12px; }
+  .telemetry-card .card-value { font-size: 21px; }
+
+  .tl-root { height: calc(100dvh - 60px); min-height: 400px; }
+  .tl-list { padding-right: 12px; }
+  .tl-item { grid-template-columns: 44px minmax(0, 1fr); }
+  .tl-date-big { font-size: clamp(28px, 9vw, 38px); }
+  .tl-card-body { padding: 16px; }
+  .tl-card-title { font-size: 19px; overflow-wrap: anywhere; }
+  .vintage-drawer-panel { width: 100%; max-width: 100vw; height: 100dvh; }
+}
+
+@media (max-width: 380px) {
+  .topbar { padding-right: 7px; padding-left: 7px; }
+  .topbar-left { gap: 3px; }
+  .toggle-sidebar { width: 32px; height: 34px; }
+  .breadcrumbs { font-size: 10px; }
+  .topbar-actions { gap: 3px; }
+  .topbar-action,
+  .topbar-auth { width: 32px; min-width: 32px; min-height: 32px; }
+  .page-content { padding-right: 11px; padding-left: 11px; }
+  .admin-panel-sidebar { grid-template-columns: minmax(0, 1fr); }
+  .admin-summary-grid { grid-template-columns: minmax(0, 1fr); }
+  .landing-brand strong { font-size: 14px; }
+  .landing-brand small { max-width: 180px; font-size: 9px; }
+}

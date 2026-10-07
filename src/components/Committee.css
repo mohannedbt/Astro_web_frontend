@@ -82,3 +82,19 @@
   .committee-join p { font-size: 20px; }
   .committee-footer { flex-direction: column; }
 }
+
+@media (max-width: 640px) {
+  .committee-page { padding: 0 16px; }
+  .committee-header { align-items: flex-start; flex-direction: column; gap: 12px; padding: 14px 0; }
+  .committee-header nav { width: 100%; justify-content: space-between; gap: 4px; }
+  .committee-header nav button { min-width: 0; padding: 0 7px; font-size: 11px; }
+  .committee-header nav .committee-sign-in { padding: 0 9px; }
+  .committee-brand { min-width: 0; }
+  .committee-brand small { max-width: min(62vw, 240px); }
+  .committee-intro { padding: 42px 0; }
+  .committee-intro h1 { font-size: clamp(30px, 9vw, 38px); }
+  .committee-roster-section { padding: 42px 0; }
+  .committee-roster li { grid-template-columns: 26px minmax(0, 1fr) 18px; gap: 10px; }
+  .committee-join p { font-size: 20px; }
+  .committee-footer { font-size: 8px; }
+}

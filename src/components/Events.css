@@ -327,6 +327,19 @@
   .drawer-meta-grid { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 420px) {
+  .tl-title { right: 12px; font-size: 17px; }
+  .tl-list { --spine-x: 21px; padding-left: 0; }
+  .tl-item { grid-template-columns: 40px minmax(0, 1fr); column-gap: 6px; }
+  .tl-date { gap: 7px; }
+  .tl-date-big { font-size: 30px; }
+  .tl-date-season { font-size: 21px; }
+  .tl-card-body { padding: 14px; }
+  .tl-card-title { font-size: 18px; }
+  .tl-card-desc { font-size: 13px; }
+  .drawer-meta-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tl-card, .tl-node, .tl-date, .tl-card-photo img, .tl-backdrop img { transform: none !important; transition-duration: 0.01ms; }
 }

@@ -663,9 +663,6 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                     >
                       <Eye size={14} /> {eventLivePreview ? 'Hide preview' : 'Show preview'}
                     </button>
-                    <button className="btn btn-primary" type="submit" form="admin-event-form">
-                      <Check size={14} /> {editingEventId ? 'Save event' : 'Publish event'}
-                    </button>
                   </div>
                 </div>
 
