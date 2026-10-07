@@ -83,9 +83,28 @@ const Events = ({ token }) => {
             String(candidate.id) === String(event.id)
             || normalizeTitle(candidate.title) === normalizeTitle(event.title)
           ));
-          return record
-            ? { ...event, ...record, id: event.id, title: event.title, description: event.description, image: event.image, gallery: event.gallery }
-            : event;
+          if (record) {
+            // Admin can override date fields; everything else stays from ACI_EVENTS
+            const merged = {
+              ...event,
+              ...record,
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              image: event.image,
+              gallery: event.gallery,
+            };
+            // If the backend record has a real date, mark it as confirmed
+            if (record.date || record.startAt) {
+              merged.date = record.date || (record.startAt ? record.startAt.split('T')[0] : event.date);
+              merged.startAt = record.startAt || (record.date ? `${record.date}T${event.time?.split(' - ')[0] || '20:00'}:00` : event.startAt);
+              merged.dateConfirmed = true;
+              // Clear the season so the confirmed date takes priority
+              delete merged.season;
+            }
+            return merged;
+          }
+          return event;
         });
         // Dates aren't fixed, so keep the order defined in ACI_EVENTS (or an explicit `order` field).
         setEvents(clubEvents.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));

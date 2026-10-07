@@ -19,17 +19,27 @@ export const createAvatarSeed = (seedBase = '') => {
   return cleaned ? `${cleaned}-${suffix}` : `astro-${suffix}`;
 };
 
-export const buildAvatarUrl = (seed = '', scale = 80) => {
+/**
+ * Generate a 32×32 pixel identicon SVG with an 8×8 grid of 4×4px blocks.
+ * Each block is filled with either white or the user's unique hue-based color.
+ * Returns a data URI suitable for use in <img> src attributes.
+ */
+export const buildAvatarUrl = (seed = '') => {
   const normalizedSeed = (seed || 'astro').toString().trim();
   const rand = createSeededRandom(normalizedSeed);
-  const size = Math.max(24, Math.min(96, scale));
-  const cell = size / 4;
+
+  // Image is always 32×32 pixels, divided into an 8×8 grid of 4×4px blocks
+  const size = 32;
+  const gridSize = 8;
+  const cell = size / gridSize; // 4px per cell
+
+  // Unique user color derived from the seed
   const hue = Math.floor(rand() * 360);
   const color = `hsl(${hue} 68% 46%)`;
 
   const squares = [];
-  for (let row = 0; row < 4; row += 1) {
-    for (let column = 0; column < 4; column += 1) {
+  for (let row = 0; row < gridSize; row += 1) {
+    for (let column = 0; column < gridSize; column += 1) {
       const x = column * cell;
       const y = row * cell;
       const fill = rand() > 0.5 ? color : '#ffffff';

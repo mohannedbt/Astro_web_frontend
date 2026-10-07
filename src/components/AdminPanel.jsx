@@ -19,6 +19,7 @@ import {
   Users,
 } from 'lucide-react';
 import {
+  ACI_EVENTS,
   fetchAdminNewsletterSubscribers,
   fetchAdminStats,
   deleteNewsletterSubscriber,
@@ -106,6 +107,15 @@ const AdminPanel = ({ token: initialToken = '' }) => {
   const [editingEventId, setEditingEventId] = useState(null);
   const [eventLivePreview, setEventLivePreview] = useState(true);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
+
+  // ACI Flagship Event Dates (admin can set confirmed dates for the 3 fixed events)
+  const [aciFlagshipDates, setAciFlagshipDates] = useState(() =>
+    ACI_EVENTS.reduce((acc, ev) => {
+      acc[ev.id] = { date: '', time: ev.time || '' };
+      return acc;
+    }, {})
+  );
+  const [flagshipSaveStatus, setFlagshipSaveStatus] = useState('');
 
   // Facebook & Newsletter State
   const [pageId, setPageId] = useState('');
@@ -313,6 +323,77 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       if (editingEventId === id) resetEventForm();
     } catch (err) {
       setError('Failed to delete event.');
+    }
+  };
+
+  /* ================= ACI FLAGSHIP DATE HANDLERS ================= */
+  const handleFlagshipDateChange = (eventId, field, value) => {
+    setAciFlagshipDates((prev) => ({
+      ...prev,
+      [eventId]: { ...prev[eventId], [field]: value },
+    }));
+  };
+
+  const saveFlagshipDate = async (aciEvent) => {
+    const dateInfo = aciFlagshipDates[aciEvent.id];
+    if (!dateInfo?.date) {
+      setFlagshipSaveStatus(`Please select a date for "${aciEvent.title}".`);
+      return;
+    }
+    setFlagshipSaveStatus(`Saving date for "${aciEvent.title}"...`);
+    const payload = {
+      title: aciEvent.title,
+      category: aciEvent.category,
+      date: dateInfo.date,
+      time: dateInfo.time || aciEvent.time,
+      startAt: `${dateInfo.date}T${(dateInfo.time || aciEvent.time || '20:00').split(' - ')[0]}:00`,
+      location: aciEvent.location,
+      capacity: aciEvent.capacity,
+      status: 'Upcoming',
+      description: aciEvent.description,
+      image: typeof aciEvent.image === 'string' ? aciEvent.image : '',
+      image_url: typeof aciEvent.image === 'string' ? aciEvent.image : '',
+      dateConfirmed: true,
+    };
+    try {
+      // Check if the event already exists in the backend
+      const existing = events.find(
+        (ev) => String(ev.id) === String(aciEvent.id) || (ev.title || '').toLowerCase() === (aciEvent.title || '').toLowerCase()
+      );
+      if (existing) {
+        await updateAdminEvent(token, existing.id, payload);
+      } else {
+        await createAdminEvent(token, payload);
+      }
+      await fetchAdminEvents();
+      setFlagshipSaveStatus(`Date confirmed for "${aciEvent.title}": ${dateInfo.date}`);
+    } catch (err) {
+      setFlagshipSaveStatus(`Failed to save date for "${aciEvent.title}": ${err.message}`);
+    }
+  };
+
+  const clearFlagshipDate = async (aciEvent) => {
+    const existing = events.find(
+      (ev) => String(ev.id) === String(aciEvent.id) || (ev.title || '').toLowerCase() === (aciEvent.title || '').toLowerCase()
+    );
+    if (existing) {
+      try {
+        await updateAdminEvent(token, existing.id, { date: '', startAt: '', dateConfirmed: false });
+        await fetchAdminEvents();
+        setAciFlagshipDates((prev) => ({
+          ...prev,
+          [aciEvent.id]: { date: '', time: aciEvent.time || '' },
+        }));
+        setFlagshipSaveStatus(`Date cleared for "${aciEvent.title}".`);
+      } catch (err) {
+        setFlagshipSaveStatus(`Failed to clear date: ${err.message}`);
+      }
+    } else {
+      setAciFlagshipDates((prev) => ({
+        ...prev,
+        [aciEvent.id]: { date: '', time: aciEvent.time || '' },
+      }));
+      setFlagshipSaveStatus(`Date cleared for "${aciEvent.title}".`);
     }
   };
 
@@ -899,6 +980,92 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            {/* ACI Flagship Event Date Manager */}
+            <div className="admin-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3>🌟 Flagship Event Dates</h3>
+                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                  3 Fixed ACI Events
+                </span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+                Set confirmed dates for the three core ACI events below. Once a date is saved, it replaces the season
+                placeholder on the public timeline.
+              </p>
+
+              {flagshipSaveStatus && (
+                <div style={{
+                  fontSize: '13px',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  marginBottom: '14px',
+                  background: flagshipSaveStatus.includes('Failed') || flagshipSaveStatus.includes('Please')
+                    ? 'rgba(239, 68, 68, 0.08)'
+                    : 'rgba(34, 197, 94, 0.08)',
+                  border: `1px solid ${flagshipSaveStatus.includes('Failed') || flagshipSaveStatus.includes('Please') ? 'rgba(239,68,68,0.25)' : 'rgba(34,197,94,0.25)'}`,
+                  color: flagshipSaveStatus.includes('Failed') || flagshipSaveStatus.includes('Please') ? '#ef4444' : '#22c55e',
+                }}>
+                  {flagshipSaveStatus}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {ACI_EVENTS.map((aciEv) => {
+                  const dateInfo = aciFlagshipDates[aciEv.id] || {};
+                  const existingRecord = events.find(
+                    (ev) => String(ev.id) === String(aciEv.id) || (ev.title || '').toLowerCase() === (aciEv.title || '').toLowerCase()
+                  );
+                  const currentDate = dateInfo.date || existingRecord?.date || '';
+                  return (
+                    <div
+                      key={aciEv.id}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr auto auto auto',
+                        gap: '10px',
+                        alignItems: 'center',
+                        padding: '14px 16px',
+                        borderRadius: '12px',
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                          {aciEv.title}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                          {currentDate ? `Confirmed: ${currentDate}` : `Season: ${aciEv.season}`}
+                        </div>
+                      </div>
+                      <input
+                        type="date"
+                        value={dateInfo.date || ''}
+                        onChange={(e) => handleFlagshipDateChange(aciEv.id, 'date', e.target.value)}
+                        style={{ maxWidth: '170px' }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ fontSize: '12px', padding: '7px 14px', whiteSpace: 'nowrap' }}
+                        onClick={() => saveFlagshipDate(aciEv)}
+                      >
+                        <Check size={13} /> Confirm Date
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ fontSize: '12px', padding: '7px 14px', whiteSpace: 'nowrap' }}
+                        onClick={() => clearFlagshipDate(aciEv)}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

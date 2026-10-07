@@ -372,51 +372,50 @@ const setStoredEvents = (events) => {
   }
 };
 
-export const fetchEvents = async (token) => {
-  if (!token) throw new Error('Sign in is required to load club events.');
-
+export const fetchEvents = async (token = null) => {
   let backendList = [];
-  try {
-    const res = await safeFetch(`${API_BASE}/api/events`, { headers: authHeaders(token) });
-    if (Array.isArray(res) && res.length > 0) {
-      backendList = res.map((e) => {
-        const startDate = e.start_time ? new Date(e.start_time) : null;
-        const date = startDate && !Number.isNaN(startDate.getTime())
-          ? startDate.toISOString().split('T')[0]
-          : e.date || '';
-        const time = e.time || (startDate && !Number.isNaN(startDate.getTime())
-          ? startDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-          : '');
-        const location = typeof e.location === 'object' ? e.location.name || 'TBA' : e.location || e.venue || 'TBA';
-        const capacity = e.capacity || e.attending_count || 'Unlimited';
-        const status = e.status || (startDate && startDate.getTime() > Date.now() ? 'Upcoming' : 'Past');
-        let gallery = [];
-        if (e.gallery) {
-          try {
-            gallery = typeof e.gallery === 'string' ? JSON.parse(e.gallery) : e.gallery;
-          } catch {
-            gallery = [e.gallery];
+  if (token) {
+    try {
+      const res = await safeFetch(`${API_BASE}/api/events`, { headers: authHeaders(token) });
+      if (Array.isArray(res) && res.length > 0) {
+        backendList = res.map((e) => {
+          const startDate = e.start_time ? new Date(e.start_time) : null;
+          const date = startDate && !Number.isNaN(startDate.getTime())
+            ? startDate.toISOString().split('T')[0]
+            : e.date || '';
+          const time = e.time || (startDate && !Number.isNaN(startDate.getTime())
+            ? startDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+            : '');
+          const location = typeof e.location === 'object' ? e.location.name || 'TBA' : e.location || e.venue || 'TBA';
+          const capacity = e.capacity || e.attending_count || 'Unlimited';
+          const status = e.status || (startDate && startDate.getTime() > Date.now() ? 'Upcoming' : 'Past');
+          let gallery = [];
+          if (e.gallery) {
+            try {
+              gallery = typeof e.gallery === 'string' ? JSON.parse(e.gallery) : e.gallery;
+            } catch {
+              gallery = [e.gallery];
+            }
           }
-        }
-        return {
-          id: e.id || e.source_id || e.id?.toString?.() || Math.random().toString(36).slice(2, 9),
-          title: e.title || e.name || 'Untitled Event',
-          date,
-          startAt: e.start_time || e.startAt || date,
-          time,
-          location,
-          description: e.description || '',
-          image: e.image_url || e.image || e.cover?.source || '',
-          category: e.category || 'Observation',
-          capacity,
-          status,
-          gallery: Array.isArray(gallery) && gallery.length > 0 ? gallery : (e.image_url ? [e.image_url] : []),
-        };
-      });
+          return {
+            id: e.id || e.source_id || e.id?.toString?.() || Math.random().toString(36).slice(2, 9),
+            title: e.title || e.name || 'Untitled Event',
+            date,
+            startAt: e.start_time || e.startAt || date,
+            time,
+            location,
+            description: e.description || '',
+            image: e.image_url || e.image || e.cover?.source || '',
+            category: e.category || 'Observation',
+            capacity,
+            status,
+            gallery: Array.isArray(gallery) && gallery.length > 0 ? gallery : (e.image_url ? [e.image_url] : []),
+          };
+        });
+      }
+    } catch (err) {
+      console.warn('Backend events fetch fallback to local cache:', err.message);
     }
-  } catch (err) {
-    if (err.status === 401 || err.status === 403) throw err;
-    console.warn('Backend events fetch fallback to local cache:', err.message);
   }
 
   const stored = getStoredEvents();

@@ -79,17 +79,36 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, pro
         </div>
       ))}
 
-      <div className="sidebar-user" style={{ cursor: 'pointer' }} title={collapsed ? profile?.name || user?.email || 'Account' : undefined}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => setActivePage('account')}>
-          <div className="user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', borderRadius: '50%', overflow: 'hidden' }}>
-            {profile?.avatar ? (
-              <img src={profile.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
-            ) : (
-              <img src={getAbstractAvatar()} alt="default avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-            )}
+      <div
+        className="sidebar-user"
+        style={{ cursor: 'pointer' }}
+        title={collapsed ? (user ? profile?.name || user?.email : 'Sign in as Member') : undefined}
+      >
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => setActivePage('account')}>
+            <div className="user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', borderRadius: '50%', overflow: 'hidden' }}>
+              {profile?.avatar ? (
+                <img src={profile.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+              ) : (
+                <img src={getAbstractAvatar()} alt="default avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="user-name">{profile?.name ? `${profile.name}` : user?.email ? `${user.email}` : 'Member'}</div>
+              <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 500 }}>{user?.is_admin ? 'Admin' : 'Active Member'}</span>
+            </div>
           </div>
-          <div className="user-name">{profile?.name ? `${profile.name}` : user?.email ? `${user.email}` : 'Guest'}</div>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={() => setActivePage('login')}>
+            <div className="user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(125, 211, 252, 0.12)', border: '1px solid rgba(125, 211, 252, 0.3)', borderRadius: '50%', color: 'var(--accent)', fontSize: '12px' }}>
+              🔭
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="user-name" style={{ color: 'var(--text-primary)' }}>Observer Mode</div>
+              <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 500 }}>Sign In →</span>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );

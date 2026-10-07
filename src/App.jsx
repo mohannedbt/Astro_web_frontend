@@ -191,15 +191,15 @@ function App() {
   };
 
   const renderContent = () => {
-    if ((activePage === 'dashboard' || activePage === 'admin' || activePage === 'account' || activePage === 'events') && !user) {
+    if ((activePage === 'admin' || activePage === 'account') && !user) {
       return <Login setActivePage={setActivePage} onLogin={handleLoginSuccess} />;
     }
 
     switch (activePage) {
       case 'landing':
-        return <Landing setActivePage={setActivePage} />;
+        return <Landing setActivePage={setActivePage} user={user} />;
       case 'dashboard':
-        return <Dashboard setActivePage={setActivePage} user={user} token={token} />;
+        return <Dashboard setActivePage={setActivePage} user={user} token={token} profile={profile} />;
       case 'magazine':
         return <Magazine />;
       case 'skymap':
@@ -207,9 +207,9 @@ function App() {
       case 'workshops':
         return <Workshops />;
       case 'admin':
-        return user?.is_admin ? <AdminPanel token={token} /> : <Dashboard setActivePage={setActivePage} user={user} />;
+        return user?.is_admin ? <AdminPanel token={token} /> : <Dashboard setActivePage={setActivePage} user={user} token={token} profile={profile} />;
       case 'events':
-        return <Events token={token} />;
+        return <Events token={token} setActivePage={setActivePage} user={user} />;
       case 'committee':
         return <Committee setActivePage={setActivePage} />;
       case 'astrogames':
@@ -221,12 +221,12 @@ function App() {
       case 'account':
         return <Account user={user} profile={profile} updateProfile={updateProfile} onLogout={handleLogout} setActivePage={setActivePage} />;
       default:
-        return <Dashboard setActivePage={setActivePage} user={user} />;
+        return <Dashboard setActivePage={setActivePage} user={user} token={token} profile={profile} />;
     }
   };
 
   const noShellPages = ['landing', 'committee', 'login', 'register'];
-  const requiresAuth = ['dashboard', 'admin', 'account', 'events'];
+  const requiresAuth = ['admin', 'account'];
   const showShell = !noShellPages.includes(activePage) && !(requiresAuth.includes(activePage) && !user);
 
   return (
@@ -251,6 +251,7 @@ function App() {
               collapsed={collapsed}
               setCollapsed={setCollapsed}
               activePage={activePage}
+              setActivePage={setActivePage}
               user={user}
               theme={siteTheme}
               setTheme={setSiteTheme}
