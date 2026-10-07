@@ -1796,6 +1796,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .meteor-gameover-overlay {
@@ -1893,8 +1896,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   gap: 18px;
 }
 
-.meteor-touch-pad { display: none; }
-
 .touch-steering-hint {
   font-size: 10px;
   color: var(--text-tertiary);
@@ -1926,42 +1927,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 @media (max-width: 768px) {
   .meteor-touch-action-row { gap: 12px; }
-  .meteor-touch-pad {
-    display: grid;
-    grid-template-areas:
-      ". up ."
-      "left down right";
-    grid-template-columns: repeat(3, 48px);
-    grid-template-rows: repeat(2, 48px);
-    gap: 4px;
-    padding: 4px;
-    border: 1px solid rgba(125, 211, 252, 0.18);
-    border-radius: 16px;
-    background: rgba(14, 27, 47, 0.72);
-  }
-  .meteor-touch-direction {
-    display: flex;
-    min-width: 44px;
-    min-height: 44px;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(125, 211, 252, 0.28);
-    border-radius: 12px;
-    background: rgba(56, 189, 248, 0.12);
-    color: #e0f2fe;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  .meteor-touch-direction:active {
-    background: rgba(56, 189, 248, 0.38);
-    border-color: rgba(125, 211, 252, 0.75);
-  }
-  .meteor-touch-direction:disabled { opacity: 0.45; }
-  .touch-up { grid-area: up; }
-  .touch-left { grid-area: left; }
-  .touch-down { grid-area: down; }
-  .touch-right { grid-area: right; }
   .touch-hint-mobile { display: inline; }
   .touch-hint-desktop { display: none; }
   .touch-emp-button {
@@ -3226,6 +3191,21 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   .topbar-auth { width: 34px; padding: 0; }
   .topbar-auth > span:not(.topbar-member-indicator) { display: none; }
   .topbar { gap: 8px; }
+
+  .main:has(.meteor-page-active) > .topbar { display: none; }
+  .meteor-page-active {
+    height: calc(100svh - 12px);
+    height: calc(100dvh - 12px);
+    padding: 6px 8px;
+  }
+  .page-content.meteor-page-active { padding: 6px 8px; }
+  .meteor-dash-viewport-panel { gap: 5px; }
+  .meteor-dash-hud-header { gap: 6px; padding: 5px 7px; }
+  .meteor-touch-controls { gap: 3px; }
+  .meteor-touch-action-row { gap: 0; }
+  .touch-steering-hint { font-size: 9px; letter-spacing: 0; }
+  .touch-emp-button { min-height: 40px; }
+  .meteor-canvas-wrapper { touch-action: none; }
 
   .page-content {
     gap: 20px;

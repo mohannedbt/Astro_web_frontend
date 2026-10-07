@@ -15,9 +15,6 @@ import {
   Zap,
   Flame,
   Award,
-  ArrowUp,
-  ArrowDown,
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
   Maximize2,
@@ -152,6 +149,8 @@ const AstroGames = ({ user, profile, setActivePage }) => {
     speed: 3.5,
     frameCount: 0,
     keys: {},
+    touchPointerId: null,
+    touchTarget: null,
     gameOver: false,
   });
 
@@ -232,6 +231,8 @@ const AstroGames = ({ user, profile, setActivePage }) => {
       speed: 3.8,
       frameCount: 0,
       keys: {},
+      touchPointerId: null,
+      touchTarget: null,
       gameOver: false,
     };
 
@@ -283,8 +284,15 @@ const AstroGames = ({ user, profile, setActivePage }) => {
     setDashScore(state.score);
   }, []);
 
-  const setTouchSteering = (direction, pressed) => {
-    gameStateRef.current.keys[direction] = pressed;
+  const updateTouchTarget = (event) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const bounds = canvas.getBoundingClientRect();
+    const state = gameStateRef.current;
+    state.touchTarget = {
+      x: (event.clientX - bounds.left) * (canvas.width / bounds.width),
+      y: (event.clientY - bounds.top) * (canvas.height / bounds.height),
+    };
   };
 
   useEffect(() => {
@@ -349,13 +357,20 @@ const AstroGames = ({ user, profile, setActivePage }) => {
       let targetVx = 0;
       let targetVy = 0;
 
-      if (state.keys['arrowleft'] || state.keys['a']) targetVx -= moveSpeed;
-      if (state.keys['arrowright'] || state.keys['d']) targetVx += moveSpeed;
-      if (state.keys['arrowup'] || state.keys['w']) targetVy -= moveSpeed * 0.85;
-      if (state.keys['arrowdown'] || state.keys['s']) targetVy += moveSpeed * 0.85;
+      if (state.touchPointerId !== null && state.touchTarget) {
+        targetVx = (state.touchTarget.x - state.ship.x) * 0.2;
+        targetVy = (state.touchTarget.y - state.ship.y) * 0.2;
+        state.ship.vx += (targetVx - state.ship.vx) * 0.55;
+        state.ship.vy += (targetVy - state.ship.vy) * 0.55;
+      } else {
+        if (state.keys['arrowleft'] || state.keys['a']) targetVx -= moveSpeed;
+        if (state.keys['arrowright'] || state.keys['d']) targetVx += moveSpeed;
+        if (state.keys['arrowup'] || state.keys['w']) targetVy -= moveSpeed * 0.85;
+        if (state.keys['arrowdown'] || state.keys['s']) targetVy += moveSpeed * 0.85;
 
-      state.ship.vx += (targetVx - state.ship.vx) * 0.22;
-      state.ship.vy += (targetVy - state.ship.vy) * 0.22;
+        state.ship.vx += (targetVx - state.ship.vx) * 0.22;
+        state.ship.vy += (targetVy - state.ship.vy) * 0.22;
+      }
       state.ship.x += state.ship.vx;
       state.ship.y += state.ship.vy;
       state.ship.tilt = state.ship.vx * 0.05;
@@ -952,7 +967,36 @@ const AstroGames = ({ user, profile, setActivePage }) => {
 
           {/* Interactive Game Canvas Container */}
           <div className="meteor-canvas-wrapper" style={dashCanvasSize ? { width: `${dashCanvasSize.width}px`, height: `${dashCanvasSize.height}px` } : undefined}>
-            <canvas ref={canvasRef} width={520} height={640} className="meteor-game-canvas" />
+            <canvas
+              ref={canvasRef}
+              width={520}
+              height={640}
+              className="meteor-game-canvas"
+              aria-label="Meteor Dash play area. Touch and drag to steer the rocket."
+              onPointerDown={(event) => {
+                if (event.pointerType !== 'touch' && !window.matchMedia('(max-width: 768px)').matches) return;
+                event.preventDefault();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                gameStateRef.current.touchPointerId = event.pointerId;
+                updateTouchTarget(event);
+              }}
+              onPointerMove={(event) => {
+                if (gameStateRef.current.touchPointerId !== event.pointerId) return;
+                event.preventDefault();
+                updateTouchTarget(event);
+              }}
+              onPointerUp={(event) => {
+                if (gameStateRef.current.touchPointerId === event.pointerId) {
+                  gameStateRef.current.touchPointerId = null;
+                }
+              }}
+              onPointerCancel={() => {
+                gameStateRef.current.touchPointerId = null;
+              }}
+              onLostPointerCapture={() => {
+                gameStateRef.current.touchPointerId = null;
+              }}
+            />
 
             {/* Game Over Overlay */}
             {dashGameOver && (
@@ -995,36 +1039,10 @@ const AstroGames = ({ user, profile, setActivePage }) => {
           {/* Mobile Touch Controls Overlay */}
           <div className="meteor-touch-controls" ref={dashControlsRef}>
             <div className="touch-steering-hint">
-              <span className="touch-hint-mobile">Hold a direction to steer · EMP clears nearby meteors</span>
+              <span className="touch-hint-mobile">Drag anywhere in the flight window to steer · EMP clears nearby meteors</span>
               <span className="touch-hint-desktop">Use arrows / WASD to steer · SPACE for EMP shockwave</span>
             </div>
             <div className="meteor-touch-action-row">
-              <div className="meteor-touch-pad" role="group" aria-label="Rocket steering controls">
-                {[
-                  { direction: 'arrowup', label: 'Steer up', Icon: ArrowUp, position: 'up' },
-                  { direction: 'arrowleft', label: 'Steer left', Icon: ArrowLeft, position: 'left' },
-                  { direction: 'arrowdown', label: 'Steer down', Icon: ArrowDown, position: 'down' },
-                  { direction: 'arrowright', label: 'Steer right', Icon: ArrowRight, position: 'right' },
-                ].map(({ direction, label, Icon, position }) => (
-                  <button
-                    className={`meteor-touch-direction touch-${position}`}
-                    key={direction}
-                    type="button"
-                    aria-label={label}
-                    disabled={dashGameOver}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      setTouchSteering(direction, true);
-                    }}
-                    onPointerUp={() => setTouchSteering(direction, false)}
-                    onPointerCancel={() => setTouchSteering(direction, false)}
-                    onLostPointerCapture={() => setTouchSteering(direction, false)}
-                  >
-                    <Icon size={19} aria-hidden="true" />
-                  </button>
-                ))}
-              </div>
               <button
                 className="touch-emp-button"
                 type="button"
