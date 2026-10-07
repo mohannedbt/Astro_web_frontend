@@ -17,11 +17,22 @@
 .committee-brand { display: inline-flex; align-items: center; gap: 11px; color: #f3f5ee; text-align: left; }
 .committee-brand img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
 .committee-brand strong, .committee-brand small { display: block; }
-.committee-brand strong { font-size: 16px; }
-.committee-brand small { margin-top: 3px; color: rgba(243, 245, 238, 0.65); font-size: 11px; }
+.committee-brand strong { font-size: 15px; }
+.committee-brand small { max-width: 245px; margin-top: 3px; color: rgba(243, 245, 238, 0.65); font-size: 9px; line-height: 1.35; }
 .committee-header nav { display: flex; align-items: center; gap: 22px; }
-.committee-header nav button { display: inline-flex; align-items: center; gap: 7px; color: rgba(243, 245, 238, 0.82); font-size: 12px; }
-.committee-header nav button:hover { color: #fff; }
+.committee-header nav button {
+  display: inline-flex; min-height: 38px; align-items: center; justify-content: center; gap: 7px;
+  padding: 0 10px; border: 1px solid transparent; border-radius: 10px;
+  color: rgba(243, 245, 238, 0.82); font-size: 12px;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.committee-header nav button:hover { color: #fff; background: rgba(243, 245, 238, 0.07); }
+.committee-header nav .committee-sign-in {
+  padding: 0 14px; border-color: rgba(125, 211, 252, 0.28);
+  background: var(--accent); color: #07111b; font-weight: 700;
+}
+.committee-header nav .committee-sign-in:hover { background: #a5e2ff; color: #07111b; }
+.committee-header button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 .committee-intro {
   display: grid;
@@ -57,7 +68,11 @@
 
 @media (max-width: 700px) {
   .committee-header { min-height: 70px; }
-  .committee-header nav { gap: 12px; }
+  .committee-header nav { gap: 4px; }
+  .committee-header nav button { padding: 0 8px; }
+  .committee-header nav .committee-sign-in { padding: 0 11px; }
+  .committee-brand img { width: 38px; height: 38px; }
+  .committee-brand small { max-width: 190px; font-size: 8px; }
   .committee-intro { grid-template-columns: 1fr; gap: 28px; padding: 58px 0; }
   .committee-intro h1 { font-size: 38px; }
   .committee-emblem-wrap { align-items: flex-start; }

@@ -7,17 +7,17 @@ const Committee = ({ setActivePage, user }) => (
     <header className="committee-header">
       <button className="committee-brand" onClick={() => setActivePage('landing')} aria-label="Back to Astro Club INSAT home">
         <img src="/profile.png" alt="Astro Club INSAT emblem" />
-        <span><strong>ACI</strong><small>Astro Club INSAT</small></span>
+        <span><strong>Astro Club INSAT</strong><small>The first club at INSAT dedicated to astronomy</small></span>
       </button>
       <nav aria-label="Committee page navigation">
-        <button onClick={() => setActivePage('landing')}><ArrowLeft size={15} /> Home</button>
-        <button onClick={() => setActivePage('events')}>Events <ArrowUpRight size={15} /></button>
+        <button type="button" onClick={() => setActivePage('landing')}><ArrowLeft size={15} /> Home</button>
+        <button type="button" onClick={() => setActivePage('events')}>Events <ArrowUpRight size={15} /></button>
         {!user ? (
-          <button onClick={() => setActivePage('login')} style={{ background: 'var(--accent)', color: '#07111b', fontWeight: 600, borderRadius: '999px', padding: '6px 14px' }}>
+        <button className="committee-sign-in" type="button" onClick={() => setActivePage('login')}>
             <LogIn size={14} /> Sign In
           </button>
         ) : (
-          <button onClick={() => setActivePage('dashboard')}>Dashboard <ArrowUpRight size={15} /></button>
+        <button type="button" onClick={() => setActivePage('dashboard')}>Dashboard <ArrowUpRight size={15} /></button>
         )}
       </nav>
     </header>
@@ -60,14 +60,14 @@ const Committee = ({ setActivePage, user }) => (
             gap: '6px'
           }}
         >
-          <span>Join ACI Community</span> <ArrowRight size={14} />
+          <span>Join Astro Club INSAT</span> <ArrowRight size={14} />
         </button>
       </div>
     )}
 
     <section className="committee-intro" aria-labelledby="committee-title">
       <div className="committee-intro-copy">
-        <span className="committee-eyebrow">THE PEOPLE BEHIND ACI</span>
+        <span className="committee-eyebrow">THE PEOPLE BEHIND ASTRO CLUB INSAT</span>
         <h1 id="committee-title">A club is made by the people who share it.</h1>
         <p>
           The Astro Club INSAT committee brings students together to make astronomy welcoming, collaborative, and
@@ -109,7 +109,7 @@ const Committee = ({ setActivePage, user }) => (
       <button onClick={() => setActivePage('register')}>Join the club <ArrowRight size={16} /></button>
     </section>
 
-    <footer className="committee-footer"><span>ASTRO CLUB INSAT</span><span>INSAT · University of Carthage</span></footer>
+    <footer className="committee-footer"><span>ASTRO CLUB INSAT · THE FIRST ASTRONOMY CLUB AT INSAT</span><span>INSAT · University of Carthage</span></footer>
   </main>
 );
 

@@ -14,6 +14,8 @@ import {
   Layers,
   Star,
   LogIn,
+  Menu,
+  X,
 } from 'lucide-react';
 import { ACI_EVENTS } from '../services/api';
 import './Landing.css';
@@ -113,6 +115,7 @@ const scrollToId = (id) => document.getElementById(id)?.scrollIntoView({ behavio
 
 const Landing = ({ setActivePage, user }) => {
   const [openFaq, setOpenFaq] = useState(null);
+  const [navOpen, setNavOpen] = useState(false);
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -127,31 +130,42 @@ const Landing = ({ setActivePage, user }) => {
             <img src="/profile.png" alt="Astro Club INSAT logo" />
           </span>
           <span>
-            <strong>ACI</strong>
-            <small>Astro Club INSAT</small>
+            <strong>Astro Club INSAT</strong>
+            <small>The first club at INSAT dedicated to astronomy</small>
           </span>
         </button>
 
-        <nav className="landing-nav" aria-label="Main navigation">
-          <button className="landing-nav-link" onClick={() => scrollToId('landing-about')}>About</button>
-          <button className="landing-nav-link" onClick={() => scrollToId('landing-portal')}>Features</button>
-          <button className="landing-nav-link" onClick={() => setActivePage('events')}>Events</button>
-          <button className="landing-nav-link" onClick={() => setActivePage('committee')}>Committee</button>
-          
+        <button
+          className="landing-menu-toggle"
+          type="button"
+          onClick={() => setNavOpen(!navOpen)}
+          aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={navOpen}
+          aria-controls="landing-main-nav"
+        >
+          {navOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
+        <nav className={`landing-nav ${navOpen ? 'is-open' : ''}`} id="landing-main-nav" aria-label="Main navigation">
+          <button className="landing-nav-link" onClick={() => { scrollToId('landing-about'); setNavOpen(false); }}>About</button>
+          <button className="landing-nav-link" onClick={() => { scrollToId('landing-portal'); setNavOpen(false); }}>Features</button>
+          <button className="landing-nav-link" onClick={() => { setActivePage('events'); setNavOpen(false); }}>Events</button>
+          <button className="landing-nav-link" onClick={() => { setActivePage('committee'); setNavOpen(false); }}>Committee</button>
+
           <button
             className="landing-portal-link"
-            onClick={() => setActivePage('dashboard')}
+            onClick={() => { setActivePage('dashboard'); setNavOpen(false); }}
             title="Open the interactive club portal"
           >
             <Sparkles size={14} /> <span>Live Dashboard</span>
           </button>
 
           {!user ? (
-            <button className="landing-sign-in" onClick={() => setActivePage('login')}>
+            <button className="landing-sign-in" onClick={() => { setActivePage('login'); setNavOpen(false); }}>
               <span>Sign in</span> <LogIn size={14} />
             </button>
           ) : (
-            <button className="landing-sign-in is-member" onClick={() => setActivePage('dashboard')}>
+            <button className="landing-sign-in is-member" onClick={() => { setActivePage('dashboard'); setNavOpen(false); }}>
               <span>Portal</span> <ArrowUpRight size={14} />
             </button>
           )}
@@ -178,8 +192,8 @@ const Landing = ({ setActivePage, user }) => {
           </h1>
 
           <p className="landing-intro">
-            A community of engineering students exploring the cosmos through observational astronomy, astrophysics research,
-            and space technology. Curious beginners and seasoned stargazers are equally welcome.
+            INSAT’s first club dedicated to astronomy brings engineering students together to explore the cosmos through
+            stargazing, astrophysics research, and space technology. Curious beginners and seasoned observers are equally welcome.
           </p>
 
           <div className="landing-actions">
@@ -221,7 +235,7 @@ const Landing = ({ setActivePage, user }) => {
         </div>
 
         <button className="landing-scroll-cue" onClick={() => scrollToId('landing-about')} aria-label="Scroll to discover the club">
-          <span>Explore ACI</span> <ArrowDown size={15} />
+          <span>Explore Astro Club INSAT</span> <ArrowDown size={15} />
         </button>
       </section>
 
@@ -272,7 +286,7 @@ const Landing = ({ setActivePage, user }) => {
         </div>
         <div className="landing-about-text">
           <p>
-            ACI brings together students fascinated by astronomy, astrophysics, and aerospace technology. We deepen
+            Astro Club INSAT brings together students fascinated by astronomy, astrophysics, and aerospace technology. We deepen
             understanding of the universe by pairing academic curiosity with hands-on practice: telescope operations,
             darkroom film processing, and scientific challenges.
           </p>

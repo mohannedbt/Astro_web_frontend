@@ -58,16 +58,18 @@
 .landing-brand strong {
   display: block;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .landing-brand small {
   display: block;
-  margin-top: 1px;
+  max-width: 245px;
+  margin-top: 3px;
   color: rgba(248, 251, 255, 0.7);
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .landing-nav {
@@ -76,12 +78,24 @@
   gap: 22px;
 }
 
+.landing-menu-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(248, 251, 255, 0.18);
+  border-radius: 12px;
+  color: #f8fbff;
+  background: rgba(7, 17, 31, 0.55);
+}
+
 .landing-nav-link {
   color: rgba(248, 251, 255, 0.82);
   font-size: 13px;
   font-weight: 500;
   transition: color var(--transition);
-  padding: 6px 4px;
+  padding: 8px 4px;
 }
 
 .landing-nav-link:hover {
@@ -130,6 +144,11 @@
 .landing-sign-in.is-member {
   background: var(--accent);
   color: #07111b;
+}
+
+.landing-header button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 /* ---------- Hero ---------- */
@@ -871,13 +890,43 @@
 
 @media (max-width: 768px) {
   .landing-header {
-    padding: 16px 20px;
+    padding: 14px 20px;
+  }
+  .landing-menu-toggle {
+    display: inline-flex;
   }
   .landing-nav {
-    gap: 12px;
-  }
-  .landing-nav-link {
     display: none;
+  }
+  .landing-nav.is-open {
+    position: absolute;
+    top: calc(100% - 2px);
+    right: 16px;
+    left: 16px;
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid rgba(125, 211, 252, 0.2);
+    border-radius: 16px;
+    background: rgba(7, 17, 31, 0.96);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(18px);
+  }
+  .landing-nav.is-open .landing-nav-link {
+    display: block;
+    padding: 11px 12px;
+    border-radius: 9px;
+    text-align: left;
+  }
+  .landing-nav.is-open .landing-nav-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .landing-nav.is-open .landing-portal-link,
+  .landing-nav.is-open .landing-sign-in {
+    justify-content: center;
+    margin-top: 4px;
   }
   .landing-hero {
     padding: 130px 20px 80px;

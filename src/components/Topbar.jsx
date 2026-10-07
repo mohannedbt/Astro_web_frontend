@@ -6,7 +6,7 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
       case 'dashboard':
         return (
           <>
-            Club ACI / <span>{user ? 'Member Dashboard' : 'Observer Hub'}</span>
+            Astro Club INSAT / <span>{user ? 'Member Dashboard' : 'Observer Hub'}</span>
           </>
         );
       case 'magazine':
@@ -54,13 +54,19 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
       case 'committee':
         return (
           <>
-            Club ACI / <span>Committee Board</span>
+            Astro Club INSAT / <span>Committee Board</span>
+          </>
+        );
+      case 'admin':
+        return (
+          <>
+            System / <span>Admin Panel</span>
           </>
         );
       default:
         return (
           <>
-            Club ACI / <span>Dashboard</span>
+            Astro Club INSAT / <span>Dashboard</span>
           </>
         );
     }
@@ -71,64 +77,40 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
       <div className="topbar-left">
         <button
           className="toggle-sidebar"
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Open navigation' : 'Collapse navigation'}
+          aria-expanded={!collapsed}
+          aria-controls="sidebar"
           title={collapsed ? 'Open navigation' : 'Collapse navigation'}
         >
           <Menu size={20} />
         </button>
         <div className="breadcrumbs">{getBreadcrumbs()}</div>
       </div>
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <div className="topbar-actions">
         <button
+          className="topbar-action"
+          type="button"
           onClick={() => setActivePage('landing')}
-          style={{
-            color: 'var(--text-secondary)',
-            fontSize: '13px',
-            padding: '7px 12px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            borderRadius: '8px',
-            border: '1px solid var(--border)',
-            background: 'rgba(255, 255, 255, 0.03)',
-            transition: 'var(--transition)',
-          }}
           title="Return to Landing Page"
         >
           <Home size={14} /> <span className="hide-on-mobile">Landing</span>
         </button>
 
         <button
+          className="topbar-action"
+          type="button"
           onClick={() => window.dispatchEvent(new Event('showTour'))}
-          style={{
-            fontSize: '13px',
-            padding: '7px 12px',
-            borderRadius: '8px',
-            border: '1px solid var(--border)',
-            color: 'var(--text-secondary)',
-            background: 'rgba(255, 255, 255, 0.03)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-          }}
           title="Quick Tour of Features"
         >
           <Sparkles size={14} /> <span className="hide-on-mobile">Tour</span>
         </button>
 
         <button
+          className="topbar-action topbar-theme"
+          type="button"
           onClick={() => setTheme(theme === 'blue' ? 'dark' : 'blue')}
-          style={{
-            color: 'var(--text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px',
-            borderRadius: '8px',
-            border: '1px solid var(--border)',
-            background: 'rgba(255, 255, 255, 0.03)',
-          }}
           aria-label={`Toggle theme (currently ${theme})`}
           title={`Switch color theme (currently ${theme})`}
         >
@@ -137,40 +119,20 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
 
         {!user ? (
           <button
+            className="topbar-auth"
+            type="button"
             onClick={() => setActivePage('login')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '7px 16px',
-              borderRadius: '999px',
-              background: 'var(--accent)',
-              color: '#07111b',
-              fontWeight: 600,
-              fontSize: '13px',
-              boxShadow: '0 0 16px rgba(125, 211, 252, 0.28)',
-              transition: 'var(--transition)',
-            }}
           >
             <LogIn size={14} /> <span>Sign In</span>
           </button>
         ) : (
           <button
+            className="topbar-auth is-member"
+            type="button"
             onClick={() => setActivePage('account')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              borderRadius: '999px',
-              background: 'rgba(125, 211, 252, 0.1)',
-              border: '1px solid rgba(125, 211, 252, 0.25)',
-              color: 'var(--accent)',
-              fontSize: '12px',
-              fontWeight: 600,
-            }}
+            aria-label="Open account settings"
           >
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--color-success)' }} />
+            <span className="topbar-member-indicator" />
             <span>Member</span>
           </button>
         )}

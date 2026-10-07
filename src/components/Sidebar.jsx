@@ -6,7 +6,7 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, pro
     {
       section: 'Club Space',
       items: [
-        { id: 'dashboard', label: 'ACI Dashboard', icon: Compass },
+        { id: 'dashboard', label: 'Dashboard', icon: Compass },
         { id: 'magazine', label: 'Magazine', icon: BookOpen },
         { id: 'skymap', label: 'Sky Map', icon: Map },
         { id: 'astrogames', label: 'AstroGames', icon: Gamepad2 },
@@ -28,24 +28,25 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, pro
   };
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`} id="sidebar">
-      <div className="sidebar-logo" style={{ cursor: 'pointer' }} onClick={() => setActivePage('dashboard')}>
-        <div className="logo-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', borderRadius: '6px' }}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`} id="sidebar" aria-label="Main sidebar">
+      <button className="sidebar-logo" type="button" onClick={() => setActivePage('dashboard')} aria-label="ACI Dashboard">
+        <div className="logo-icon">
           <img
             src="/profile.png"
-            alt="Logo"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            alt=""
             onError={(e) => {
               e.target.style.display = 'none';
             }}
           />
         </div>
         <div className="logo-name">
-          ACI<span>.</span>
+          <span className="logo-name-title">Astro Club INSAT</span>
+          <small>The astronomy club at INSAT</small>
         </div>
-      </div>
+      </button>
 
-      {navItems.map((sectionGroup) => (
+      <nav className="sidebar-navigation" aria-label="Club navigation">
+        {navItems.map((sectionGroup) => (
         <div className="nav-section" key={sectionGroup.section}>
           <div className="nav-label">{sectionGroup.section}</div>
           {sectionGroup.items.map((item) => {
@@ -53,64 +54,60 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, pro
             const IconComponent = item.icon;
             const isActive = activePage === item.id;
             return (
-              <div
+              <button
                 className={`nav-item ${isActive ? 'active' : ''}`}
+                type="button"
                 key={item.id}
                 onClick={() => {
                   setActivePage(item.id);
                   if (window.matchMedia('(max-width: 980px)').matches) setCollapsed(true);
                 }}
-                role="button"
-                tabIndex={0}
                 title={collapsed ? item.label : undefined}
                 aria-label={item.label}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    setActivePage(item.id);
-                    if (window.matchMedia('(max-width: 980px)').matches) setCollapsed(true);
-                  }
-                }}
+                aria-current={isActive ? 'page' : undefined}
               >
-                <IconComponent />
+                <IconComponent aria-hidden="true" />
                 <span>{item.label}</span>
-              </div>
+              </button>
             );
           })}
         </div>
-      ))}
+        ))}
+      </nav>
 
-      <div
+      <button
         className="sidebar-user"
-        style={{ cursor: 'pointer' }}
+        type="button"
         onClick={() => setActivePage(user ? 'account' : 'login')}
         title={collapsed ? (user ? profile?.name || user?.email || 'Account' : 'Sign in as Member') : undefined}
+        aria-label={user ? 'Open account settings' : 'Sign in as a member'}
       >
         {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-            <div className="user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+          <>
+            <div className="user-avatar">
               {profile?.avatar ? (
-                <img src={profile.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                <img src={profile.avatar} alt="" onError={(e) => { e.target.style.display = 'none'; }} />
               ) : (
-                <img src={getAbstractAvatar()} alt="default avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                <img src={getAbstractAvatar()} alt="" />
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="sidebar-user-copy">
               <div className="user-name">{profile?.name ? `${profile.name}` : user?.email ? `${user.email}` : 'Member'}</div>
-              <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 500 }}>{user?.is_admin ? 'Admin' : 'Active Member'}</span>
+              <span className="sidebar-user-role">{user?.is_admin ? 'Admin' : 'Active Member'}</span>
             </div>
-          </div>
+          </>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-            <div className="user-avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(125, 211, 252, 0.12)', border: '1px solid rgba(125, 211, 252, 0.3)', borderRadius: '50%', color: 'var(--accent)', fontSize: '12px', flexShrink: 0 }}>
+          <>
+            <div className="user-avatar observer-avatar">
               🔭
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <div className="user-name" style={{ color: 'var(--text-primary)' }}>Observer Mode</div>
-              <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 500 }}>Sign In →</span>
+            <div className="sidebar-user-copy">
+              <div className="user-name">Observer Mode</div>
+              <span className="sidebar-user-role">Sign in to join</span>
             </div>
-          </div>
+          </>
         )}
-      </div>
+      </button>
     </aside>
   );
 };
