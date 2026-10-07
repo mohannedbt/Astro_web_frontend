@@ -145,10 +145,26 @@ h1, h2, h3, h4, .font-heading {
 .nav-item span { transition: opacity var(--transition); }
 .sidebar.collapsed .nav-item span { opacity: 0; pointer-events: none; }
 
+.sidebar.collapsed .sidebar-logo {
+  padding: 0;
+  justify-content: center;
+  min-width: 0;
+  width: 100%;
+}
+
 .sidebar-user {
   margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border);
   display: flex; align-items: center; gap: 12px; min-width: var(--sidebar-w);
-  white-space: nowrap;
+  white-space: nowrap; transition: padding var(--transition);
+}
+.sidebar.collapsed .sidebar-user {
+  padding: 20px 0;
+  justify-content: center;
+  min-width: 0;
+  width: 100%;
+}
+.sidebar.collapsed .sidebar-user > div {
+  justify-content: center;
 }
 .user-avatar {
   width: 28px; height: 28px; border-radius: 50%; background: var(--bg-hover);
@@ -156,7 +172,7 @@ h1, h2, h3, h4, .font-heading {
 }
 .user-avatar i, .user-avatar svg { flex-shrink: 0; }
 .user-name { font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: opacity var(--transition); }
-.sidebar.collapsed .user-name { opacity: 0; pointer-events: none; }
+.sidebar.collapsed .user-name { opacity: 0; pointer-events: none; width: 0; overflow: hidden; display: none; }
 
 /* ===========================
    MAIN AREA

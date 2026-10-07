@@ -56,17 +56,25 @@ function App() {
       }
     })();
 
-    const seed = source?.avatar_seed || source?.username || source?.email || stored?.avatar_seed || stored?.username || stored?.email || 'astro';
+    // If source represents a different user than stored, reset stored profile cache
+    const isNewUser = source?.email && stored?.email && source.email.toLowerCase() !== stored.email.toLowerCase();
+    const effectiveStored = isNewUser ? {} : stored;
+
+    const seed = source?.avatar_seed || source?.username || source?.email || effectiveStored?.avatar_seed || effectiveStored?.username || effectiveStored?.email || 'astro';
+    
+    // Always calculate fresh default avatar for seed unless explicitly custom avatar provided
+    const avatarUrl = source?.avatar || effectiveStored?.avatar || buildAvatarUrl(seed);
+
     const next = {
-      ...(stored || {}),
+      ...(effectiveStored || {}),
       ...(source || {}),
-      name: source?.name || stored?.name || '',
-      username: source?.username || stored?.username || '',
-      email: source?.email || stored?.email || '',
-      bio: source?.bio || stored?.bio || '',
-      location: source?.location || stored?.location || '',
+      name: source?.name || effectiveStored?.name || '',
+      username: source?.username || effectiveStored?.username || '',
+      email: source?.email || effectiveStored?.email || '',
+      bio: source?.bio || effectiveStored?.bio || '',
+      location: source?.location || effectiveStored?.location || '',
       avatar_seed: seed,
-      avatar: source?.avatar || stored?.avatar || buildAvatarUrl(seed),
+      avatar: avatarUrl,
     };
 
     setProfile(next);
@@ -187,6 +195,10 @@ function App() {
 
   const handleLogout = () => {
     setToken('');
+    setProfile(null);
+    try {
+      localStorage.removeItem('profile');
+    } catch (e) {}
     setActivePage('landing');
   };
 
@@ -211,7 +223,7 @@ function App() {
       case 'events':
         return <Events token={token} setActivePage={setActivePage} user={user} />;
       case 'committee':
-        return <Committee setActivePage={setActivePage} />;
+        return <Committee setActivePage={setActivePage} user={user} />;
       case 'astrogames':
         return <AstroGames user={user} profile={profile} setActivePage={setActivePage} />;
       case 'login':

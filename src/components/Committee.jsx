@@ -1,8 +1,8 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Eye, LogIn } from 'lucide-react';
 import { ACI_COMMITTEE } from '../services/api';
 import './Committee.css';
 
-const Committee = ({ setActivePage }) => (
+const Committee = ({ setActivePage, user }) => (
   <main className="committee-page">
     <header className="committee-header">
       <button className="committee-brand" onClick={() => setActivePage('landing')} aria-label="Back to Astro Club INSAT home">
@@ -12,8 +12,58 @@ const Committee = ({ setActivePage }) => (
       <nav aria-label="Committee page navigation">
         <button onClick={() => setActivePage('landing')}><ArrowLeft size={15} /> Home</button>
         <button onClick={() => setActivePage('events')}>Events <ArrowUpRight size={15} /></button>
+        {!user ? (
+          <button onClick={() => setActivePage('login')} style={{ background: 'var(--accent)', color: '#07111b', fontWeight: 600, borderRadius: '999px', padding: '6px 14px' }}>
+            <LogIn size={14} /> Sign In
+          </button>
+        ) : (
+          <button onClick={() => setActivePage('dashboard')}>Dashboard <ArrowUpRight size={15} /></button>
+        )}
       </nav>
     </header>
+
+    {!user && (
+      <div style={{
+        margin: '0 auto 24px',
+        maxWidth: '1200px',
+        padding: '14px 20px',
+        borderRadius: '12px',
+        background: 'rgba(125, 211, 252, 0.08)',
+        border: '1px solid rgba(125, 211, 252, 0.25)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--accent)', background: 'rgba(125,211,252,0.14)', padding: '4px 10px', borderRadius: '999px', textTransform: 'uppercase' }}>
+            <Eye size={14} /> Guest Observer Pass Active
+          </span>
+          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            You are browsing our executive board directory in public guest observer mode.
+          </span>
+        </div>
+        <button
+          onClick={() => setActivePage('register')}
+          style={{
+            fontSize: '13px',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            padding: '6px 14px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <span>Join ACI Community</span> <ArrowRight size={14} />
+        </button>
+      </div>
+    )}
 
     <section className="committee-intro" aria-labelledby="committee-title">
       <div className="committee-intro-copy">

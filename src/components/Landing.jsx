@@ -124,13 +124,7 @@ const Landing = ({ setActivePage, user }) => {
       <header className="landing-header">
         <button className="landing-brand" onClick={() => setActivePage('landing')} aria-label="Astro Club INSAT home">
           <span className="landing-brand-mark">
-            <img
-              src="/favicon.svg"
-              alt="Astro Club INSAT emblem"
-              onError={(e) => {
-                e.target.src = '/profile.png';
-              }}
-            />
+            <img src="/profile.png" alt="Astro Club INSAT logo" />
           </span>
           <span>
             <strong>ACI</strong>
