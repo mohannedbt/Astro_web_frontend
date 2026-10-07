@@ -93,6 +93,7 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
           className="topbar-action"
           type="button"
           onClick={() => setActivePage('landing')}
+          aria-label="Open landing page"
           title="Return to Landing Page"
         >
           <Home size={14} /> <span className="hide-on-mobile">Landing</span>
@@ -102,6 +103,7 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
           className="topbar-action"
           type="button"
           onClick={() => window.dispatchEvent(new Event('showTour'))}
+          aria-label="Open quick tour"
           title="Quick Tour of Features"
         >
           <Sparkles size={14} /> <span className="hide-on-mobile">Tour</span>
@@ -122,6 +124,7 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
             className="topbar-auth"
             type="button"
             onClick={() => setActivePage('login')}
+            aria-label="Sign in"
           >
             <LogIn size={14} /> <span>Sign In</span>
           </button>

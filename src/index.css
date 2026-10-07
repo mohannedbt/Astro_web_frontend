@@ -1885,25 +1885,85 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   gap: 5px;
 }
 
+.meteor-touch-action-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.meteor-touch-pad { display: none; }
+
 .touch-steering-hint {
   font-size: 10px;
   color: var(--text-tertiary);
   letter-spacing: 0.05em;
+  text-align: center;
 }
+
+.touch-hint-mobile { display: none; }
 
 .touch-emp-button {
   display: none;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 12px 28px;
+  min-height: 48px;
+  padding: 12px 20px;
   border-radius: 30px;
   background: #38bdf8;
   color: #040910;
   font-weight: 800;
   font-size: 13px;
+  touch-action: manipulation;
+}
+
+.touch-emp-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
+  .meteor-touch-action-row { gap: 12px; }
+  .meteor-touch-pad {
+    display: grid;
+    grid-template-areas:
+      ". up ."
+      "left down right";
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(2, 48px);
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(125, 211, 252, 0.18);
+    border-radius: 16px;
+    background: rgba(14, 27, 47, 0.72);
+  }
+  .meteor-touch-direction {
+    display: flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(125, 211, 252, 0.28);
+    border-radius: 12px;
+    background: rgba(56, 189, 248, 0.12);
+    color: #e0f2fe;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .meteor-touch-direction:active {
+    background: rgba(56, 189, 248, 0.38);
+    border-color: rgba(125, 211, 252, 0.75);
+  }
+  .meteor-touch-direction:disabled { opacity: 0.45; }
+  .touch-up { grid-area: up; }
+  .touch-left { grid-area: left; }
+  .touch-down { grid-area: down; }
+  .touch-right { grid-area: right; }
+  .touch-hint-mobile { display: inline; }
+  .touch-hint-desktop { display: none; }
   .touch-emp-button {
     display: inline-flex;
   }
@@ -1926,7 +1986,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   .meteor-dash-hud-header > .hud-telemetry-strip { min-width: 0; }
   .hud-item.combo-tag { padding: 3px 6px; font-size: 9px; }
   .touch-steering-hint { font-size: 9px; text-align: center; }
-  .touch-emp-button { padding: 6px 14px; font-size: 11px; }
+  .touch-emp-button { min-height: 48px; padding: 8px 12px; font-size: 10px; }
 }
 
 @media (max-height: 600px) {
@@ -3157,10 +3217,15 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   }
 
   .topbar-left { flex: 1 1 auto; min-width: 0; }
-  .breadcrumbs { flex: 1 1 auto; max-width: 100%; font-size: 11px; }
+  .breadcrumbs { display: none; }
   .topbar-actions { gap: 4px; }
   .topbar-action,
   .topbar-auth { min-width: 34px; }
+  .topbar-action { width: 34px; padding: 0; }
+  .topbar-action > span { display: none; }
+  .topbar-auth { width: 34px; padding: 0; }
+  .topbar-auth > span:not(.topbar-member-indicator) { display: none; }
+  .topbar { gap: 8px; }
 
   .page-content {
     gap: 20px;

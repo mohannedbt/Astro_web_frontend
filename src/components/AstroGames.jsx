@@ -15,6 +15,9 @@ import {
   Zap,
   Flame,
   Award,
+  ArrowUp,
+  ArrowDown,
+  ArrowRight,
   ChevronLeft,
   ChevronRight,
   Maximize2,
@@ -279,6 +282,10 @@ const AstroGames = ({ user, profile, setActivePage }) => {
     state.score += vaporizedCount * 150;
     setDashScore(state.score);
   }, []);
+
+  const setTouchSteering = (direction, pressed) => {
+    gameStateRef.current.keys[direction] = pressed;
+  };
 
   useEffect(() => {
     if (gameMode !== 'meteor' || !dashGameStarted) return;
@@ -987,14 +994,46 @@ const AstroGames = ({ user, profile, setActivePage }) => {
 
           {/* Mobile Touch Controls Overlay */}
           <div className="meteor-touch-controls" ref={dashControlsRef}>
-            <div className="touch-steering-hint">Use Arrow keys / WASD to steer • SPACE for EMP shockwave</div>
-            <button
-              className="touch-emp-button"
-              onClick={triggerEmpPulse}
-              disabled={!dashEmpReady || dashGameOver}
-            >
-              <Zap size={16} /> TRIGGER EMP
-            </button>
+            <div className="touch-steering-hint">
+              <span className="touch-hint-mobile">Hold a direction to steer · EMP clears nearby meteors</span>
+              <span className="touch-hint-desktop">Use arrows / WASD to steer · SPACE for EMP shockwave</span>
+            </div>
+            <div className="meteor-touch-action-row">
+              <div className="meteor-touch-pad" role="group" aria-label="Rocket steering controls">
+                {[
+                  { direction: 'arrowup', label: 'Steer up', Icon: ArrowUp, position: 'up' },
+                  { direction: 'arrowleft', label: 'Steer left', Icon: ArrowLeft, position: 'left' },
+                  { direction: 'arrowdown', label: 'Steer down', Icon: ArrowDown, position: 'down' },
+                  { direction: 'arrowright', label: 'Steer right', Icon: ArrowRight, position: 'right' },
+                ].map(({ direction, label, Icon, position }) => (
+                  <button
+                    className={`meteor-touch-direction touch-${position}`}
+                    key={direction}
+                    type="button"
+                    aria-label={label}
+                    disabled={dashGameOver}
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      setTouchSteering(direction, true);
+                    }}
+                    onPointerUp={() => setTouchSteering(direction, false)}
+                    onPointerCancel={() => setTouchSteering(direction, false)}
+                    onLostPointerCapture={() => setTouchSteering(direction, false)}
+                  >
+                    <Icon size={19} aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+              <button
+                className="touch-emp-button"
+                type="button"
+                onClick={triggerEmpPulse}
+                disabled={!dashEmpReady || dashGameOver}
+              >
+                <Zap size={18} /> <span>TRIGGER EMP</span>
+              </button>
+            </div>
           </div>
         </section>
       )}
