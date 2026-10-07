@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { User, Shield, LogOut, Eye, EyeOff, Upload } from 'lucide-react';
+import { User, Shield, LogOut, Eye, EyeOff, Upload, Save, RotateCcw } from 'lucide-react';
 import { buildAvatarUrl, createAvatarSeed } from '../utils/avatar';
+import { optimizeImageFile } from '../utils/optimizeImage';
 
 const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
   const [section, setSection] = useState('profile');
@@ -15,9 +16,9 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswords, setShowPasswords] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('success');
 
   const avatarOptions = [
-    '',
     buildAvatarUrl('astro1'),
     buildAvatarUrl('astro2'),
     buildAvatarUrl('astro3'),
@@ -30,54 +31,74 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
     return buildAvatarUrl(seed);
   };
 
-  const handleAvatarUpload = (event) => {
+  const handleAvatarUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
-      setMessage('Choose an image smaller than 5 MB.');
-      event.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = new Image();
-      image.onload = () => {
-        const canvas = document.createElement('canvas');
-        const scale = Math.min(1, 256 / Math.max(image.width, image.height));
-        canvas.width = Math.max(1, Math.round(image.width * scale));
-        canvas.height = Math.max(1, Math.round(image.height * scale));
-        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-        setAvatar(canvas.toDataURL('image/jpeg', 0.82));
-        setMessage('');
-      };
-      image.src = reader.result;
-    };
-    reader.readAsDataURL(file);
     event.target.value = '';
+    try {
+      setAvatar(await optimizeImageFile(file));
+      setMessageType('success');
+      setMessage('Photo ready. Save your profile to keep it.');
+    } catch (error) {
+      setMessageType('error');
+      setMessage(error.message);
+    }
   };
 
   const handleSave = () => {
     const nextAvatarSeed = profile?.avatar_seed || createAvatarSeed(username || email || name);
     const nextAvatar = avatar || buildAvatarUrl(nextAvatarSeed);
-    updateProfile({ name, username, email, avatar: nextAvatar, avatar_seed: nextAvatarSeed, bio, location });
-    setMessage('Profile saved successfully!');
-    setTimeout(() => setMessage(''), 3000);
+    try {
+      updateProfile({ name, username, email, avatar: nextAvatar, avatar_seed: nextAvatarSeed, bio, location });
+      setMessageType('success');
+      setMessage('Profile saved in this browser.');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Failed to save profile', error);
+      setMessageType('error');
+      setMessage('Could not save your profile. Browser storage may be full; free some space and try again.');
+    }
+  };
+
+  const handleResetAvatar = () => {
+    const nextAvatarSeed = profile?.avatar_seed || createAvatarSeed(username || email || name);
+    const defaultAvatar = buildAvatarUrl(nextAvatarSeed);
+    try {
+      updateProfile({ avatar: defaultAvatar, avatar_seed: nextAvatarSeed });
+      setAvatar(defaultAvatar);
+      setMessageType('success');
+      setMessage('Default avatar saved to your profile.');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Failed to save default avatar', error);
+      setMessageType('error');
+      setMessage('Could not save your default avatar. Browser storage may be full; free some space and try again.');
+    }
   };
 
   const handlePasswordChange = () => {
     if (newPassword !== confirmPassword) {
+      setMessageType('error');
       setMessage('Passwords do not match');
       return;
     }
     if (newPassword.length < 6) {
+      setMessageType('error');
       setMessage('Password must be at least 6 characters');
       return;
     }
-    updateProfile({ name, username, email, avatar });
+    try {
+      updateProfile({ name, username, email, avatar });
+    } catch (error) {
+      console.error('Failed to save profile', error);
+      setMessageType('error');
+      setMessage('Could not save your profile. Browser storage may be full; free some space and try again.');
+      return;
+    }
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
+    setMessageType('success');
     setMessage('Password changed successfully!');
     setTimeout(() => setMessage(''), 3000);
   };
@@ -99,94 +120,108 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '32px', marginTop: '24px' }}>
+        <div className="account-settings-layout">
           {/* Sidebar Navigation */}
-          <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', padding: '16px', height: 'fit-content' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <nav className="account-settings-nav" aria-label="Account settings">
               <button 
+                type="button"
+                className={section === 'profile' ? 'active' : ''}
                 onClick={() => setSection('profile')}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: section === 'profile' ? 'var(--glass-bg)' : 'transparent', border: '1px solid ' + (section === 'profile' ? 'var(--border)' : 'transparent'), borderRadius: '8px', color: section === 'profile' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', textAlign: 'left', fontSize: '14px', transition: 'all 0.2s' }}
+                aria-current={section === 'profile' ? 'page' : undefined}
               >
                 <User size={18}/> Profile
               </button>
               <button 
+                type="button"
+                className={section === 'security' ? 'active' : ''}
                 onClick={() => setSection('security')}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: section === 'security' ? 'var(--glass-bg)' : 'transparent', border: '1px solid ' + (section === 'security' ? 'var(--border)' : 'transparent'), borderRadius: '8px', color: section === 'security' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', textAlign: 'left', fontSize: '14px', transition: 'all 0.2s' }}
+                aria-current={section === 'security' ? 'page' : undefined}
               >
                 <Shield size={18}/> Security
               </button>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
-              <button onClick={onLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'transparent', border: '1px solid transparent', borderRadius: '8px', color: '#ef4444', cursor: 'pointer', textAlign: 'left', fontSize: '14px' }}>
+              <button type="button" className="account-sign-out" onClick={onLogout}>
                 <LogOut size={18}/> Sign Out
               </button>
-            </div>
-          </div>
+          </nav>
 
           {/* Main Content */}
-          <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', padding: '32px' }}>
+          <div className="account-settings-card">
             {message && (
-              <div style={{ background: '#10b981', color: 'white', padding: '12px 16px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px' }}>
+              <div
+                role={messageType === 'error' ? 'alert' : 'status'}
+                style={{
+                  background: messageType === 'error' ? 'var(--color-error-bg)' : 'var(--color-success-bg)',
+                  border: `1px solid ${messageType === 'error' ? 'var(--color-error-border)' : 'var(--color-success-border)'}`,
+                  color: messageType === 'error' ? 'var(--color-error)' : 'var(--color-success)',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  marginBottom: '24px',
+                  fontSize: '14px',
+                }}
+              >
                 {message}
               </div>
             )}
 
             {section === 'profile' && (
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <User size={20} /> Profile Information
-                </h2>
+                <div className="account-section-heading">
+                  <div>
+                    <h2><User size={20} /> Profile Information</h2>
+                    <p>Update your details and profile image.</p>
+                  </div>
+                </div>
 
                 {/* Avatar Section */}
-                <div style={{ paddingBottom: '32px', borderBottom: '1px solid var(--border)', marginBottom: '32px' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-secondary)' }}>Profile Picture</h3>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
-                    <div style={{ width: '100px', height: '100px', borderRadius: '12px', background: 'var(--glass-bg)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                <div className="account-avatar-section">
+                  <div className="account-avatar-preview">
                       {avatar ? (
                         <img src={avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
                       ) : (
                       <img src={getPersonalAvatar()} alt="default avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       )}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '8px', color: 'var(--text-secondary)' }}>Avatar image URL</label>
-                      <input 
-                        placeholder="https://example.com/avatar.jpg" 
-                        value={avatar} 
-                        onChange={(e) => setAvatar(e.target.value)} 
-                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', outline: 'none', fontSize: '14px', marginBottom: '12px' }} 
-                      />
-                      <button onClick={() => setAvatar('')} style={{ padding: '8px 14px', background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px' }}>Clear Avatar</button>
+                  </div>
+                  <div className="account-avatar-controls">
+                    <div className="account-avatar-buttons">
                       <label className="avatar-upload-button">
-                        <Upload size={15} /> Upload photo
-                        <input type="file" accept="image/*" onChange={handleAvatarUpload} />
+                        <Upload size={15} /> Choose photo
+                        <input type="file" accept="image/*" onChange={handleAvatarUpload} aria-label="Upload profile photo" />
                       </label>
-                      <div style={{ marginTop: '16px' }}>
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '10px' }}>Abstract avatars (like GitHub):</p>
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          {avatarOptions.map((opt, i) => (
-                            <button 
-                              key={i} 
-                              onClick={() => setAvatar(opt)} 
-                              style={{ 
-                                width: 50, 
-                                height: 50, 
-                                borderRadius: '8px', 
-                                border: avatar === opt ? '2px solid #3b82f6' : '1px solid var(--border)', 
-                                background: opt ? `url(${opt}) center/cover` : 'var(--glass-bg)', 
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }} 
-                              aria-label={`avatar-${i}`} 
-                            />
-                          ))}
-                        </div>
+                      <button className="account-reset-avatar" type="button" onClick={handleResetAvatar}>
+                        <RotateCcw size={14} /> Reset to default
+                      </button>
+                    </div>
+                    <p>Upload an image up to 5 MB. Your profile picture is stored in this browser.</p>
+                    <label className="account-url-label" htmlFor="profile-avatar-url">Or paste a public image URL</label>
+                    <input
+                      id="profile-avatar-url"
+                      className="account-avatar-url"
+                      type="url"
+                      placeholder="https://example.com/photo.jpg"
+                      value={avatar.startsWith('data:') ? '' : avatar}
+                      onChange={(e) => setAvatar(e.target.value)}
+                    />
+                    <div className="account-avatar-presets">
+                      <span>Choose a generated avatar</span>
+                      <div>
+                        {avatarOptions.map((option, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className={avatar === option ? 'selected' : ''}
+                            onClick={() => setAvatar(option)}
+                            style={{ backgroundImage: `url("${option}")` }}
+                            aria-label={`Select generated avatar ${index + 1}`}
+                            aria-pressed={avatar === option}
+                          />
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Profile Fields */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+                <div className="account-profile-row">
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-secondary)' }}>Full Name</label>
                     <input 
@@ -207,7 +242,7 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '32px' }}>
+                <div className="account-profile-field">
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-secondary)' }}>Email Address</label>
                   <input 
                     type="email" 
@@ -218,7 +253,7 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
                   <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '6px' }}>Used for login and notifications</p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+                <div className="account-profile-row">
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-secondary)' }}>Location</label>
                     <input 
@@ -231,7 +266,7 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '32px' }}>
+                <div className="account-profile-field">
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-secondary)' }}>Bio</label>
                   <textarea 
                     value={bio} 
@@ -243,16 +278,18 @@ const Account = ({ user, profile, updateProfile, onLogout, setActivePage }) => {
                   <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '6px' }}>{bio.length}/160</p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="account-profile-actions">
                   <button 
+                    type="button"
                     onClick={handleSave} 
-                    style={{ padding: '10px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+                    className="btn btn-primary"
                   >
-                    Save Changes
+                    <Save size={16} /> Save changes
                   </button>
                   <button 
+                    type="button"
                     onClick={() => { setName(profile?.name || (user?.name || '')); setUsername(profile?.username || ''); setEmail(profile?.email || (user?.email || '')); setAvatar(profile?.avatar || ''); setBio(profile?.bio || ''); setLocation(profile?.location || ''); }} 
-                    style={{ padding: '10px 20px', background: 'var(--bg-base)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+                    className="btn btn-secondary"
                   >
                     Cancel
                   </button>

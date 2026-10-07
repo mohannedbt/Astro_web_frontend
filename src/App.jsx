@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Starfield from './components/Starfield';
 import Sidebar from './components/Sidebar';
@@ -86,10 +86,8 @@ function App() {
 
   const updateProfile = (updates) => {
     const next = { ...(profile || {}), ...updates };
+    localStorage.setItem('profile', JSON.stringify(next));
     setProfile(next);
-    try {
-      localStorage.setItem('profile', JSON.stringify(next));
-    } catch (e) {}
   };
 
   const pathToPage = (path) => {

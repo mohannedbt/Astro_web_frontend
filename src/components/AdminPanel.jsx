@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CalendarDays,
   Camera,
-  Image as ImageIcon,
   Plus,
   Trash2,
   Edit3,
   Eye,
   Check,
   UploadCloud,
-  Layers,
   ArrowUp,
   ArrowDown,
   RefreshCw,
@@ -17,6 +15,9 @@ import {
   MapPin,
   Clock,
   Users,
+  LayoutDashboard,
+  Mail,
+  Globe2,
 } from 'lucide-react';
 import {
   ACI_EVENTS,
@@ -31,6 +32,7 @@ import {
   updateAdminEvent,
   deleteAdminEvent,
 } from '../services/api';
+import { optimizeImageFile } from '../utils/optimizeImage';
 
 const initialWorkshopFormState = {
   topic: '',
@@ -152,7 +154,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       const data = await res.json();
       setWorkshops(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn('Could not load workshops from API');
+      console.warn('Could not load workshops from API', err);
     }
   };
 
@@ -161,7 +163,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       const evList = await fetchEvents(token);
       setEvents(Array.isArray(evList) ? evList : []);
     } catch (err) {
-      console.warn('Could not load events');
+      console.warn('Could not load events', err);
     }
   };
 
@@ -170,7 +172,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       const data = await fetchAdminNewsletterSubscribers(token);
       setSubscribers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn('Could not load newsletter subscribers');
+      console.warn('Could not load newsletter subscribers', err);
     }
   };
 
@@ -184,7 +186,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
         subscribers: data?.subscribers || 0,
       });
     } catch (err) {
-      // Fallback stats
+      console.warn('Could not load admin statistics', err);
       setStats((prev) => ({
         ...prev,
         events: events.length || 5,
@@ -199,7 +201,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       setNewsletterSubject(data.subject || '');
       setNewsletterBody(data.body || '');
     } catch (err) {
-      console.warn('Failed to load newsletter template');
+      console.warn('Failed to load newsletter template', err);
     }
   };
 
@@ -208,20 +210,36 @@ const AdminPanel = ({ token: initialToken = '' }) => {
     setEventForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleEventImageUpload = (e) => {
+  const handleEventImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (uploadEvent) => {
-      const base64 = uploadEvent.target.result;
+    e.target.value = '';
+    try {
+      const optimizedImage = await optimizeImageFile(file, { maxDimension: 1600, quality: 0.84 });
       setEventForm((prev) => ({
         ...prev,
-        image: base64,
-        gallery: [base64, ...(prev.gallery || []).filter((u) => u !== base64)],
+        image: optimizedImage,
+        gallery: [optimizedImage, ...(prev.gallery || []).filter((url) => url !== optimizedImage)],
       }));
-      setStatusMessage('Custom photo uploaded and applied.');
-    };
-    reader.readAsDataURL(file);
+      setError('');
+      setStatusMessage('Event photo ready. Save the event to publish it.');
+    } catch (uploadError) {
+      setError(`Could not upload event photo: ${uploadError.message}`);
+    }
+  };
+
+  const handleWorkshopImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    try {
+      const optimizedImage = await optimizeImageFile(file, { maxDimension: 1200, quality: 0.84 });
+      handleWorkshopFormChange('image_url', optimizedImage);
+      setError('');
+      setStatusMessage('Workshop photo ready. Save the workshop to publish it.');
+    } catch (uploadError) {
+      setError(`Could not upload workshop photo: ${uploadError.message}`);
+    }
   };
 
   const handleAddGalleryImage = () => {
@@ -322,7 +340,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       setStatusMessage('Event deleted from archive.');
       if (editingEventId === id) resetEventForm();
     } catch (err) {
-      setError('Failed to delete event.');
+      setError(`Failed to delete event: ${err.message}`);
     }
   };
 
@@ -469,7 +487,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       await refreshAdminData();
       setStatusMessage('Workshop deleted.');
     } catch (err) {
-      setError('Failed to delete workshop.');
+      setError(`Failed to delete workshop: ${err.message}`);
     }
   };
 
@@ -483,7 +501,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       await saveNewsletterTemplate(token, newsletterTemplateKey, newsletterSubject, newsletterBody);
       setStatusMessage('Newsletter template saved successfully.');
     } catch (err) {
-      setError('Failed to save newsletter template');
+      setError(`Failed to save newsletter template: ${err.message}`);
     }
   };
 
@@ -496,7 +514,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       setStatusMessage(`Newsletter sent: ${result.sent} succeeded, ${result.failed} failed.`);
       setSendingNewsletter(false);
     } catch (err) {
-      setError('Failed to send newsletter');
+      setError(`Failed to send newsletter: ${err.message}`);
       setSendingNewsletter(false);
     }
   };
@@ -510,7 +528,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
       await fetchSubscribers();
       setStatusMessage('Subscriber removed.');
     } catch (err) {
-      setError('Failed to remove subscriber.');
+      setError(`Failed to remove subscriber: ${err.message}`);
     }
   };
 
@@ -543,11 +561,11 @@ const AdminPanel = ({ token: initialToken = '' }) => {
   };
 
   const sectionItems = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'events', label: 'Events CMS', icon: '✨' },
-    { id: 'workshops', label: 'Workshops', icon: '🔭' },
-    { id: 'newsletter', label: 'Newsletter', icon: '✉️' },
-    { id: 'facebook', label: 'Facebook Sync', icon: '🌐' },
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'events', label: 'Events', icon: CalendarDays },
+    { id: 'workshops', label: 'Workshops', icon: Camera },
+    { id: 'newsletter', label: 'Newsletter', icon: Mail },
+    { id: 'facebook', label: 'Facebook sync', icon: Globe2 },
   ];
 
   const renderSection = () => {
@@ -632,19 +650,26 @@ const AdminPanel = ({ token: initialToken = '' }) => {
             <div className="admin-events-builder-grid">
               {/* Left Column: Form Editor */}
               <div className="admin-card admin-card-form">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3>{editingEventId ? 'Edit Event Plate' : 'Publish New Celestial Event'}</h3>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    style={{ fontSize: '12px', padding: '6px 14px' }}
-                    onClick={() => setEventLivePreview(!eventLivePreview)}
-                  >
-                    <Eye size={14} /> {eventLivePreview ? 'Hide Preview' : 'Show Preview'}
-                  </button>
+                <div className="admin-editor-heading">
+                  <div>
+                    <h3>{editingEventId ? 'Edit event' : 'Create an event'}</h3>
+                    <p className="admin-form-intro">Add the event details, choose an image, then save to publish.</p>
+                  </div>
+                  <div className="admin-editor-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setEventLivePreview(!eventLivePreview)}
+                    >
+                      <Eye size={14} /> {eventLivePreview ? 'Hide preview' : 'Show preview'}
+                    </button>
+                    <button className="btn btn-primary" type="submit" form="admin-event-form">
+                      <Check size={14} /> {editingEventId ? 'Save event' : 'Publish event'}
+                    </button>
+                  </div>
                 </div>
 
-                <form onSubmit={submitEvent} className="admin-form">
+                <form id="admin-event-form" onSubmit={submitEvent} className="admin-form">
                   <div className="admin-form-row-2">
                     <div>
                       <label className="admin-label">Expedition Title *</label>
@@ -739,12 +764,12 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                       <input
                         placeholder="Paste image URL (https://...)"
-                        value={eventForm.image}
+                        value={eventForm.image.startsWith('data:') ? '' : eventForm.image}
                         onChange={(e) => handleEventFormChange('image', e.target.value)}
                       />
-                      <label className="btn btn-secondary" style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      <label className="btn btn-secondary admin-upload-button">
                         <UploadCloud size={16} />
-                        <span>Upload File</span>
+                        <span>Upload photo</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -756,8 +781,8 @@ const AdminPanel = ({ token: initialToken = '' }) => {
 
                     {/* Presets Grid */}
                     <div style={{ marginTop: '10px' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '6px' }}>
-                        Or pick from curated observatory photo presets:
+                      <div className="admin-media-hint">
+                        Or choose a curated image:
                       </div>
                       <div className="admin-photo-preset-grid">
                         {PRESET_EVENT_IMAGES.map((preset, pIdx) => (
@@ -844,10 +869,10 @@ const AdminPanel = ({ token: initialToken = '' }) => {
 
                   <div className="admin-form-actions">
                     <button className="btn btn-primary" type="submit">
-                      {editingEventId ? 'Update Live Event Plate' : 'Publish Expedition Plate'}
+                      <Check size={15} /> {editingEventId ? 'Save event changes' : 'Publish event'}
                     </button>
                     <button type="button" className="btn btn-secondary" onClick={resetEventForm}>
-                      Clear Form
+                      {editingEventId ? 'Cancel edit' : 'Clear form'}
                     </button>
                   </div>
                 </form>
@@ -1076,22 +1101,31 @@ const AdminPanel = ({ token: initialToken = '' }) => {
           <div className="admin-section-stack">
             <div className="admin-card admin-card-form">
               <h3>{editingWorkshopId ? 'Edit Workshop' : 'Add Workshop'}</h3>
+              <p className="admin-form-intro">
+                {editingWorkshopId ? 'Update the workshop details below.' : 'Add a workshop to the club activity list.'}
+              </p>
               <form onSubmit={submitWorkshop} className="admin-form">
+                <label className="admin-label" htmlFor="workshop-topic">Workshop title</label>
                 <input
+                  id="workshop-topic"
                   required
                   aria-label="Workshop subject"
                   placeholder="Subject"
                   value={workshopForm.topic}
                   onChange={(e) => handleWorkshopFormChange('topic', e.target.value)}
                 />
+                <label className="admin-label" htmlFor="workshop-host">Instructor</label>
                 <input
+                  id="workshop-host"
                   required
                   aria-label="Instructor"
                   placeholder="Instructor"
                   value={workshopForm.host}
                   onChange={(e) => handleWorkshopFormChange('host', e.target.value)}
                 />
+                <label className="admin-label" htmlFor="workshop-description">Description</label>
                 <textarea
+                  id="workshop-description"
                   required
                   aria-label="Description"
                   placeholder="Description"
@@ -1100,14 +1134,21 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                   onChange={(e) => handleWorkshopFormChange('description', e.target.value)}
                 />
                 <div className="admin-form-row-2">
+                  <div>
+                    <label className="admin-label" htmlFor="workshop-date">Date</label>
                   <input
+                    id="workshop-date"
                     required
                     type="date"
                     aria-label="Workshop date"
                     value={workshopForm.date}
                     onChange={(e) => handleWorkshopFormChange('date', e.target.value)}
                   />
+                  </div>
+                  <div>
+                    <label className="admin-label" htmlFor="workshop-status">Status</label>
                   <select
+                    id="workshop-status"
                     aria-label="Workshop status"
                     value={workshopForm.status}
                     onChange={(e) => handleWorkshopFormChange('status', e.target.value)}
@@ -1116,8 +1157,11 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                     <option value="ongoing">Ongoing</option>
                     <option value="completed">Completed</option>
                   </select>
+                  </div>
                 </div>
+                <label className="admin-label" htmlFor="workshop-level">Difficulty</label>
                 <select
+                  id="workshop-level"
                   aria-label="Difficulty"
                   value={workshopForm.level}
                   onChange={(e) => handleWorkshopFormChange('level', e.target.value)}
@@ -1126,19 +1170,29 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                   <option value="Intermediate">Intermediate</option>
                   <option value="Advanced">Advanced</option>
                 </select>
-                <input
-                  required
-                  type="url"
-                  aria-label="Workshop image URL"
-                  placeholder="Image URL (direct image or image-host link)"
-                  value={workshopForm.image_url}
-                  onChange={(e) => handleWorkshopFormChange('image_url', e.target.value)}
-                />
-                <p className="admin-workshop-image-hint">The URL must return an image, but it does not need a visible file extension.</p>
+                <label className="admin-label" htmlFor="workshop-image">Workshop image URL</label>
+                <div className="admin-image-field">
+                  <input
+                    id="workshop-image"
+                    required={!workshopForm.image_url.startsWith('data:')}
+                    type={workshopForm.image_url.startsWith('data:') ? 'text' : 'url'}
+                    aria-label="Workshop image URL"
+                    placeholder="Paste a public image URL"
+                    value={workshopForm.image_url.startsWith('data:') ? '' : workshopForm.image_url}
+                    onChange={(e) => handleWorkshopFormChange('image_url', e.target.value)}
+                  />
+                  <label className="btn btn-secondary admin-upload-button">
+                    <UploadCloud size={15} /> Upload photo
+                    <input type="file" accept="image/*" onChange={handleWorkshopImageUpload} />
+                  </label>
+                </div>
+                <p className="admin-workshop-image-hint">Upload an image up to 5 MB or paste a public image URL.</p>
                 {workshopForm.image_url && (
                   <img className="admin-workshop-image-preview" src={workshopForm.image_url} alt="Workshop preview" referrerPolicy="no-referrer" />
                 )}
+                <label className="admin-label" htmlFor="workshop-presentation">Presentation link <span>(optional)</span></label>
                 <input
+                  id="workshop-presentation"
                   type="url"
                   aria-label="Presentation URL"
                   placeholder="Presentation URL (optional)"
@@ -1147,10 +1201,10 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                 />
                 <div className="admin-form-actions">
                   <button className="btn btn-primary" type="submit">
-                    {editingWorkshopId ? 'Update workshop' : 'Create workshop'}
+                    <Check size={15} /> {editingWorkshopId ? 'Save workshop changes' : 'Create workshop'}
                   </button>
                   <button type="button" className="btn btn-secondary" onClick={resetWorkshopForm}>
-                    Clear
+                    {editingWorkshopId ? 'Cancel edit' : 'Clear form'}
                   </button>
                 </div>
               </form>
@@ -1205,8 +1259,9 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                 newsletter layout.
               </p>
               <div className="admin-form">
-                <label>Template Design</label>
+                <label className="admin-label" htmlFor="newsletter-template">Template design</label>
                 <select
+                  id="newsletter-template"
                   className="admin-input"
                   value={newsletterTemplateKey}
                   onChange={(e) => {
@@ -1219,15 +1274,17 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                   <option value="workshop">Workshop Template</option>
                   <option value="announcement">Announcement Template</option>
                 </select>
-                <label style={{ marginTop: '20px' }}>Subject Line</label>
+                <label className="admin-label" htmlFor="newsletter-subject">Subject line</label>
                 <input
+                  id="newsletter-subject"
                   className="admin-input"
                   placeholder="e.g., Astro Club Weekly Newsletter"
                   value={newsletterSubject}
                   onChange={(e) => setNewsletterSubject(e.target.value)}
                 />
-                <label style={{ marginTop: '20px' }}>Newsletter Body (plain text)</label>
+                <label className="admin-label" htmlFor="newsletter-body">Newsletter body</label>
                 <textarea
+                  id="newsletter-body"
                   className="admin-input"
                   placeholder="Write the newsletter body as plain text. Paragraphs will be rendered in the Astro newsletter layout."
                   rows="10"
@@ -1301,13 +1358,17 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                 Import events from a Facebook page so the public Events section stays updated automatically.
               </p>
               <div className="admin-form admin-form-stack">
+                <label className="admin-label" htmlFor="facebook-page-id">Facebook page ID</label>
                 <input
+                  id="facebook-page-id"
                   className="admin-input"
                   placeholder="Facebook Page ID"
                   value={pageId}
                   onChange={(e) => setPageId(e.target.value)}
                 />
+                <label className="admin-label" htmlFor="facebook-access-token">Facebook access token</label>
                 <input
+                  id="facebook-access-token"
                   className="admin-input"
                   placeholder="Facebook Access Token"
                   value={accessToken}
@@ -1366,11 +1427,13 @@ const AdminPanel = ({ token: initialToken = '' }) => {
         <aside className="admin-panel-sidebar">
           {sectionItems.map((item) => (
             <button
+              type="button"
               key={item.id}
               className={`btn admin-side-button ${activeSection === item.id ? 'active' : ''}`}
               onClick={() => setActiveSection(item.id)}
+              aria-current={activeSection === item.id ? 'page' : undefined}
             >
-              <span style={{ marginRight: '8px' }}>{item.icon}</span>
+              <item.icon size={17} aria-hidden="true" />
               {item.label}
             </button>
           ))}

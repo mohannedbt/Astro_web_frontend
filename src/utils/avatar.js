@@ -21,7 +21,7 @@ export const createAvatarSeed = (seedBase = '') => {
 
 /**
  * Generate a 32×32 pixel identicon SVG with an 8×8 grid of 4×4px blocks.
- * Each block is filled with either white or the user's unique hue-based color.
+ * Each block is filled with either white or the club's cyan accent.
  * Returns a data URI suitable for use in <img> src attributes.
  */
 export const buildAvatarUrl = (seed = '') => {
@@ -33,9 +33,7 @@ export const buildAvatarUrl = (seed = '') => {
   const gridSize = 8;
   const cell = size / gridSize; // 4px per cell
 
-  // Unique user color derived from the seed
-  const hue = Math.floor(rand() * 360);
-  const color = `hsl(${hue} 68% 46%)`;
+  const color = '#7dd3fc';
 
   const squares = [];
   for (let row = 0; row < gridSize; row += 1) {
