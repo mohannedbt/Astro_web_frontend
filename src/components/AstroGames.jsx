@@ -120,6 +120,21 @@ const quizBank = {
     question('What is a shooting star actually?', 'A meteoroid burning in atmosphere', ['A piece of a star', 'A comet fragment', 'Solar debris']),
     question('Which planet spins on its side?', 'Uranus', ['Saturn', 'Neptune', 'Jupiter']),
     question('Which planet is closest to the Sun?', 'Mercury', ['Venus', 'Earth', 'Mars']),
+    question('What is the name of our planetary system?', 'The Solar System', ['The Milky Way', 'The Orion Arm', 'The Local Group']),
+    question('Which planet is called the Blue Planet?', 'Earth', ['Neptune', 'Uranus', 'Venus']),
+    question('What is the Moon mostly made of?', 'Rock and metal', ['Gas and ice', 'Liquid water', 'Hydrogen plasma']),
+    question('Which object gives Earth most of its light and heat?', 'The Sun', ['The Moon', 'Jupiter', 'Sirius']),
+    question('What is a comet nucleus mainly made of?', 'Ice and dust', ['Liquid iron', 'Pure hydrogen', 'Molten rock']),
+    question('Which planet is famous for its tilted rings?', 'Saturn', ['Mars', 'Venus', 'Mercury']),
+    question('What do astronauts wear outside a spacecraft?', 'A spacesuit', ['A pressure shield', 'A flight jacket', 'A thermal blanket']),
+    question('What is a constellation?', 'A pattern of stars seen from Earth', ['A group of planets', 'A type of galaxy', 'A space station']),
+    question('Which direction does the Sun appear to rise from?', 'East', ['West', 'North', 'South']),
+    question('What is the name of the first artificial satellite?', 'Sputnik 1', ['Explorer 1', 'Apollo 1', 'Vostok 1']),
+    question('Which planet is often called Earth’s sister planet?', 'Venus', ['Mars', 'Neptune', 'Saturn']),
+    question('What is the path of an object around another object called?', 'An orbit', ['A rotation', 'A transit', 'A phase']),
+    question('What is the visible surface of the Sun called?', 'The photosphere', ['The corona', 'The core', 'The chromosphere']),
+    question('Which planet has a day longer than its year?', 'Venus', ['Mars', 'Jupiter', 'Earth']),
+    question('What is the name of the galaxy containing our Solar System?', 'The Milky Way', ['Andromeda', 'Sombrero', 'Whirlpool']),
   ],
   medium: [
     question('Which moon in our solar system has a dense nitrogen atmosphere?', 'Titan', ['Europa', 'Ganymede', 'Io']),
@@ -132,6 +147,34 @@ const quizBank = {
     question('Which dwarf planet is located in the main asteroid belt?', 'Ceres', ['Pluto', 'Eris', 'Haumea']),
     question('What is the name of NASA’s rover that landed on Mars in 2021?', 'Perseverance', ['Curiosity', 'Opportunity', 'InSight']),
     question('What causes a solar eclipse on Earth?', 'The Moon passes between Sun and Earth', ['Earth passes between Sun and Moon', 'Sun passes between Earth and Moon', 'Venus blocks the Sun']),
+    question('What is a parsec used to measure?', 'Astronomical distance', ['Star temperature', 'Planet mass', 'Light intensity']),
+    question('Which planet has the strongest surface winds?', 'Neptune', ['Earth', 'Mars', 'Saturn']),
+    question('What is an exoplanet?', 'A planet outside our Solar System', ['A planet without a moon', 'A failed star', 'A dwarf planet']),
+    question('Why do stars appear to twinkle?', 'Atmospheric turbulence', ['Their rotation', 'Solar eclipses', 'Magnetic storms']),
+    question('What is a nebula?', 'A cloud of gas and dust in space', ['A planet core', 'A comet tail', 'A black hole jet']),
+    question('What is the main sequence?', 'A band where stars spend most of their lives', ['A galaxy arm', 'A comet path', 'A lunar phase']),
+    question('Which planet has the Great Dark Spot-like storms?', 'Neptune', ['Venus', 'Mercury', 'Earth']),
+    question('What is an astronomical unit based on?', 'The average Earth-Sun distance', ['The Earth-Moon distance', 'The Sun radius', 'The Milky Way diameter']),
+    question('What is a light-year?', 'A distance light travels in one year', ['A unit of time', 'The age of a star', 'A telescope exposure']),
+    question('Which rocket family launched many Apollo missions?', 'Saturn V', ['Falcon 9', 'Ariane 5', 'Atlas V']),
+    question('What is a transit in astronomy?', 'An object passing across a larger object', ['A star explosion', 'A planet rotation', 'A galaxy merger']),
+    question('Which moon is known for its subsurface ocean and icy crust?', 'Europa', ['Phobos', 'Titan', 'Triton']),
+    question('What is solar wind?', 'A stream of charged particles from the Sun', ['A wave of sunlight', 'A lunar atmosphere', 'A comet tail']),
+    question('What does a spectroscope separate?', 'Light by wavelength', ['Planets by size', 'Moons by orbit', 'Rockets by fuel']),
+    question('Which launch vehicle is reusable and developed by SpaceX?', 'Falcon 9', ['Saturn V', 'Ariane 5', 'Soyuz-U']),
+    question('What is the asteroid belt located between?', 'Mars and Jupiter', ['Earth and Mars', 'Jupiter and Saturn', 'Venus and Earth']),
+    question('What is a red giant?', 'An expanded late-stage star', ['A young planet', 'A black hole jet', 'A comet nucleus']),
+    question('What is a rover designed to do?', 'Travel across and study a planetary surface', ['Orbit a star', 'Measure only starlight', 'Launch rockets']),
+    question('Which rocket carried humans to the Moon?', 'Saturn V', ['Falcon Heavy', 'Ariane 5', 'Electron']),
+    question('What is a meteor?', 'A meteoroid glowing in an atmosphere', ['A moon fragment in orbit', 'A small star', 'A planet ring']),
+    question('What is the Kuiper Belt?', 'A region of icy bodies beyond Neptune', ['A ring around Saturn', 'A cloud near the Sun', 'A belt between Earth and Mars']),
+    question('Which planet has the fastest winds among the planets?', 'Neptune', ['Earth', 'Mars', 'Jupiter']),
+    question('What is a telescope aperture?', 'The diameter of its light-collecting opening', ['Its focal length', 'Its weight', 'Its tracking speed']),
+    question('What is a satellite?', 'An object that orbits another object', ['Only a human-made rocket', 'A star cluster', 'A comet tail']),
+    question('What is an eclipse?', 'One body blocking light from another', ['A planet changing size', 'A star changing color', 'A rocket launch']),
+    question('Which planet is the hottest on average?', 'Venus', ['Mercury', 'Mars', 'Jupiter']),
+    question('What is a lunar phase?', 'The changing visible shape of the Moon', ['A Moon earthquake', 'A new crater', 'A solar flare']),
+    question('What is a launch window?', 'A time period suitable for a mission launch', ['A rocket window', 'A telescope lens', 'A spacecraft hatch']),
   ],
   hard: [
     question('What is the maximum mass limit of a stable white dwarf star?', 'Chandrasekhar Limit (~1.4 M☉)', ['Tolman-Oppenheimer-Volkoff Limit', 'Eddington Limit', 'Hawking Mass']),
@@ -142,6 +185,67 @@ const quizBank = {
     question('What phenomenon causes light from expanding cosmic space to stretch in wavelength?', 'Cosmological Redshift', ['Doppler Shift', 'Gravitational Redshift', 'Compton Effect']),
     question('What is the primary element synthesized during main-sequence stellar fusion?', 'Helium', ['Carbon', 'Oxygen', 'Iron']),
     question('What landmark observatory detected gravitational waves for the first time in 2015?', 'LIGO', ['VIRGO', 'Webb Telescope', 'Kepler Observatory']),
+    question('What is the Schwarzschild radius associated with?', 'A black hole event horizon', ['A star spectrum', 'A galaxy orbit', 'A planet atmosphere']),
+    question('What does the Hertzsprung-Russell diagram compare?', 'Stellar luminosity and temperature', ['Planet mass and radius', 'Galaxy age and distance', 'Orbit speed and tilt']),
+    question('What is a neutron star primarily composed of?', 'Degenerate neutron matter', ['Liquid hydrogen', 'Silicate rock', 'Dark energy']),
+    question('What process powers a main-sequence star?', 'Hydrogen fusion', ['Carbon fission', 'Gravitational collapse only', 'Chemical combustion']),
+    question('What is gravitational lensing?', 'Light bending around massive objects', ['A telescope mirror defect', 'A stellar flare', 'A radio interference pattern']),
+    question('What is the Chandrasekhar limit measured in?', 'Solar masses', ['Light-years', 'Kelvin', 'Parsecs']),
+    question('What is a kilonova associated with?', 'A neutron-star merger', ['A lunar eclipse', 'A solar flare', 'A comet impact']),
+    question('What is the Roche limit?', 'The distance where tidal forces can break apart an orbiting body', ['A star’s fusion limit', 'A galaxy’s edge', 'A planet’s atmosphere']),
+    question('What is a protostar?', 'A forming star before sustained hydrogen fusion', ['A dead star', 'A small galaxy', 'A planet with rings']),
+    question('What is the Oort Cloud?', 'A distant reservoir of icy bodies around the Solar System', ['A cloud inside Jupiter', 'A solar corona layer', 'A nebula near Earth']),
+    question('What is a barycenter?', 'The common center of mass of orbiting bodies', ['A galaxy core', 'A star’s surface', 'A comet’s tail']),
+    question('What is the Eddington limit?', 'A luminosity where radiation pressure balances gravity in accretion', ['A planet mass limit', 'A lunar distance', 'A telescope resolution']),
+    question('What is stellar parallax used to measure?', 'Distances to nearby stars', ['Star composition only', 'Planet temperature', 'Galaxy rotation']),
+    question('What is a planetary nebula?', 'Gas shed by a dying low- to intermediate-mass star', ['A planet atmosphere', 'A galaxy cluster', 'A comet cloud']),
+    question('What is a brown dwarf?', 'An object too small to sustain ordinary hydrogen fusion', ['A red giant', 'A neutron star', 'A dark galaxy']),
+    question('What is the event horizon?', 'The boundary beyond which light cannot escape a black hole', ['A star’s atmosphere', 'A galaxy edge', 'A planet’s orbit']),
+    question('What does redshift usually indicate for a distant galaxy?', 'It is receding from us', ['It is getting hotter', 'It is rotating faster', 'It is closer']),
+    question('What is a solar prominence?', 'A loop of cooler plasma above the Sun’s surface', ['A planet shadow', 'A comet fragment', 'A galaxy arm']),
+    question('What is the main source of a pulsar’s regular pulses?', 'A rotating magnetized neutron star', ['A rotating planet', 'A binary asteroid', 'A solar flare']),
+    question('What is a Lagrange point?', 'A location where gravitational and orbital effects balance', ['A black hole surface', 'A star formation zone', 'A lunar crater']),
+    question('What is an impact crater?', 'A depression formed by a collision', ['A volcanic cloud', 'A galaxy void', 'A stellar remnant']),
+    question('What is an absorption spectrum?', 'Dark lines formed when specific wavelengths are absorbed', ['A planet map', 'A radio pulse', 'A star orbit']),
+    question('What is the Hill sphere?', 'The region where a body dominates satellite orbits', ['A star’s atmosphere', 'A galaxy’s halo', 'A comet’s coma']),
+    question('What is a Roche lobe?', 'A region around a star in a close binary where its gravity dominates', ['A planet ring', 'A black hole jet', 'A lunar basin']),
+    question('What is stellar nucleosynthesis?', 'The creation of elements inside stars', ['The motion of galaxies', 'The cooling of planets', 'The formation of craters']),
+    question('What is a symbiotic binary?', 'A binary system with interacting stars of different evolutionary stages', ['Two colliding galaxies', 'Two orbiting planets', 'A double asteroid']),
+    question('What is a cosmic ray?', 'A high-energy particle arriving from space', ['A visible light beam', 'A sound wave', 'A meteor trail']),
+    question('What is the Chandrasekhar mass limit relevant to?', 'White dwarf stability', ['Planet formation', 'Galaxy rotation', 'Comet brightness']),
+    question('What is an ultra-luminous X-ray source?', 'A very bright non-nuclear X-ray source outside a galaxy nucleus', ['A solar eclipse', 'A radio planet', 'A bright comet']),
+  ],
+  veryHard: [
+    question('What is the Tolman-Oppenheimer-Volkoff limit?', 'The maximum mass of a neutron star', ['The age of the universe', 'A galaxy brightness limit', 'A planet density scale']),
+    question('What is Hawking radiation caused by?', 'Quantum effects near a black hole horizon', ['Fusion in a star', 'Solar wind pressure', 'Dark matter collisions']),
+    question('What is baryogenesis?', 'The origin of the matter-antimatter asymmetry', ['The birth of a galaxy', 'A planet formation process', 'A star cooling phase']),
+    question('What is the inflation epoch?', 'A very rapid early expansion of the universe', ['A star expansion phase', 'A moon formation event', 'A galaxy collision']),
+    question('What does the cosmological constant represent in standard cosmology?', 'Dark energy density', ['Neutron pressure', 'Stellar metallicity', 'Magnetic field strength']),
+    question('What is a quasar powered by?', 'An accreting supermassive black hole', ['A giant comet', 'A neutron-star crust', 'A planetary core']),
+    question('What is the Sachs-Wolfe effect?', 'CMB temperature shifts from gravitational potentials', ['A solar wind cycle', 'A planet transit', 'A stellar nucleosynthesis chain']),
+    question('What is a Type II supernova progenitor?', 'A massive star with a collapsing core', ['A small asteroid', 'A white dwarf alone', 'A brown dwarf']),
+    question('What is the cosmic neutrino background?', 'Relic neutrinos from the early universe', ['A solar wind stream', 'A galaxy gas cloud', 'A radio telescope artifact']),
+    question('What does metallicity mean in stellar astronomy?', 'The abundance of elements heavier than helium', ['The star magnetic field', 'The star rotation speed', 'The planet iron core size']),
+    question('What is an accretion disk?', 'A rotating disk of infalling matter', ['A galaxy ring of stars', 'A planet ring system', 'A lunar shadow']),
+    question('What is the no-hair theorem about?', 'The limited observable properties of stationary black holes', ['The shape of comets', 'The color of stars', 'The structure of nebulae']),
+    question('What is recombination in cosmology?', 'The era when electrons joined nuclei to form neutral atoms', ['A galaxy merger', 'A star explosion', 'A planet atmosphere loss']),
+    question('What is the cosmic horizon?', 'The limit beyond which signals cannot reach us', ['The edge of a planet', 'A stellar surface', 'A telescope mirror']),
+    question('What is a magnetar?', 'A neutron star with an extreme magnetic field', ['A magnetic planet', 'A young galaxy', 'A charged comet']),
+    question('What is the Hubble tension?', 'A disagreement between measurements of the expansion rate', ['A telescope vibration', 'A planet orbit error', 'A star brightness cycle']),
+    question('What is an active galactic nucleus?', 'A luminous central region powered by accretion onto a black hole', ['A newborn planet', 'A comet cloud', 'A stellar nursery only']),
+    question('What is the Penrose process?', 'A way a rotating black hole can lose energy', ['A method of star formation', 'A lunar orbit', 'A rocket maneuver']),
+    question('What is quark matter?', 'Matter composed of deconfined quarks under extreme conditions', ['Ordinary gas', 'Planet rock', 'Interstellar dust']),
+    question('What is the cosmological redshift-distance relation used to study?', 'Expansion of the universe', ['Planet interiors', 'Solar flares', 'Comet chemistry']),
+    question('What is a Population III star?', 'A hypothetical first generation of metal-free stars', ['A third planet', 'A neutron star class', 'A galaxy satellite']),
+    question('What is the Jeans instability?', 'Gravitational collapse when pressure cannot support a gas cloud', ['A black hole evaporation', 'A planetary transit', 'A rocket failure']),
+    question('What is a Type Ia supernova useful for?', 'Measuring cosmological distances', ['Finding exoplanet moons', 'Mapping asteroid surfaces', 'Timing eclipses only']),
+    question('What is the Schwarzschild metric?', 'A solution describing spacetime outside a non-rotating spherical mass', ['A star catalog', 'A rocket equation', 'A planet map']),
+    question('What is dark matter inferred from?', 'Its gravitational effects', ['Its visible glow', 'Its radio broadcasts', 'Its atmospheric pressure']),
+    question('What is a gravitational wave?', 'A ripple in spacetime produced by accelerating massive objects', ['A solar wind gust', 'A sound wave in space', 'A telescope vibration']),
+    question('What is the last scattering surface?', 'The region from which the CMB last scattered toward us', ['A star’s core', 'A comet surface', 'A galaxy boundary']),
+    question('What is the virial theorem used for in astrophysics?', 'Relating kinetic and potential energies in bound systems', ['Naming planets', 'Measuring moon phases', 'Designing heat shields']),
+    question('What is a white dwarf cooling sequence?', 'The progressive fading and cooling of stellar remnants', ['A planet migration path', 'A comet orbit class', 'A galaxy merger stage']),
+    question('What is vacuum decay?', 'A hypothetical transition to a lower-energy vacuum state', ['A rocket fuel leak', 'A star wind', 'A moon collapse']),
   ],
 };
 
@@ -149,7 +253,7 @@ export const QUIZ_DIFFICULTIES_CONFIG = {
   easy: {
     id: 'easy',
     label: 'Cadet Quiz',
-    tierList: ['easy', 'easy', 'easy', 'easy', 'easy'],
+    tierList: ['easy'],
     multiplier: 0.25,
     color: '#34d399',
     desc: '5 fundamental questions for recruits (0.25x XP multiplier).',
@@ -157,7 +261,7 @@ export const QUIZ_DIFFICULTIES_CONFIG = {
   medium: {
     id: 'medium',
     label: 'Officer Exam',
-    tierList: ['medium', 'medium', 'medium', 'medium', 'medium'],
+    tierList: ['medium'],
     multiplier: 1.4,
     color: '#38bdf8',
     desc: '5 intermediate questions on solar physics & space probes.',
@@ -165,7 +269,7 @@ export const QUIZ_DIFFICULTIES_CONFIG = {
   hard: {
     id: 'hard',
     label: 'Commander Challenge',
-    tierList: ['hard', 'hard', 'hard', 'hard', 'hard'],
+    tierList: ['hard'],
     multiplier: 2.2,
     color: '#f59e0b',
     desc: '5 hard astrophysics questions on black holes & relativity.',
@@ -173,14 +277,13 @@ export const QUIZ_DIFFICULTIES_CONFIG = {
   master: {
     id: 'master',
     label: 'Very Hard · Cosmic Master',
-    tierList: ['medium', 'hard', 'hard', 'hard', 'hard'],
+    tierList: ['medium', 'hard', 'veryHard'],
     multiplier: 3.5,
     color: '#a855f7',
     desc: 'A demanding astrophysics gauntlet with no beginner questions.',
   },
 };
 
-const QUIZ_QUESTION_COUNT = 5;
 const MEMORY_PLANETS = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'];
 const MEMORY_SETTINGS = {
   easy: { id: 'easy', label: 'Easy · Cadet', pairs: 4, seconds: 90, multiplier: 0.25, color: '#34d399', desc: '4 planet pairs · 90s life support · 0.25x XP multiplier' },
@@ -332,6 +435,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
 
   // Astro Quiz State
   const [quizDifficulty, setQuizDifficulty] = useState('easy');
+  const [quizQuestionCount, setQuizQuestionCount] = useState(5);
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -339,9 +443,12 @@ const AstroGames = ({ user, profile, setActivePage }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startedAt, setStartedAt] = useState(null);
   const [finished, setFinished] = useState(false);
+  const [quizFullscreen, setQuizFullscreen] = useState(false);
   const [saveState, setSaveState] = useState('idle');
   const [quizName, setQuizName] = useState(playerName);
   const [popup, setPopup] = useState(null);
+  const quizPanelRef = useRef(null);
+  const quizTimeoutsRef = useRef([]);
 
   // Records & Leaderboard State
   const [recordsList, setRecordsList] = useState([]);
@@ -1005,8 +1112,14 @@ const AstroGames = ({ user, profile, setActivePage }) => {
 
     const config = QUIZ_DIFFICULTIES_CONFIG[quizDifficulty] || QUIZ_DIFFICULTIES_CONFIG.easy;
 
-    const preparedQuestions = config.tierList.map((tier) => {
-      const selected = shuffle(quizBank[tier])[0];
+    const tiers = config.tierList.length === 1
+      ? Array.from({ length: quizQuestionCount }, () => config.tierList[0])
+      : Array.from({ length: quizQuestionCount }, (_, index) => config.tierList[index % config.tierList.length]);
+    const usedQuestions = new Set();
+    const preparedQuestions = tiers.map((tier) => {
+      const available = quizBank[tier].filter((item) => !usedQuestions.has(item.question));
+      const selected = shuffle(available.length ? available : quizBank[tier])[0];
+      usedQuestions.add(selected.question);
       return { ...selected, tier, options: shuffle(selected.options) };
     });
 
@@ -1033,8 +1146,10 @@ const AstroGames = ({ user, profile, setActivePage }) => {
     const isCorrect = answer === questions[current].answer;
     setSelectedAnswer(answer);
     setPopup({ correct: isCorrect, text: isCorrect ? 'Spot on!' : 'Off target' });
-    window.setTimeout(() => setPopup(null), 1000);
-    window.setTimeout(() => advanceQuestion(answer), 1400);
+    quizTimeoutsRef.current.push(
+      window.setTimeout(() => setPopup(null), 1000),
+      window.setTimeout(() => advanceQuestion(answer), 1400),
+    );
   };
 
   const advanceQuestion = async (answerOverride = null) => {
@@ -1068,9 +1183,9 @@ const AstroGames = ({ user, profile, setActivePage }) => {
       userId: user?.id || null,
       userEmail: user?.email || profile?.email || null,
       score: finalScore,
-      total: 5 * 200,
+      total: questions.length * 200,
       difficulty: quizDifficulty,
-      won: correctCount >= 3,
+      won: correctCount >= Math.ceil(questions.length * 0.6),
       correct: correctCount,
       timeSec: elapsed,
       xp: xpEarned,
@@ -1082,7 +1197,9 @@ const AstroGames = ({ user, profile, setActivePage }) => {
       .catch(() => setSaveState('failed'));
   };
 
-  const resetQuiz = () => {
+  const resetQuiz = (nextMode = 'arcade') => {
+    quizTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    quizTimeoutsRef.current = [];
     setQuestions([]);
     setAnswers([]);
     setSelectedAnswer(null);
@@ -1092,14 +1209,35 @@ const AstroGames = ({ user, profile, setActivePage }) => {
     setElapsedSeconds(0);
     setSaveState('idle');
     setPopup(null);
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    setQuizFullscreen(false);
+    setGameMode(nextMode);
   };
+
+  const toggleQuizFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (quizPanelRef.current?.requestFullscreen) {
+        await quizPanelRef.current.requestFullscreen();
+      }
+    } catch {
+      setQuizFullscreen((value) => !value);
+    }
+  };
+
+  useEffect(() => {
+    const syncFullscreen = () => setQuizFullscreen(document.fullscreenElement === quizPanelRef.current);
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
 
   const activeQuestion = questions[current];
   const displayCorrect = answers.filter((ans, idx) => ans === questions[idx]?.answer).length;
   const isWrongPick = selectedAnswer && activeQuestion && selectedAnswer !== activeQuestion.answer;
 
   return (
-    <div className={`page-content astrogames-page ${gameMode === 'quiz' && !questions.length ? 'quiz-home' : ''} ${gameMode === 'meteor' ? 'meteor-page-active' : ''}`}>
+    <div className={`page-content astrogames-page ${gameMode === 'quiz' ? 'quiz-active' : ''} ${gameMode === 'quiz' && !questions.length ? 'quiz-home' : ''} ${gameMode === 'meteor' ? 'meteor-page-active' : ''}`}>
       
       {/* ================= ARCADE LOBBY ================= */}
       {gameMode === 'arcade' && (
@@ -1602,11 +1740,68 @@ const AstroGames = ({ user, profile, setActivePage }) => {
                 </div>
                 <p className="diff-desc">{cfg.desc}</p>
                 <div className="diff-specs">
-                  <span>Questions: 5</span>
+                  <span>5–15 questions</span>
                   <span>Time bonus enabled</span>
                 </div>
               </button>
             ))}
+          </div>
+
+          <div className="quiz-question-count">
+            <div className="quiz-question-count-heading">
+              <label htmlFor="quiz-question-count">Question count</label>
+              <div className="quiz-question-count-value">
+                <input
+                  id="quiz-question-count-value"
+                  type="number"
+                  min="5"
+                  max="15"
+                  step="1"
+                  value={quizQuestionCount}
+                  onChange={(event) => {
+                    const nextValue = Number(event.target.value);
+                    if (Number.isFinite(nextValue)) {
+                      setQuizQuestionCount(Math.min(15, Math.max(5, nextValue)));
+                    }
+                  }}
+                  aria-label="Enter number of quiz questions"
+                />
+                <span>questions</span>
+              </div>
+            </div>
+            <div className="quiz-flight-track">
+              <div
+                className="quiz-flight-progress"
+                style={{ width: `${((quizQuestionCount - 5) / 10) * 100}%` }}
+                aria-hidden="true"
+              />
+              <div
+                className="quiz-rocket-marker"
+                style={{ left: `${((quizQuestionCount - 5) / 10) * 100}%` }}
+                aria-hidden="true"
+              >
+                <span className="quiz-rocket-flame" />
+                <span className="quiz-rocket-body"><span className="quiz-rocket-window" /></span>
+              </div>
+              <input
+                id="quiz-question-count"
+                className="quiz-question-slider"
+                type="range"
+                min="5"
+                max="15"
+                step="1"
+                value={quizQuestionCount}
+                onChange={(event) => setQuizQuestionCount(Number(event.target.value))}
+                aria-valuemin="5"
+                aria-valuemax="15"
+                aria-valuenow={quizQuestionCount}
+                aria-label="Number of quiz questions"
+              />
+            </div>
+            <div className="quiz-question-scale" aria-hidden="true">
+              <span>5 · Quick flight</span><span>10 · Mission</span><span>15 · Deep run</span>
+            </div>
+            <p>Questions are selected from a large difficulty-specific bank without repeating within a run.</p>
           </div>
 
           <div className="quiz-name-box">
@@ -1627,7 +1822,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
 
       {/* ================= ASTRO QUIZ RUNNER ================= */}
       {gameMode === 'quiz' && activeQuestion && !finished && (
-        <section className="astro-quiz-panel" key={current}>
+        <section className={`astro-quiz-panel ${quizFullscreen ? 'is-fullscreen' : ''}`} ref={quizPanelRef} key={current}>
           <div className="astro-quiz-topline">
             <div>
               <span
@@ -1640,7 +1835,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
                 {QUIZ_DIFFICULTIES_CONFIG[quizDifficulty]?.label}
               </span>
               <span className="astro-question-count">
-                Question {current + 1} of {QUIZ_QUESTION_COUNT}
+                Question {current + 1} of {questions.length}
               </span>
             </div>
             <div className="astro-timer">
@@ -1649,16 +1844,20 @@ const AstroGames = ({ user, profile, setActivePage }) => {
             </div>
             <div className="astro-score-wrap">
               <strong className="astro-live-score">
-                {displayCorrect}/{QUIZ_QUESTION_COUNT} correct
+                {displayCorrect}/{questions.length} correct
               </strong>
               {popup && (
                 <span className={`quiz-pop ${popup.correct ? 'correct' : 'wrong'}`}>{popup.text}</span>
               )}
             </div>
+            <button className="quiz-fullscreen-button" type="button" onClick={toggleQuizFullscreen} aria-label={quizFullscreen ? 'Exit fullscreen quiz' : 'Open quiz fullscreen'}>
+              <Maximize2 size={16} />
+              <span>{quizFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
+            </button>
           </div>
 
           <div className="astro-progress">
-            <span style={{ width: `${((current + 1) / QUIZ_QUESTION_COUNT) * 100}%` }} />
+            <span style={{ width: `${((current + 1) / questions.length) * 100}%` }} />
           </div>
 
           <h2>{activeQuestion.question}</h2>
@@ -1699,7 +1898,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
             </div>
           )}
 
-          <button className="btn btn-secondary astro-exit" onClick={resetQuiz}>
+          <button className="btn btn-secondary astro-exit" onClick={() => resetQuiz('arcade')}>
             <ArrowLeft size={15} /> Exit Quiz
           </button>
         </section>
@@ -1707,16 +1906,16 @@ const AstroGames = ({ user, profile, setActivePage }) => {
 
       {/* ================= ASTRO QUIZ COMPLETED ================= */}
       {gameMode === 'quiz' && finished && (
-        <section className={`astro-result ${displayCorrect === QUIZ_QUESTION_COUNT ? 'astro-perfect-result' : ''}`}>
+        <section className={`astro-result ${displayCorrect === questions.length ? 'astro-perfect-result' : ''}`}>
           <div className="astro-result-icon">
-            {displayCorrect === QUIZ_QUESTION_COUNT ? <Trophy size={34} /> : <CheckCircle2 size={34} />}
+            {displayCorrect === questions.length ? <Trophy size={34} /> : <CheckCircle2 size={34} />}
           </div>
           <span className="astro-kicker">
-            {displayCorrect === QUIZ_QUESTION_COUNT ? 'Perfect Score' : 'Exam Complete'}
+            {displayCorrect === questions.length ? 'Perfect Score' : 'Exam Complete'}
           </span>
           <h2 className="astro-score-result">
             <strong>{displayCorrect}</strong>
-            <small>/ {QUIZ_QUESTION_COUNT} correct</small>
+            <small>/ {questions.length} correct</small>
           </h2>
           <div className="astro-time-result">
             <strong>{timeDescription(elapsedSeconds)}</strong>
@@ -1724,7 +1923,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
           </div>
 
           <div className="gameover-actions" style={{ marginTop: '20px' }}>
-            <button className="btn btn-primary" onClick={resetQuiz}>
+            <button className="btn btn-primary" onClick={() => resetQuiz('quiz-setup')}>
               <Gamepad2 size={15} /> New Exam
             </button>
             <button className="btn btn-secondary" onClick={() => openLeaderboard('astro-quiz')}>
