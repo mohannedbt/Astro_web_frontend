@@ -131,7 +131,7 @@ const Landing = ({ setActivePage, user }) => {
           </span>
           <span>
             <strong>Astro Club INSAT</strong>
-            <small>The first club at INSAT dedicated to astronomy</small>
+            <small>Student astronomy community at INSAT</small>
           </span>
         </button>
 
@@ -147,18 +147,17 @@ const Landing = ({ setActivePage, user }) => {
         </button>
 
         <nav className={`landing-nav ${navOpen ? 'is-open' : ''}`} id="landing-main-nav" aria-label="Main navigation">
-          <button className="landing-nav-link" onClick={() => { scrollToId('landing-about'); setNavOpen(false); }}>About</button>
-          <button className="landing-nav-link" onClick={() => { scrollToId('landing-portal'); setNavOpen(false); }}>Features</button>
-          <button className="landing-nav-link" onClick={() => { setActivePage('events'); setNavOpen(false); }}>Events</button>
-          <button className="landing-nav-link" onClick={() => { setActivePage('committee'); setNavOpen(false); }}>Committee</button>
-
-          <button
-            className="landing-portal-link"
-            onClick={() => { setActivePage('dashboard'); setNavOpen(false); }}
-            title="Open the interactive club portal"
-          >
-            <Sparkles size={14} /> <span>Live Dashboard</span>
-          </button>
+          <div className="landing-nav-group">
+            <span className="landing-nav-label">Explore</span>
+            <button className="landing-nav-link" onClick={() => { scrollToId('landing-about'); setNavOpen(false); }}>About</button>
+            <button className="landing-nav-link" onClick={() => { scrollToId('landing-portal'); setNavOpen(false); }}>Platform</button>
+            <button className="landing-nav-link" onClick={() => { setActivePage('events'); setNavOpen(false); }}>Events</button>
+          </div>
+          <div className="landing-nav-group landing-nav-group-secondary">
+            <button className="landing-portal-link" onClick={() => { setActivePage('dashboard'); setNavOpen(false); }} title="Open the interactive club portal">
+              <Sparkles size={14} /> <span>Open portal</span>
+            </button>
+          </div>
 
           {!user ? (
             <button className="landing-sign-in" onClick={() => { setActivePage('login'); setNavOpen(false); }}>
@@ -184,7 +183,7 @@ const Landing = ({ setActivePage, user }) => {
         <div className="landing-hero-copy">
           <div className="landing-badge">
             <span className="landing-badge-dot" />
-            <span>INSAT · Astronomical Observatory Station · 2026/27 Active</span>
+            <span>INSAT · Astronomy community and digital observatory</span>
           </div>
 
           <h1 id="landing-title">
@@ -192,8 +191,8 @@ const Landing = ({ setActivePage, user }) => {
           </h1>
 
           <p className="landing-intro">
-            INSAT’s first club dedicated to astronomy brings engineering students together to explore the cosmos through
-            stargazing, astrophysics research, and space technology. Curious beginners and seasoned observers are equally welcome.
+            Astro Club INSAT brings students together to explore the cosmos through stargazing, astronomy education, and practical
+            space projects. Curious beginners and experienced observers are equally welcome.
           </p>
 
           <div className="landing-actions">
@@ -210,27 +209,8 @@ const Landing = ({ setActivePage, user }) => {
             )}
           </div>
 
-          {/* Quick Metrics */}
-          <div className="landing-stats-bar" aria-label="Club metrics">
-            <div className="landing-stat-item">
-              <strong>120+</strong>
-              <span>Active Stargazers</span>
-            </div>
-            <div className="landing-stat-separator" />
-            <div className="landing-stat-item">
-              <strong>15+</strong>
-              <span>Annual Expeditions</span>
-            </div>
-            <div className="landing-stat-separator" />
-            <div className="landing-stat-item">
-              <strong>3</strong>
-              <span>Signature Events</span>
-            </div>
-            <div className="landing-stat-separator" />
-            <div className="landing-stat-item">
-              <strong>Bortle 2</strong>
-              <span>Dark Sky Access</span>
-            </div>
+          <div className="landing-trust-note">
+            Open to curious students, first-time observers, and experienced astronomy enthusiasts.
           </div>
         </div>
 

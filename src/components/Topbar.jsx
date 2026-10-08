@@ -1,6 +1,6 @@
-import { Menu, Palette, LogIn, Home, Sparkles } from 'lucide-react';
+import { Menu, Palette, LogIn, LogOut, Home, Sparkles } from 'lucide-react';
 
-const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, theme, setTheme }) => {
+const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, theme, setTheme, onLogout }) => {
   const getBreadcrumbs = () => {
     switch (activePage) {
       case 'dashboard':
@@ -39,6 +39,12 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
             User / <span>Account Settings</span>
           </>
         );
+      case 'profile':
+        return (
+          <>
+            User / <span>Profile</span>
+          </>
+        );
       case 'events':
         return (
           <>
@@ -49,12 +55,6 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
         return (
           <>
             Club Space / <span>Space Arcade</span>
-          </>
-        );
-      case 'committee':
-        return (
-          <>
-            Astro Club INSAT / <span>Committee Board</span>
           </>
         );
       case 'admin':
@@ -89,15 +89,17 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
         <div className="breadcrumbs">{getBreadcrumbs()}</div>
       </div>
       <div className="topbar-actions">
-        <button
-          className="topbar-action"
-          type="button"
-          onClick={() => setActivePage('landing')}
-          aria-label="Open landing page"
-          title="Return to Landing Page"
-        >
-          <Home size={14} /> <span className="hide-on-mobile">Landing</span>
-        </button>
+        {user?.is_admin && (
+          <button
+            className="topbar-action"
+            type="button"
+            onClick={() => setActivePage('landing')}
+            aria-label="Open landing page"
+            title="Return to Landing Page"
+          >
+            <Home size={14} /> <span className="hide-on-mobile">Landing</span>
+          </button>
+        )}
 
         <button
           className="topbar-action"
@@ -112,9 +114,12 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
         <button
           className="topbar-action topbar-theme"
           type="button"
-          onClick={() => setTheme(theme === 'blue' ? 'dark' : 'blue')}
+          onClick={() => {
+            const themes = ['blue', 'violet', 'slate'];
+            setTheme(themes[(themes.indexOf(theme) + 1) % themes.length]);
+          }}
           aria-label={`Toggle theme (currently ${theme})`}
-          title={`Switch color theme (currently ${theme})`}
+          title={`Switch theme (currently ${theme})`}
         >
           <Palette size={16} />
         </button>
@@ -129,15 +134,26 @@ const Topbar = ({ collapsed, setCollapsed, activePage, setActivePage, user, them
             <LogIn size={14} /> <span>Sign In</span>
           </button>
         ) : (
-          <button
-            className="topbar-auth is-member"
-            type="button"
-            onClick={() => setActivePage('account')}
-            aria-label="Open account settings"
-          >
-            <span className="topbar-member-indicator" />
-            <span>Member</span>
-          </button>
+          <>
+            <button
+              className="topbar-auth is-member"
+              type="button"
+              onClick={() => setActivePage('profile')}
+              aria-label="Open profile"
+            >
+              <span className="topbar-member-indicator" />
+              <span>Member</span>
+            </button>
+            <button
+              className="topbar-action topbar-signout"
+              type="button"
+              onClick={onLogout}
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut size={14} /> <span className="hide-on-mobile">Sign out</span>
+            </button>
+          </>
         )}
       </div>
     </header>

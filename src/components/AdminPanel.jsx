@@ -31,6 +31,10 @@ import {
   createAdminEvent,
   updateAdminEvent,
   deleteAdminEvent,
+  getUserTotalXP,
+  getRankFromXP,
+  isExperimentalXpMarketEnabled,
+  setExperimentalXpMarketEnabled,
 } from '../services/api';
 import { optimizeImageFile } from '../utils/optimizeImage';
 
@@ -129,6 +133,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
   const [newsletterBody, setNewsletterBody] = useState('');
   const [sendingNewsletter, setSendingNewsletter] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [expMarketEnabled, setExpMarketEnabled] = useState(() => isExperimentalXpMarketEnabled());
 
   useEffect(() => {
     if (token) {
@@ -566,6 +571,7 @@ const AdminPanel = ({ token: initialToken = '' }) => {
     { id: 'workshops', label: 'Workshops', icon: Camera },
     { id: 'newsletter', label: 'Newsletter', icon: Mail },
     { id: 'facebook', label: 'Facebook sync', icon: Globe2 },
+    { id: 'xp-market', label: 'XP Market Sandbox', icon: Sparkles },
   ];
 
   const renderSection = () => {
@@ -1384,6 +1390,134 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                   >
                     Clear
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'xp-market':
+        return (
+          <div className="admin-section-stack">
+            <div className="admin-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={20} style={{ color: '#f59e0b' }} />
+                <h3 style={{ margin: 0 }}>XP Market &amp; Cosmetics (Admin Test Sandbox)</h3>
+              </div>
+              <p className="admin-section-note">
+                Test environment for the XP economy, daily login XP rewards (+100 XP), Discord-style shiny username badges, custom site themes, and rare profile avatars. Restricted to admin testing to preserve website stability.
+              </p>
+
+              {/* Experimental Feature Parameter Toggle */}
+              <div style={{ background: '#090d16', padding: '16px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.3)', margin: '16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <strong style={{ color: '#f59e0b', fontSize: '1rem' }}>Experimental XP Market &amp; Discord Profiles Flag</strong>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: '#94a3b8' }}>
+                    Public Discord-style profiles are now available to every member. This switch is reserved for admin-only cosmetic previews and test effects.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={`btn ${expMarketEnabled ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ minWidth: '110px', fontWeight: 'bold', padding: '8px 16px' }}
+                  onClick={() => {
+                    const nextVal = !expMarketEnabled;
+                    setExpMarketEnabled(nextVal);
+                    setExperimentalXpMarketEnabled(nextVal);
+                    setStatusMessage(`Experimental XP Market & Discord Profiles turned ${nextVal ? 'ON' : 'OFF'}.`);
+                  }}
+                >
+                  {expMarketEnabled ? '⚡ ENABLED' : '⚪ DISABLED'}
+                </button>
+              </div>
+
+              <div className="admin-summary-grid" style={{ marginTop: '16px' }}>
+                <div className="admin-summary-item">
+                  <span>Current Admin XP</span>
+                  <div className="admin-summary-amount" style={{ color: '#38bdf8' }}>
+                    {getUserTotalXP('Admin')} XP
+                  </div>
+                </div>
+                <div className="admin-summary-item">
+                  <span>Current Rank Tier</span>
+                  <div className="admin-summary-amount" style={{ color: '#f59e0b', fontSize: '1.2rem' }}>
+                    {getRankFromXP(getUserTotalXP('Admin')).tier} ({getRankFromXP(getUserTotalXP('Admin')).title})
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const xpKey = 'astro_total_user_xp_Admin';
+                    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
+                    localStorage.setItem(xpKey, currentXp + 100);
+                    setStatusMessage('Granted +100 Daily Login XP (Test)');
+                  }}
+                >
+                  <Plus size={15} /> Grant +100 Daily XP
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    const xpKey = 'astro_total_user_xp_Admin';
+                    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
+                    localStorage.setItem(xpKey, currentXp + 500);
+                    setStatusMessage('Granted +500 Bonus XP (Test)');
+                  }}
+                >
+                  <Plus size={15} /> Grant +500 Test XP
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    localStorage.setItem('astro_total_user_xp_Admin', '0');
+                    localStorage.setItem('astro_game_records', JSON.stringify([]));
+                    setStatusMessage('Reset local test XP and records');
+                  }}
+                >
+                  <Trash2 size={15} /> Reset XP &amp; Clean Leaderboards
+                </button>
+              </div>
+            </div>
+
+            <div className="admin-card">
+              <h3>Preview &amp; Test Cosmetic Items</h3>
+              <p className="admin-section-note">
+                Test-only previews for cosmetic effects, rare profile images, and experimental themes. These controls are not shown in member settings.
+              </p>
+
+              <div className="admin-summary-grid" style={{ marginTop: '16px' }}>
+                <div className="admin-card" style={{ background: '#090d16', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                  <h4 style={{ color: '#38bdf8', marginTop: 0 }}>Discord-Style Shiny Username Effects</h4>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <li>
+                      <span className="shiny-badge shiny-rainbow" style={{ background: 'linear-gradient(90deg, #ff4500, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 'bold' }}>
+                        Rainbow Neon Glow (1,200 XP)
+                      </span>
+                    </li>
+                    <li>
+                      <span className="shiny-badge shiny-gold" style={{ color: '#f59e0b', textShadow: '0 0 8px rgba(245,158,11,0.8)', fontWeight: 'bold' }}>
+                        Gold Pulsing Sparkles (2,800 XP)
+                      </span>
+                    </li>
+                    <li>
+                      <span className="shiny-badge shiny-cyan" style={{ color: '#38bdf8', textShadow: '0 0 10px rgba(56,189,248,0.9)', fontWeight: 'bold' }}>
+                        Cyber Cyan Pulse (6,000 XP)
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="admin-card" style={{ background: '#090d16', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+                  <h4 style={{ color: '#a855f7', marginTop: 0 }}>Custom Unlockable Themes &amp; Rare Avatars</h4>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem' }}>
+                    <li><strong>Midnight Orbit Theme</strong> (Default)</li>
+                    <li><strong>Cyberpunk Neon Theme</strong> (1,000 XP)</li>
+                    <li><strong>Holographic Astronaut Avatar</strong> (500 XP)</li>
+                    <li><strong>Cosmic Crown Badge</strong> (7,500 XP)</li>
+                  </ul>
                 </div>
               </div>
             </div>

@@ -117,7 +117,7 @@ const Dashboard = ({ setActivePage, user, token, profile }) => {
               <span className="observer-kicker">
                 <Eye size={14} /> PUBLIC OBSERVER PASS ACTIVE
               </span>
-              <span className="observer-station-tag">INSAT STATION 2026/27</span>
+              <span className="observer-station-tag">PUBLIC OBSERVER ACCESS</span>
             </div>
 
             <h1 id="observer-title">Welcome to the Digital Observatory.</h1>
@@ -213,7 +213,7 @@ const Dashboard = ({ setActivePage, user, token, profile }) => {
               <Moon size={18} className="sky-icon" />
               <h2 id="sky-snapshot-title">Tonight's Celestial Snapshot</h2>
             </div>
-            <span className="sky-live-badge">Live Coordinates: 36.80° N, 10.18° E (INSAT)</span>
+            <span className="sky-live-badge">Local sky preview</span>
           </div>
 
           <div className="sky-snapshot-grid">
@@ -228,21 +228,21 @@ const Dashboard = ({ setActivePage, user, token, profile }) => {
             <div className="sky-metric-separator" />
 
             <div className="sky-metric-item">
-              <span className="sky-metric-label">Observation Window:</span>
+              <span className="sky-metric-label">Observation planning:</span>
               <div>
-                <strong>Optimal Dark Sky</strong>
-                <span>21:00 UTC - 03:30 UTC</span>
+              <strong>Check the Sky Map</strong>
+              <span>Conditions vary by date and location</span>
               </div>
             </div>
 
             <div className="sky-metric-separator" />
 
             <div className="sky-metric-item">
-              <span className="sky-metric-label">Prime Zenith Targets:</span>
+              <span className="sky-metric-label">Explore the sky:</span>
               <div className="sky-targets-list">
-                <span className="target-pill">Jupiter (Mag -2.4)</span>
-                <span className="target-pill">Orion Nebula M42</span>
-                <span className="target-pill">Pleiades Cluster</span>
+              <span className="target-pill">Planets</span>
+              <span className="target-pill">Constellations</span>
+              <span className="target-pill">Deep-sky objects</span>
               </div>
             </div>
 

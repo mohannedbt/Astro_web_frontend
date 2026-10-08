@@ -66,7 +66,7 @@ async function initDatabase() {
 
     await pgPool.query(`CREATE TABLE IF NOT EXISTS newsletter_subscribers (
       id SERIAL PRIMARY KEY,
-      email TEXT UNIQUE,
+      email TEXT UNIQUE NOT NULL,
       subscribed_at TEXT
     )`);
 
@@ -116,7 +116,7 @@ async function initDatabase() {
 
     db.prepare(`CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE,
       password_hash TEXT NOT NULL,
       name TEXT DEFAULT '',
       username TEXT UNIQUE,
@@ -127,6 +127,31 @@ async function initDatabase() {
       joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`).run();
+
+    const emailColumn = db.prepare('PRAGMA table_info(users)').all().find((column) => column.name === 'email');
+    if (emailColumn?.notnull) {
+      db.exec(`
+        PRAGMA foreign_keys=OFF;
+        CREATE TABLE users_migration (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT UNIQUE,
+          password_hash TEXT NOT NULL,
+          name TEXT DEFAULT '',
+          username TEXT UNIQUE,
+          bio TEXT DEFAULT '',
+          location TEXT DEFAULT '',
+          avatar_seed TEXT DEFAULT '',
+          is_admin INTEGER DEFAULT 0,
+          joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO users_migration (id, email, password_hash, name, username, bio, location, avatar_seed, is_admin, joined_at, updated_at)
+          SELECT id, email, password_hash, name, username, bio, location, avatar_seed, is_admin, joined_at, updated_at FROM users;
+        DROP TABLE users;
+        ALTER TABLE users_migration RENAME TO users;
+        PRAGMA foreign_keys=ON;
+      `);
+    }
 
     db.prepare(`CREATE TABLE IF NOT EXISTS workshops (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

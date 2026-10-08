@@ -79,6 +79,7 @@ async function ensureScoresTable() {
         game TEXT NOT NULL,
         name TEXT NOT NULL,
         score INTEGER DEFAULT 0,
+        xp INTEGER DEFAULT 0,
         total INTEGER DEFAULT 0,
         difficulty TEXT,
         won BOOLEAN DEFAULT false,
@@ -101,6 +102,7 @@ async function ensureScoresTable() {
         game TEXT NOT NULL,
         name TEXT NOT NULL,
         score INTEGER DEFAULT 0,
+        xp INTEGER DEFAULT 0,
         total INTEGER DEFAULT 0,
         difficulty TEXT,
         won INTEGER DEFAULT 0,
@@ -130,6 +132,7 @@ async function ensureScoresTable() {
       }
     };
     await addColumn('user_id', 'INTEGER DEFAULT NULL');
+    await addColumn('xp', 'INTEGER DEFAULT 0');
     await addColumn('user_email', 'TEXT');
     await addColumn('user_name', 'TEXT');
     await addColumn('challenge_type', 'TEXT');
@@ -147,6 +150,7 @@ async function ensureScoresTable() {
       }
     };
     await addColumn('user_id', 'INTEGER DEFAULT NULL');
+    await addColumn('xp', 'INTEGER DEFAULT 0');
     await addColumn('user_email', 'TEXT');
     await addColumn('user_name', 'TEXT');
     await addColumn('challenge_type', 'TEXT');
@@ -435,7 +439,9 @@ function astrogamesRoutes(app) {
         params.push(game);
       }
       const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
-      const limit = userId || userEmail ? 40 : 20;
+      // A global leaderboard is aggregated per user in the client. Return enough
+      // history for that aggregation instead of limiting it to the first 20 runs.
+      const limit = userId || userEmail ? 200 : 2000;
       const rows = await dbAll(`SELECT * FROM astrogames_scores ${where} ORDER BY created_at DESC LIMIT ${limit}`, params);
       res.json(rows);
     } catch (error) {
@@ -444,19 +450,20 @@ function astrogamesRoutes(app) {
   });
 
   app.post('/api/astrogames/leaderboard', async (req, res) => {
-    const { game, name, score, total, difficulty, won, guesses, timeSec, target, date, pct, userId, userEmail, userName, challengeType, challengeTitle, challengeId, globalScore, timeMs } = req.body;
+    const { game, name, score, xp, total, difficulty, won, guesses, timeSec, target, date, pct, userId, userEmail, userName, challengeType, challengeTitle, challengeId, globalScore, timeMs } = req.body;
     if (!game || !name) return res.status(400).json({ error: 'game and name required' });
 
     try {
       await ensureScoresTable();
       const insertSql = usingPostgres
-        ? 'INSERT INTO astrogames_scores (game, name, score, total, difficulty, won, guesses, time_sec, target, pct, user_id, user_email, user_name, challenge_type, challenge_title, challenge_id, global_score, time_ms, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *'
-        : 'INSERT INTO astrogames_scores (game, name, score, total, difficulty, won, guesses, time_sec, target, pct, user_id, user_email, user_name, challenge_type, challenge_title, challenge_id, global_score, time_ms, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        ? 'INSERT INTO astrogames_scores (game, name, score, xp, total, difficulty, won, guesses, time_sec, target, pct, user_id, user_email, user_name, challenge_type, challenge_title, challenge_id, global_score, time_ms, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *'
+        : 'INSERT INTO astrogames_scores (game, name, score, xp, total, difficulty, won, guesses, time_sec, target, pct, user_id, user_email, user_name, challenge_type, challenge_title, challenge_id, global_score, time_ms, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
       const wonValue = usingPostgres ? (won ? true : false) : (won ? 1 : 0);
       const insertParams = [
         game,
         name,
         Number(score) || 0,
+        Math.max(0, Number(xp) || Math.round((Number(score) || 0) * 0.5 + (won ? 100 : 20))),
         Number(total) || 0,
         difficulty || null,
         wonValue,

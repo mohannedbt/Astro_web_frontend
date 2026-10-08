@@ -52,13 +52,19 @@ export const login = async (email, password) => {
   });
 };
 
-export const register = async (email, password, is_admin = false, name = '', username = '', bio = '', location = '') => {
+export const register = async (email, password, username) => {
   return safeFetch(`${API_BASE}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, is_admin, name, username, bio, location }),
+    body: JSON.stringify({ email, username, password, is_admin: false }),
   });
 };
+
+export const updateAuthProfile = async (token, profile) => safeFetch(`${API_BASE}/api/auth/profile`, {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+  body: JSON.stringify(profile),
+});
 
 export const authHeaders = (token) => {
   if (!token) return {}; 
@@ -264,88 +270,9 @@ export const ACI_COMMITTEE = [
   { role: 'Logistics manager', name: 'Med Dhia Selmi' },
 ];
 
-export const CLUB_HISTORY_EVENTS = [
-  {
-    id: 'club-hackathon-01',
-    title: 'Hackathon #1 · Annual Dev Hackathon',
-    date: '2026-02-21',
-    startAt: '2026-02-21T09:00:00',
-    time: '09:00 - 09:00',
-    location: 'INSAT Innovation Hub',
-    description: 'The club opened its build season with a 24-hour team challenge: turn a rough idea into a working product, then present it to the community.',
-    image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1920&q=85',
-    gallery: [
-      'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1400&q=85',
-    ],
-    category: 'Hackathon',
-    capacity: 80,
-    status: 'Past event',
-    highlights: ['24 hours of collaborative product building', 'Mentor office hours and rapid demos', 'Community-voted audience award'],
-    winners: ['PLACEHOLDER · Team Orbit — Best Overall Project', 'PLACEHOLDER · Team Nova — Audience Choice'],
-  },
-  {
-    id: 'club-hackathon-02',
-    title: 'Hackathon #2 · AI / Innovation Sprint',
-    date: '2026-04-25',
-    startAt: '2026-04-25T10:00:00',
-    time: '10:00 - 20:00',
-    location: 'INSAT Research Lab',
-    description: 'A focused sprint for practical AI ideas. Teams explored responsible machine learning, useful prototypes, and the small details that make a demo feel like a real product.',
-    image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1920&q=85',
-    gallery: [
-      'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1400&q=85',
-    ],
-    category: 'Hackathon',
-    capacity: 64,
-    status: 'Past event',
-    highlights: ['Responsible AI challenge tracks', 'Prototype reviews with invited mentors', 'Live demos and peer feedback'],
-    winners: ['PLACEHOLDER · Team Deep Blue — Most Useful Prototype', 'PLACEHOLDER · Team Comet — Best Technical Experiment'],
-  },
-  {
-    id: 'club-general-assembly',
-    title: 'General Assembly · Community & Elections',
-    date: '2026-06-20',
-    startAt: '2026-06-20T14:00:00',
-    time: '14:00 - 17:00',
-    location: 'INSAT Main Auditorium',
-    description: 'Members gathered to review the season, welcome new voices, share plans for the year ahead, and elect the next club board.',
-    image: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1920&q=85',
-    gallery: [
-      'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1400&q=85',
-    ],
-    category: 'General Assembly',
-    capacity: 120,
-    status: 'Past event',
-    highlights: ['Season recap and open member forum', 'Next-year roadmap and project sign-ups', 'Board elections and handover'],
-    winners: ['Elected board roster · PLACEHOLDER until official names are added'],
-  },
-  {
-    id: 'club-hackathon-03',
-    title: 'Hackathon #3 · Grand Finale Hackathon',
-    date: '2026-09-19',
-    startAt: '2026-09-19T09:00:00',
-    time: '09:00 - 21:00',
-    location: 'INSAT Grand Hall',
-    description: 'The season finale brought the strongest ideas to one stage. Teams polished their work, shared what they learned, and competed in a final community showcase.',
-    image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1920&q=85',
-    gallery: [
-      'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1400&q=85',
-      'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1400&q=85',
-    ],
-    category: 'Hackathon',
-    capacity: 100,
-    status: 'Past event',
-    highlights: ['Final project showcase and live judging', 'Cross-team demos and community awards', 'Season-closing celebration'],
-    winners: ['PLACEHOLDER · Team Polaris — Grand Finale', 'PLACEHOLDER · Team Signal — Best Presentation'],
-  },
-];
+// No unverified historical events are shown when the events service is empty.
+// Administrators can publish confirmed events through the admin panel.
+export const CLUB_HISTORY_EVENTS = [];
 
 const EVENTS_CACHE_KEY = 'astro_events_cache_v2';
 
@@ -355,7 +282,14 @@ const getStoredEvents = () => {
     const raw = localStorage.getItem(EVENTS_CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        const confirmed = parsed.filter((event) => (
+          event
+          && !String(event.id || '').startsWith('club-hackathon-')
+          && !String(event.title || '').toLowerCase().includes('placeholder')
+        ));
+        if (confirmed.length > 0) return confirmed;
+      }
     }
   } catch (e) {
     console.warn('Failed to parse cached events', e);
@@ -512,18 +446,241 @@ export const deleteAdminEvent = async (token, id) => {
   return { success: true };
 };
 
-export const fetchAstrogameRecords = async ({ game, userId, userEmail }) => {
-  const params = new URLSearchParams({ game });
-  if (userId) params.set('userId', userId);
-  if (userEmail) params.set('userEmail', userEmail);
-  return safeFetch(`${API_BASE}/api/astrogames/leaderboard?${params}`);
+export const isSameWeek = (dateStr) => {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return false;
+  const now = new Date();
+  
+  const startOfWeek = new Date(now);
+  const day = startOfWeek.getDay();
+  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+  startOfWeek.setDate(diff);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+  return date >= startOfWeek && date < endOfWeek;
 };
 
-export const saveAstrogameRecord = async (record) => safeFetch(`${API_BASE}/api/astrogames/leaderboard`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(record),
-});
+export const getWeeklyResetTimeLeft = () => {
+  const now = new Date();
+  const nextReset = new Date(now);
+  const day = nextReset.getDay();
+  const diff = nextReset.getDate() - day + (day === 0 ? 1 : 8);
+  nextReset.setDate(diff);
+  nextReset.setHours(0, 0, 0, 0);
+
+  const diffMs = nextReset - now;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  return { days, hours, minutes, formatted: `${days}d ${hours}h ${minutes}m` };
+};
+
+export const getRankFromXP = (xp = 0) => {
+  const numXp = Number(xp) || 0;
+  if (numXp >= 35000) return { title: 'Cosmic Legend', tier: 'Mythic', icon: '👑', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', nextXp: null, minXp: 35000 };
+  if (numXp >= 15000) return { title: 'Galactic Admiral', tier: 'Diamond', icon: '💫', color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.15)', nextXp: 35000, minXp: 15000 };
+  if (numXp >= 6000) return { title: 'Astral Commander', tier: 'Platinum', icon: '⭐', color: '#a855f7', bg: 'rgba(168, 85, 247, 0.15)', nextXp: 15000, minXp: 6000 };
+  if (numXp >= 2000) return { title: 'Cosmic Officer', tier: 'Gold', icon: '🚀', color: '#eab308', bg: 'rgba(234, 179, 8, 0.15)', nextXp: 6000, minXp: 2000 };
+  if (numXp >= 500) return { title: 'Orbital Explorer', tier: 'Silver', icon: '🛰️', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)', nextXp: 2000, minXp: 500 };
+  return { title: 'Stargazer', tier: 'Bronze', icon: '🌌', color: '#cd7f32', bg: 'rgba(205, 127, 50, 0.15)', nextXp: 500, minXp: 0 };
+};
+
+const DEFAULT_SEED_RECORDS = [];
+
+export const getStoredAstroRecords = () => {
+  try {
+    const raw = localStorage.getItem('astro_game_records');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((r) => r && r.id && !String(r.id).startsWith('seed-'));
+      }
+    }
+  } catch (e) {}
+  try {
+    localStorage.setItem('astro_game_records', JSON.stringify([]));
+  } catch (e) {}
+  return [];
+};
+
+export const fetchAstrogameRecords = async ({ game, userId, userEmail, timeframe = 'all', difficulty = 'all' } = {}) => {
+  let backendRecords = [];
+  try {
+    const params = new URLSearchParams();
+    if (game && game !== 'all' && game !== 'global') params.set('game', game);
+    // Global rankings must include every user. Identity filters are reserved for
+    // callers explicitly requesting a personal history.
+    if (game && game !== 'global' && userId) params.set('userId', userId);
+    if (game && game !== 'global' && userEmail) params.set('userEmail', userEmail);
+    const res = await safeFetch(`${API_BASE}/api/astrogames/leaderboard?${params}`);
+    if (Array.isArray(res)) backendRecords = res;
+  } catch (e) {
+    console.warn('Leaderboard backend fetch failed, using local records:', e.message);
+  }
+
+  const localRecords = getStoredAstroRecords();
+  
+  const combinedMap = new Map();
+  [...backendRecords, ...localRecords].forEach((rec) => {
+    if (!rec || (rec.id && String(rec.id).startsWith('seed-'))) return;
+    const key = rec.id || `${rec.name}-${rec.created_at || rec.createdAt}-${rec.score}`;
+    if (!combinedMap.has(key)) {
+      combinedMap.set(key, rec);
+    }
+  });
+
+  let recordsList = Array.from(combinedMap.values());
+
+  if (game && game !== 'all' && game !== 'global') {
+    recordsList = recordsList.filter((r) => r.game === game);
+  }
+
+  if (difficulty && difficulty !== 'all') {
+    recordsList = recordsList.filter((r) => (r.difficulty || 'easy').toLowerCase() === difficulty.toLowerCase());
+  }
+
+  if (timeframe === 'weekly') {
+    recordsList = recordsList.filter((r) => isSameWeek(r.created_at || r.createdAt));
+  }
+
+  if (game === 'global') {
+    const users = new Map();
+    recordsList.forEach((record) => {
+      const identity = record.user_id || record.userId || record.user_email || record.userEmail || record.user_name || record.userName || record.name;
+      if (!identity) return;
+      const key = String(identity).toLowerCase();
+      const current = users.get(key) || {
+        id: `user-${key}`,
+        name: record.user_name || record.userName || record.name || 'Cadet Pilot',
+        userId: record.user_id || record.userId || null,
+        userEmail: record.user_email || record.userEmail || null,
+        xp: 0,
+        score: 0,
+        gamesPlayed: 0,
+        created_at: record.created_at || record.createdAt,
+      };
+      current.xp += Number(record.xp) || Math.round((Number(record.score) || 0) * 0.5 + (record.won ? 100 : 20));
+      current.score += Number(record.score) || 0;
+      current.gamesPlayed += 1;
+      users.set(key, current);
+    });
+    recordsList = Array.from(users.values());
+  }
+
+  recordsList.sort((a, b) => {
+    const bValue = game === 'global' ? Number(b.xp) || 0 : Number(b.score) || 0;
+    const aValue = game === 'global' ? Number(a.xp) || 0 : Number(a.score) || 0;
+    return bValue - aValue;
+  });
+
+  return recordsList;
+};
+
+export const claimDailyLoginXP = (userNameOrEmail = 'Cadet') => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const userKey = (userNameOrEmail || 'Cadet').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const todayKey = `astro_daily_login_${userKey}_${todayStr}`;
+  try {
+    const claimed = localStorage.getItem(todayKey);
+    if (claimed) {
+      return { claimed: false, xp: 0, message: 'Daily 100 XP already claimed today!' };
+    }
+    
+    localStorage.setItem(todayKey, 'true');
+    const xpKey = `astro_total_user_xp_${userNameOrEmail || 'guest'}`;
+    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
+    const sanitizedCurrent = currentXp > 50000 ? 0 : currentXp;
+    const newXp = sanitizedCurrent + 100;
+    localStorage.setItem(xpKey, newXp);
+    return { claimed: true, xp: 100, message: '🎉 Daily Login Reward Claimed: +100 XP!' };
+  } catch (e) {
+    return { claimed: false, xp: 0, message: 'Could not claim daily XP.' };
+  }
+};
+
+export const saveAstrogameRecord = async (record) => {
+  const nowIso = new Date().toISOString();
+  const xpEarned = Number(record.xp) || Math.round((Number(record.score) || 0) * 0.5 + (record.won ? 100 : 20));
+  
+  const formattedRecord = {
+    id: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    created_at: nowIso,
+    createdAt: nowIso,
+    xp: xpEarned,
+    ...record,
+    difficulty: record.difficulty || 'easy',
+  };
+
+  const current = getStoredAstroRecords();
+  const updated = [formattedRecord, ...current].slice(0, 250);
+  try {
+    localStorage.setItem('astro_game_records', JSON.stringify(updated));
+  } catch (e) {}
+
+  try {
+    const xpKey = `astro_total_user_xp_${record.userId || record.userEmail || record.userName || record.name || 'guest'}`;
+    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
+    const sanitizedCurrent = currentXp > 50000 ? 0 : currentXp;
+    localStorage.setItem(xpKey, sanitizedCurrent + xpEarned);
+  } catch (e) {}
+
+  try {
+    await safeFetch(`${API_BASE}/api/astrogames/leaderboard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formattedRecord),
+    });
+  } catch (e) {
+    console.warn('Leaderboard remote save failed, saved locally.');
+  }
+
+  return formattedRecord;
+};
+
+export const getUserTotalXP = (userNameOrEmail = '') => {
+  const records = getStoredAstroRecords();
+  let userRecords = records;
+  if (userNameOrEmail) {
+    const search = userNameOrEmail.toLowerCase();
+    userRecords = records.filter(
+      (r) =>
+        (r.name && r.name.toLowerCase() === search) ||
+        (r.userEmail && r.userEmail.toLowerCase() === search) ||
+        (r.userName && r.userName.toLowerCase() === search)
+    );
+  }
+  
+  const sumFromRecords = userRecords.reduce((acc, r) => acc + (Number(r.xp) || Math.round((Number(r.score) || 0) * 0.5)), 0);
+  const userKey = userNameOrEmail || 'guest';
+  const storedLocalXp = Number(localStorage.getItem(`astro_total_user_xp_${userKey}`)) || 0;
+  let total = sumFromRecords > 0 ? sumFromRecords : storedLocalXp;
+  if (storedLocalXp > 50000 || (storedLocalXp > sumFromRecords * 3 && sumFromRecords > 0)) {
+    total = sumFromRecords;
+    try {
+      localStorage.setItem(`astro_total_user_xp_${userKey}`, total);
+    } catch (e) {}
+  }
+  return total;
+};
+
+export const isExperimentalXpMarketEnabled = () => {
+  try {
+    return localStorage.getItem('astro_experimental_xp_market') === 'true';
+  } catch (e) {
+    return false;
+  }
+};
+
+export const setExperimentalXpMarketEnabled = (enabled) => {
+  try {
+    localStorage.setItem('astro_experimental_xp_market', enabled ? 'true' : 'false');
+    window.dispatchEvent(new Event('astro_experimental_xp_market_change'));
+  } catch (e) {}
+};
 
 export const fetchNews = async () => {
   try {

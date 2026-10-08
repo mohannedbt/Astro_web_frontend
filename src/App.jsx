@@ -10,9 +10,9 @@ import Workshops from './components/Workshops';
 import Login from './components/Login';
 import Register from './components/Register';
 import Account from './components/Account';
+import Profile from './components/Profile';
 import Events from './components/Events';
 import Landing from './components/Landing';
-import Committee from './components/Committee';
 import AdminPanel from './components/AdminPanel';
 import Tour from './components/Tour';
 import AstroGames from './components/AstroGames';
@@ -32,7 +32,10 @@ const parseJwt = (token) => {
 
 function App() {
   const [collapsed, setCollapsed] = useState(true);
-  const [siteTheme, setSiteTheme] = useState('blue');
+  const [siteTheme, setSiteTheme] = useState(() => {
+    const storedTheme = localStorage.getItem('astro_site_theme');
+    return ['blue', 'violet', 'slate'].includes(storedTheme) ? storedTheme : 'blue';
+  });
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [user, setUser] = useState(() => parseJwt(localStorage.getItem('token') || ''));
   const navigate = useNavigate();
@@ -99,10 +102,10 @@ function App() {
     if (p === '/skymap') return 'skymap';
     if (p === '/workshops') return 'workshops';
     if (p === '/events') return 'events';
-    if (p === '/committee') return 'committee';
     if (p === '/login') return 'login';
     if (p === '/register') return 'register';
     if (p === '/account') return 'account';
+    if (p === '/profile') return 'profile';
     if (p === '/admin') return 'admin';
     if (p === '/astrogames') return 'astrogames';
     if (p === '/games' || p.startsWith('/games/')) return 'astrogames';
@@ -127,14 +130,14 @@ function App() {
         return '/workshops';
       case 'events':
         return '/events';
-      case 'committee':
-        return '/committee';
       case 'login':
         return '/login';
       case 'register':
         return '/register';
       case 'account':
         return '/account';
+      case 'profile':
+        return '/profile';
       case 'admin':
         return '/admin';
       case 'astrogames':
@@ -163,6 +166,7 @@ function App() {
 
   useEffect(() => {
     document.body.dataset.theme = siteTheme;
+    localStorage.setItem('astro_site_theme', siteTheme);
     return () => {
       document.body.removeAttribute('data-theme');
     };
@@ -217,11 +221,9 @@ function App() {
       case 'workshops':
         return <Workshops />;
       case 'admin':
-        return user?.is_admin ? <AdminPanel token={token} /> : <Dashboard setActivePage={setActivePage} user={user} token={token} profile={profile} />;
+        return <AdminPanel token={token} />;
       case 'events':
         return <Events token={token} setActivePage={setActivePage} user={user} />;
-      case 'committee':
-        return <Committee setActivePage={setActivePage} user={user} />;
       case 'astrogames':
         return <AstroGames user={user} profile={profile} setActivePage={setActivePage} />;
       case 'login':
@@ -229,13 +231,15 @@ function App() {
       case 'register':
         return <Register setActivePage={setActivePage} onLogin={handleLoginSuccess} />;
       case 'account':
-        return <Account user={user} profile={profile} updateProfile={updateProfile} onLogout={handleLogout} setActivePage={setActivePage} />;
+        return <Account user={user} profile={profile} updateProfile={updateProfile} onLogout={handleLogout} setActivePage={setActivePage} theme={siteTheme} setTheme={setSiteTheme} token={token} />;
+      case 'profile':
+        return <Profile user={user} profile={profile} setActivePage={setActivePage} />;
       default:
         return <Dashboard setActivePage={setActivePage} user={user} token={token} profile={profile} />;
     }
   };
 
-  const noShellPages = ['landing', 'committee', 'login', 'register'];
+  const noShellPages = ['landing', 'login', 'register'];
   const requiresAuth = ['admin', 'account'];
   const showShell = !noShellPages.includes(activePage) && !(requiresAuth.includes(activePage) && !user);
 
@@ -265,6 +269,7 @@ function App() {
               user={user}
               theme={siteTheme}
               setTheme={setSiteTheme}
+              onLogout={handleLogout}
             />
             <Tour />
             {renderContent()}

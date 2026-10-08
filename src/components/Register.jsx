@@ -4,7 +4,6 @@ import { register } from '../services/api';
 import { buildAvatarUrl, createAvatarSeed } from '../utils/avatar';
 
 const Register = ({ setActivePage, onLogin }) => {
-  const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,10 +15,6 @@ const Register = ({ setActivePage, onLogin }) => {
     e.preventDefault();
     setError('');
 
-    if (!name.trim()) {
-      setError('Full name is required');
-      return;
-    }
     if (!username.trim()) {
       setError('Username is required');
       return;
@@ -42,14 +37,14 @@ const Register = ({ setActivePage, onLogin }) => {
     }
 
     try {
-      const data = await register(email, password, false, name, username, '', '');
+      const data = await register(email, password, username);
       if (!data || !data.token) {
         setError('Registration failed. Please try again.');
         return;
       }
-      const avatarSeed = data?.user?.avatar_seed || createAvatarSeed(username || email);
+      const avatarSeed = data?.user?.avatar_seed || createAvatarSeed(username);
       const defaultAvatar = buildAvatarUrl(avatarSeed);
-      const profileData = { name, username, email, avatar: defaultAvatar, avatar_seed: avatarSeed };
+      const profileData = { name: data?.user?.name || username, username, email, avatar: defaultAvatar, avatar_seed: avatarSeed };
 
       if (onLogin) {
         onLogin(data.token, data.user);
@@ -112,17 +107,6 @@ const Register = ({ setActivePage, onLogin }) => {
 
             <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Full Name</label>
-                <input 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  type="text" 
-                  placeholder="John Doe" 
-                  style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', outline: 'none', fontSize: '14px' }} 
-                  required 
-                />
-              </div>
-              <div>
                 <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Username</label>
                 <input 
                   value={username} 
@@ -135,14 +119,7 @@ const Register = ({ setActivePage, onLogin }) => {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Email</label>
-                <input 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  type="email" 
-                  placeholder="john@example.com" 
-                  style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', outline: 'none', fontSize: '14px' }} 
-                  required 
-                />
+                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="john@example.com" style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', outline: 'none', fontSize: '14px' }} required />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Password</label>

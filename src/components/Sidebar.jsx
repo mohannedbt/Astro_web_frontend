@@ -1,4 +1,4 @@
-import { Compass, BookOpen, Map, Mic, User, Calendar, Gamepad2 } from 'lucide-react';
+import { Compass, BookOpen, Map, Mic, User, Calendar, Gamepad2, Settings, UserRound } from 'lucide-react';
 import { buildAvatarUrl } from '../utils/avatar';
 
 const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, profile }) => {
@@ -17,6 +17,13 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, pro
       items: [
         { id: 'workshops', label: 'Workshops', icon: Mic },
         { id: 'events', label: 'Events', icon: Calendar },
+      ],
+    },
+    {
+      section: 'Your account',
+      items: [
+        { id: 'profile', label: 'Profile', icon: UserRound, memberOnly: true },
+        { id: 'account', label: 'Settings', icon: Settings, memberOnly: true },
         { id: 'admin', label: 'Admin', icon: User, adminOnly: true },
       ],
     },
@@ -51,6 +58,7 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, pro
           <div className="nav-label">{sectionGroup.section}</div>
           {sectionGroup.items.map((item) => {
             if (item.adminOnly && !user?.is_admin) return null;
+            if (item.memberOnly && !user) return null;
             const IconComponent = item.icon;
             const isActive = activePage === item.id;
             return (
@@ -78,9 +86,9 @@ const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage, user, pro
       <button
         className="sidebar-user"
         type="button"
-        onClick={() => setActivePage(user ? 'account' : 'login')}
+        onClick={() => setActivePage(user ? 'profile' : 'login')}
         title={collapsed ? (user ? profile?.name || user?.email || 'Account' : 'Sign in as Member') : undefined}
-        aria-label={user ? 'Open account settings' : 'Sign in as a member'}
+        aria-label={user ? 'Open profile' : 'Sign in as a member'}
       >
         {user ? (
           <>

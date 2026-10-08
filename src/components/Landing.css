@@ -7,6 +7,7 @@
   background: var(--bg-base);
   position: relative;
   overflow-x: hidden;
+  width: 100%;
 }
 
 /* ---------- Header ---------- */
@@ -75,7 +76,27 @@
 .landing-nav {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 10px;
+}
+.landing-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(248, 251, 255, 0.13);
+  border-radius: 14px;
+  background: rgba(7, 17, 31, 0.28);
+}
+.landing-nav-group-secondary {
+  padding-left: 4px;
+}
+.landing-nav-label {
+  padding: 0 8px;
+  color: rgba(248, 251, 255, 0.45);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .landing-menu-toggle {
@@ -95,20 +116,22 @@
   font-size: 13px;
   font-weight: 500;
   transition: color var(--transition);
-  padding: 8px 4px;
+  padding: 8px 10px;
+  border-radius: 9px;
 }
 
 .landing-nav-link:hover {
   color: #fff;
+  background: rgba(248, 251, 255, 0.09);
 }
 
 .landing-portal-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 9px 14px;
   border-radius: 999px;
-  background: rgba(125, 211, 252, 0.1);
+  background: linear-gradient(135deg, rgba(125, 211, 252, 0.2), rgba(56, 189, 248, 0.08));
   border: 1px solid rgba(125, 211, 252, 0.3);
   color: var(--accent);
   font-size: 13px;
@@ -128,7 +151,7 @@
   gap: 6px;
   padding: 8px 16px;
   border-radius: 999px;
-  background: #f8fbff;
+  background: linear-gradient(135deg, #f8fbff, #cceeff);
   color: #07111b;
   font-size: 13px;
   font-weight: 600;
@@ -146,9 +169,30 @@
   color: #07111b;
 }
 
+.landing-nav .landing-sign-in {
+  margin-left: 2px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.landing-nav .landing-sign-in:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.landing-nav .landing-sign-in.is-member:hover {
+  background: var(--accent-strong);
+}
+
 .landing-header button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+.landing-trust-note {
+  max-width: 520px;
+  margin-top: 22px;
+  color: rgba(248, 251, 255, 0.68);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 /* ---------- Hero ---------- */
@@ -906,11 +950,11 @@
     display: flex;
     align-items: stretch;
     flex-direction: column;
-    gap: 4px;
-    padding: 10px;
+    gap: 8px;
+    padding: 12px;
     border: 1px solid rgba(125, 211, 252, 0.2);
     border-radius: 16px;
-    background: rgba(7, 17, 31, 0.96);
+    background: rgba(7, 17, 31, 0.98);
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(18px);
   }
@@ -920,11 +964,25 @@
     border-radius: 9px;
     text-align: left;
   }
+  .landing-nav.is-open .landing-nav-group,
+  .landing-nav.is-open .landing-nav-group-secondary {
+    display: grid;
+    gap: 3px;
+    width: 100%;
+    background: rgba(248, 251, 255, 0.035);
+    border-color: rgba(248, 251, 255, 0.1);
+    padding: 0;
+    border: 0;
+  }
+  .landing-nav.is-open .landing-nav-label {
+    padding: 6px 12px 3px;
+  }
   .landing-nav.is-open .landing-nav-link:hover {
     background: rgba(255, 255, 255, 0.06);
   }
   .landing-nav.is-open .landing-portal-link,
   .landing-nav.is-open .landing-sign-in {
+    width: 100%;
     justify-content: center;
     margin-top: 4px;
   }

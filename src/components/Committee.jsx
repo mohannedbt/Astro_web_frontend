@@ -7,7 +7,7 @@ const Committee = ({ setActivePage, user }) => (
     <header className="committee-header">
       <button className="committee-brand" onClick={() => setActivePage('landing')} aria-label="Back to Astro Club INSAT home">
         <img src="/profile.png" alt="Astro Club INSAT emblem" />
-        <span><strong>Astro Club INSAT</strong><small>The first club at INSAT dedicated to astronomy</small></span>
+        <span><strong>Astro Club INSAT</strong><small>Student astronomy community at INSAT</small></span>
       </button>
       <nav aria-label="Committee page navigation">
         <button type="button" onClick={() => setActivePage('landing')}><ArrowLeft size={15} /> Home</button>
@@ -109,7 +109,7 @@ const Committee = ({ setActivePage, user }) => (
       <button onClick={() => setActivePage('register')}>Join the club <ArrowRight size={16} /></button>
     </section>
 
-    <footer className="committee-footer"><span>ASTRO CLUB INSAT · THE FIRST ASTRONOMY CLUB AT INSAT</span><span>INSAT · University of Carthage</span></footer>
+    <footer className="committee-footer"><span>ASTRO CLUB INSAT · STUDENT ASTRONOMY COMMUNITY</span><span>INSAT · University of Carthage</span></footer>
   </main>
 );
 
