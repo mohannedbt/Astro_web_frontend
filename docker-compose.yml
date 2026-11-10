@@ -1,3 +1,6 @@
+# Usage: copy .env.docker.example to .env.docker, fill it in, then
+#   docker compose --env-file .env.docker up --build
+# Secrets are read from that file and must never be committed.
 services:
   redis:
     image: redis:7-alpine
@@ -13,31 +16,33 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "5000:5000"
     environment:
       - PORT=5000
+      - NODE_ENV=production
       - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=postgresql://neondb_owner:npg_0VfKRdAqBUa9@ep-withered-hall-atn692pg.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require
-      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_min_32_chars_for_production}
+      - DATABASE_URL=${DATABASE_URL:?Set DATABASE_URL in .env.docker}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET (32+ random chars) in .env.docker}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@astro.local}
-      - ADMIN_USER=${ADMIN_USERNAME:-admin}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_NAME=${ADMIN_NAME:-Admin User}
-      - ADMIN_PASS=${ADMIN_PASS:-change-me-please}
+      - ADMIN_PASS=${ADMIN_PASS:?Set ADMIN_PASS in .env.docker}
       - NEWS_API_URL=https://api.spaceflightnewsapi.net/v4/articles?limit=
     depends_on:
       redis:
-        condition: service_started
-    command: sh -c "npm run seed-admin && npm start"
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/workshops"]
-      interval: 5s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 15s
 
 volumes:
   redis-data:

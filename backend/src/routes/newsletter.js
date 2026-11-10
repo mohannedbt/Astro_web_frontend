@@ -1,7 +1,7 @@
 const logger = require('../utils/logger');
 const { dbAll, dbRun } = require('../middleware/database');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
-const { sendNewsletterService, getNewsletterTemplate, saveNewsletterTemplate, renderNewsletterHtml, DEFAULT_NEWSLETTER_TEMPLATES, NEWSLETTER_TEMPLATE_KEYS } = require('../services/newsletter');
+const { sendNewsletterService, getNewsletterTemplate, saveNewsletterTemplate, renderNewsletterHtml, DEFAULT_NEWSLETTER_TEMPLATES } = require('../services/newsletter');
 
 const SMTP_HOST = process.env.SMTP_HOST || '';
 const SMTP_PORT = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : null;

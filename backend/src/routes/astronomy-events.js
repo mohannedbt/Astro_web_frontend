@@ -316,7 +316,7 @@ function astronomyEventsRoutes(app) {
 
       return res.json({ year, month, events: filteredEvents });
     } catch (error) {
-      logger.error('Error fetching astronomy events', { message: error.message, stack: error.stack, year, month: req.query.month });
+      logger.error('Error fetching astronomy events', { message: error.message, stack: error.stack, year: req.query.year, month: req.query.month });
       res.status(500).json({ error: 'Unable to fetch astronomy events' });
     }
   });
@@ -352,7 +352,7 @@ function astronomyEventsRoutes(app) {
       });
       return res.json({ type, year, events: filteredEvents });
     } catch (error) {
-      logger.error('Error filtering astronomy events by type', { message: error.message, stack: error.stack, type, year });
+      logger.error('Error filtering astronomy events by type', { message: error.message, stack: error.stack, type: req.params.type, year: req.query.year });
       res.status(500).json({ error: 'Unable to filter events by type' });
     }
   });
@@ -365,7 +365,7 @@ function astronomyEventsRoutes(app) {
       const articles = await fetchAstroNews(query, limit);
       return res.json({ query, articles });
     } catch (error) {
-      logger.error('Error fetching astronomy news', { message: error.message, stack: error.stack, query, limit });
+      logger.error('Error fetching astronomy news', { message: error.message, stack: error.stack, query: req.query.query, limit: req.query.limit });
       res.status(502).json({ error: 'Unable to fetch astronomy news' });
     }
   });
@@ -395,7 +395,7 @@ function astronomyEventsRoutes(app) {
 
       return res.json({ date, events: withNews });
     } catch (error) {
-      logger.error('Error fetching astronomy event news', { message: error.message, stack: error.stack, date });
+      logger.error('Error fetching astronomy event news', { message: error.message, stack: error.stack, date: req.params.date });
       res.status(500).json({ error: 'Unable to fetch news for this date' });
     }
   });

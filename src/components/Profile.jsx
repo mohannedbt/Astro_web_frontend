@@ -1,13 +1,26 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Award, Edit3, MapPin, Settings, ShieldCheck, Trophy } from 'lucide-react';
-import { getRankFromXP, getUserTotalXP } from '../services/api';
+import { fetchPlayerStats, getRankFromXP, getUserTotalXP } from '../services/api';
 import { buildAvatarUrl } from '../utils/avatar';
 
 const Profile = ({ user, profile, setActivePage }) => {
   const displayName = profile?.name || user?.name || user?.email?.split('@')[0] || 'Member';
   const username = profile?.username || user?.email?.split('@')[0] || 'pilot';
   const avatar = profile?.avatar || buildAvatarUrl(profile?.avatar_seed || username);
-  const totalXp = getUserTotalXP(profile?.email || user?.email || displayName);
+  // Start from the cached total, then replace it with the server's number.
+  const [totalXp, setTotalXp] = useState(() => getUserTotalXP());
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    let cancelled = false;
+    fetchPlayerStats()
+      .then((stats) => {
+        if (!cancelled && stats) setTotalXp(Number(stats.xp) || 0);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
   const rank = useMemo(() => getRankFromXP(totalXp), [totalXp]);
 
   if (!user) {

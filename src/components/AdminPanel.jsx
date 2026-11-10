@@ -1446,40 +1446,9 @@ const AdminPanel = ({ token: initialToken = '' }) => {
                 </div>
               </div>
 
-              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    const xpKey = 'astro_total_user_xp_Admin';
-                    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
-                    localStorage.setItem(xpKey, currentXp + 100);
-                    setStatusMessage('Granted +100 Daily Login XP (Test)');
-                  }}
-                >
-                  <Plus size={15} /> Grant +100 Daily XP
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    const xpKey = 'astro_total_user_xp_Admin';
-                    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
-                    localStorage.setItem(xpKey, currentXp + 500);
-                    setStatusMessage('Granted +500 Bonus XP (Test)');
-                  }}
-                >
-                  <Plus size={15} /> Grant +500 Test XP
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    localStorage.setItem('astro_total_user_xp_Admin', '0');
-                    localStorage.setItem('astro_game_records', JSON.stringify([]));
-                    setStatusMessage('Reset local test XP and records');
-                  }}
-                >
-                  <Trash2 size={15} /> Reset XP &amp; Clean Leaderboards
-                </button>
-              </div>
+              <p style={{ marginTop: '16px', opacity: 0.7, fontSize: '0.85rem' }}>
+                XP is stored on the server and is earned by playing; it can no longer be edited from the browser.
+              </p>
             </div>
 
             <div className="admin-card">

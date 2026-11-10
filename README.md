@@ -2,6 +2,8 @@
 
 This repository contains a Vite + React frontend and a Node/Express backend with optional Postgres + Redis support. The backend supports JWT auth, admin workshop CRUD, position caching in Redis, news caching, and a Facebook events importer.
 
+**Deploying to Render? Read [DEPLOYMENT.md](DEPLOYMENT.md) first** (required env vars, secret rotation, rollback).
+
 Below are quick start commands, example `.env` templates, Docker Compose usage, and notes for hosting (Render, Supabase, Upstash, Vercel/Netlify).
 
 ---
@@ -63,8 +65,8 @@ This will run Redis and the backend service with automatic database initializati
 
 ```bash
 # from repository root
-cp .env.docker .env    # optional: customize admin credentials
-docker compose up -d --build
+cp .env.docker.example .env.docker   # then fill in DATABASE_URL, JWT_SECRET, ADMIN_PASS
+docker compose --env-file .env.docker up -d --build
 docker compose ps
 ```
 

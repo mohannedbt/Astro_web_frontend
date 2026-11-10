@@ -14,7 +14,7 @@ async function seedSqlite() {
   }
 
   Database = require('better-sqlite3');
-  const db = new Database(__dirname + '/data.db');
+  const db = new Database(process.env.SQLITE_PATH || __dirname + '/data.db');
   try {
     // Create tables first
     db.prepare(`CREATE TABLE IF NOT EXISTS users (
@@ -79,6 +79,11 @@ async function seedPg() {
 }
 
 async function seedAdmin() {
+  // Never create an admin with the well-known placeholder password in production.
+  if (process.env.NODE_ENV === 'production' && (!(process.env.ADMIN_PASS || process.env.ADMIN_PASSWORD) || password === 'change-me-please')) {
+    console.warn('Skipping admin seed: set ADMIN_PASS to a strong password (NODE_ENV=production)');
+    return;
+  }
   await seedSqlite();
   await seedPg();
 }

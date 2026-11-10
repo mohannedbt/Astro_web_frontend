@@ -69,7 +69,7 @@ function eventRoutes(app) {
           description ?? existing.description,
           image_url ?? existing.image_url,
           category ?? existing.category,
-          Number(capacity) ?? existing.capacity,
+          capacity === undefined || capacity === null || capacity === '' ? existing.capacity : Number(capacity) || 0,
           status ?? existing.status,
           typeof gallery === 'string' ? gallery : JSON.stringify(gallery || []),
           id,

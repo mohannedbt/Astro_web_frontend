@@ -34,7 +34,7 @@ import {
   saveAstrogameRecord,
   getRankFromXP,
   getWeeklyResetTimeLeft,
-  isSameWeek,
+  fetchPlayerStats,
   getUserTotalXP,
   claimDailyLoginXP,
   isExperimentalXpMarketEnabled,
@@ -325,15 +325,22 @@ const AstroGames = ({ user, profile, setActivePage }) => {
   const [dailyBonusMsg, setDailyBonusMsg] = useState('');
   const [showXpGuide, setShowXpGuide] = useState(false);
 
+  // Daily bonus: the server decides whether today's reward was already claimed.
   useEffect(() => {
-    const claimRes = claimDailyLoginXP(playerName);
-    if (claimRes.claimed) {
+    if (!user?.id) return undefined;
+    let cancelled = false;
+    let timer;
+    claimDailyLoginXP().then((claimRes) => {
+      if (cancelled || !claimRes.claimed) return;
       setDailyBonusMsg(claimRes.message);
-      setTotalXp(getUserTotalXP(playerName));
-      const t = setTimeout(() => setDailyBonusMsg(''), 7000);
-      return () => clearTimeout(t);
-    }
-  }, [playerName]);
+      setTotalXp(Number(claimRes.totalXp) || getUserTotalXP());
+      timer = setTimeout(() => setDailyBonusMsg(''), 7000);
+    });
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!showXpGuide) return undefined;
@@ -344,25 +351,22 @@ const AstroGames = ({ user, profile, setActivePage }) => {
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [showXpGuide]);
 
+  // Load the authoritative XP total from the server (also retries any runs that
+  // failed to upload earlier). The cached value shown meanwhile is replaced.
   useEffect(() => {
+    if (!user?.id) return undefined;
     let cancelled = false;
-    fetchAstrogameRecords({ game: 'global', timeframe: 'all' })
-      .then((records) => {
-        if (cancelled) return;
-        const identity = String(user?.id || user?.email || profile?.email || playerName).toLowerCase();
-        const current = records.find((record) => (
-          String(record.userId || record.userEmail || record.name || '').toLowerCase() === identity
-          || String(record.name || '').toLowerCase() === String(playerName).toLowerCase()
-        ));
-        if (current) setTotalXp(Math.max(getUserTotalXP(playerName), Number(current.xp) || 0));
+    fetchPlayerStats()
+      .then((stats) => {
+        if (!cancelled && stats) setTotalXp(Number(stats.xp) || 0);
       })
       .catch(() => {
-        // Local XP remains available when the backend is offline.
+        // Offline: keep showing the cached total.
       });
     return () => {
       cancelled = true;
     };
-  }, [playerName, profile?.email, user?.email, user?.id]);
+  }, [user?.id]);
 
   // Weekly Reset Timer
   const [weeklyTime, setWeeklyTime] = useState(getWeeklyResetTimeLeft());
@@ -648,7 +652,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
             xp: xpEarned,
             won: false,
           }).then(() => {
-            setTotalXp(getUserTotalXP(pName));
+            setTotalXp(getUserTotalXP());
           });
 
           if (state.score > dashHighScore) {
@@ -1024,10 +1028,10 @@ const AstroGames = ({ user, profile, setActivePage }) => {
       pct: Math.round((memoryResult.matched / memoryResult.pairs) * 100),
       xp: xpEarned,
     })
-      .then(() => {
+      .then((saved) => {
         if (!cancelled) {
-          setMemoryRecordState('saved');
-          setTotalXp(getUserTotalXP(memoryResult.name));
+          setMemoryRecordState(saved.synced || saved.guest ? 'saved' : 'failed');
+          setTotalXp(getUserTotalXP());
         }
       })
       .catch(() => { if (!cancelled) setMemoryRecordState('failed'); });
@@ -1088,7 +1092,7 @@ const AstroGames = ({ user, profile, setActivePage }) => {
       });
       setRecordsList(Array.isArray(records) ? records : []);
     } catch {
-      setRecordsError('Leaderboard entries could not be fetched. Displaying local cached logs.');
+      setRecordsError('Leaderboard is unavailable right now. Please try again in a moment.');
     } finally {
       setRecordsLoading(false);
     }
@@ -1190,9 +1194,9 @@ const AstroGames = ({ user, profile, setActivePage }) => {
       timeSec: elapsed,
       xp: xpEarned,
     })
-      .then(() => {
-        setSaveState('saved');
-        setTotalXp(getUserTotalXP(pName));
+      .then((saved) => {
+        setSaveState(saved.synced || saved.guest ? 'saved' : 'failed');
+        setTotalXp(getUserTotalXP());
       })
       .catch(() => setSaveState('failed'));
   };
@@ -2062,7 +2066,10 @@ const AstroGames = ({ user, profile, setActivePage }) => {
                 </thead>
                 <tbody>
                   {recordsList.map((rec, index) => {
-                    const isCurrentUser = (rec.name && rec.name.toLowerCase() === playerName.toLowerCase()) || (rec.userEmail && rec.userEmail === user?.email);
+                    const recUserId = rec.userId ?? rec.user_id;
+                    const isCurrentUser = recUserId != null && user?.id != null
+                      ? String(recUserId) === String(user.id)
+                      : Boolean(rec.name && rec.name.toLowerCase() === playerName.toLowerCase());
                     const rankObj = getRankFromXP(rec.xp || rec.score * 0.8);
                     return (
                       <tr key={rec.id || `${rec.name}-${index}`} className={isCurrentUser ? 'is-user-row' : ''}>

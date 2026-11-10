@@ -1,6 +1,6 @@
 const axios = require('axios');
 const nodemailer = require('nodemailer');
-const { dbAll, dbGet, dbRun } = require('../middleware/database');
+const { dbGet, dbRun } = require('../middleware/database');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_EMAIL_FROM = process.env.RESEND_EMAIL_FROM;

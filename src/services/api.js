@@ -23,7 +23,19 @@ export const reportClientLog = async (level = 'info', message = 'Client log', de
 async function safeFetch(url, opts = {}) {
   try {
     const res = await fetch(url, opts);
-    const data = await res.json().catch(() => null);
+    const text = await res.text();
+    let data = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        if (res.ok) {
+          // A 200 that isn't JSON usually means the request hit the static host's
+          // index.html fallback instead of the API (VITE_API_BASE_URL not set).
+          throw new Error('Unexpected non-JSON response from the server');
+        }
+      }
+    }
     if (!res.ok) {
       const message = data && data.error ? data.error : res.statusText || 'Request failed';
       const error = new Error(message);
@@ -489,182 +501,214 @@ export const getRankFromXP = (xp = 0) => {
   return { title: 'Stargazer', tier: 'Bronze', icon: '🌌', color: '#cd7f32', bg: 'rgba(205, 127, 50, 0.15)', nextXp: 500, minXp: 0 };
 };
 
-const DEFAULT_SEED_RECORDS = [];
+// ---------------------------------------------------------------------------
+// Game scores & XP
+//
+// The server is the source of truth: it stores every run and computes each
+// player's XP total. The browser only keeps (a) a cached copy of the total so
+// the UI paints instantly, (b) a retry queue for runs that couldn't be sent,
+// and (c) local-only records for guests who aren't signed in.
+// ---------------------------------------------------------------------------
 
-export const getStoredAstroRecords = () => {
+const GUEST_RECORDS_KEY = 'astro_game_records';
+const PENDING_RUNS_KEY = 'astro_pending_runs';
+const MAX_PENDING_RUNS = 50;
+const xpCacheKey = (userId) => `astro_xp_cache_${userId}`;
+
+const getAuthToken = () => {
   try {
-    const raw = localStorage.getItem('astro_game_records');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.filter((r) => r && r.id && !String(r.id).startsWith('seed-'));
+    return localStorage.getItem('token') || '';
+  } catch {
+    return '';
+  }
+};
+
+// The id of the signed-in player, read from the JWT payload (display only; the
+// server never trusts this, it re-derives identity from the verified token).
+const getTokenUserId = () => {
+  try {
+    const payload = getAuthToken().split('.')[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    return decoded?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const readJsonList = (key) => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeJsonList = (key, list) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch {
+    // Storage full or blocked: nothing more we can do.
+  }
+};
+
+const setCachedXp = (userId, xp) => {
+  try {
+    localStorage.setItem(xpCacheKey(userId), String(Number(xp) || 0));
+  } catch {
+    // Cache only; safe to ignore.
+  }
+};
+
+// Records from runs played while signed out (kept on this device only).
+export const getStoredAstroRecords = () => readJsonList(GUEST_RECORDS_KEY).filter((r) => r && r.id);
+
+const postRun = async (run, token) => {
+  const result = await safeFetch(`${API_BASE}/api/astrogames/leaderboard`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    // Only the fields the server accepts. Identity is NOT sent: the server
+    // takes it from the token.
+    body: JSON.stringify({
+      game: run.game,
+      difficulty: run.difficulty,
+      score: run.score,
+      xp: run.xp,
+      won: run.won,
+      total: run.total,
+      guesses: run.guesses,
+      timeSec: run.timeSec,
+      pct: run.pct,
+      clientRunId: run.clientRunId,
+    }),
+  });
+  const userId = getTokenUserId();
+  if (userId && result && result.totalXp !== undefined) setCachedXp(userId, result.totalXp);
+  return result;
+};
+
+let pendingFlush = null;
+
+// Re-send runs that failed earlier (offline, server restarting...). The server
+// de-duplicates by clientRunId, so a run that actually arrived is never counted twice.
+export const flushPendingRuns = () => {
+  const token = getAuthToken();
+  const userId = getTokenUserId();
+  if (!token || !userId) return Promise.resolve(0);
+  if (pendingFlush) return pendingFlush;
+
+  pendingFlush = (async () => {
+    const queue = readJsonList(PENDING_RUNS_KEY);
+    const keep = [];
+    let sent = 0;
+    for (const run of queue) {
+      if (String(run.ownerId) !== String(userId)) {
+        keep.push(run); // belongs to a different account on this browser
+        continue;
+      }
+      try {
+        await postRun(run, token);
+        sent += 1;
+      } catch (e) {
+        // Network/server errors: retry later. 4xx: the server rejected it for good, drop it.
+        if (!e.status || e.status >= 500) keep.push(run);
       }
     }
-  } catch (e) {}
-  try {
-    localStorage.setItem('astro_game_records', JSON.stringify([]));
-  } catch (e) {}
-  return [];
-};
-
-export const fetchAstrogameRecords = async ({ game, userId, userEmail, timeframe = 'all', difficulty = 'all' } = {}) => {
-  let backendRecords = [];
-  try {
-    const params = new URLSearchParams();
-    if (game && game !== 'all' && game !== 'global') params.set('game', game);
-    // Global rankings must include every user. Identity filters are reserved for
-    // callers explicitly requesting a personal history.
-    if (game && game !== 'global' && userId) params.set('userId', userId);
-    if (game && game !== 'global' && userEmail) params.set('userEmail', userEmail);
-    const res = await safeFetch(`${API_BASE}/api/astrogames/leaderboard?${params}`);
-    if (Array.isArray(res)) backendRecords = res;
-  } catch (e) {
-    console.warn('Leaderboard backend fetch failed, using local records:', e.message);
-  }
-
-  const localRecords = getStoredAstroRecords();
-  
-  const combinedMap = new Map();
-  [...backendRecords, ...localRecords].forEach((rec) => {
-    if (!rec || (rec.id && String(rec.id).startsWith('seed-'))) return;
-    const key = rec.id || `${rec.name}-${rec.created_at || rec.createdAt}-${rec.score}`;
-    if (!combinedMap.has(key)) {
-      combinedMap.set(key, rec);
-    }
+    writeJsonList(PENDING_RUNS_KEY, keep);
+    return sent;
+  })().finally(() => {
+    pendingFlush = null;
   });
-
-  let recordsList = Array.from(combinedMap.values());
-
-  if (game && game !== 'all' && game !== 'global') {
-    recordsList = recordsList.filter((r) => r.game === game);
-  }
-
-  if (difficulty && difficulty !== 'all') {
-    recordsList = recordsList.filter((r) => (r.difficulty || 'easy').toLowerCase() === difficulty.toLowerCase());
-  }
-
-  if (timeframe === 'weekly') {
-    recordsList = recordsList.filter((r) => isSameWeek(r.created_at || r.createdAt));
-  }
-
-  if (game === 'global') {
-    const users = new Map();
-    recordsList.forEach((record) => {
-      const identity = record.user_id || record.userId || record.user_email || record.userEmail || record.user_name || record.userName || record.name;
-      if (!identity) return;
-      const key = String(identity).toLowerCase();
-      const current = users.get(key) || {
-        id: `user-${key}`,
-        name: record.user_name || record.userName || record.name || 'Cadet Pilot',
-        userId: record.user_id || record.userId || null,
-        userEmail: record.user_email || record.userEmail || null,
-        xp: 0,
-        score: 0,
-        gamesPlayed: 0,
-        created_at: record.created_at || record.createdAt,
-      };
-      current.xp += Number(record.xp) || Math.round((Number(record.score) || 0) * 0.5 + (record.won ? 100 : 20));
-      current.score += Number(record.score) || 0;
-      current.gamesPlayed += 1;
-      users.set(key, current);
-    });
-    recordsList = Array.from(users.values());
-  }
-
-  recordsList.sort((a, b) => {
-    const bValue = game === 'global' ? Number(b.xp) || 0 : Number(b.score) || 0;
-    const aValue = game === 'global' ? Number(a.xp) || 0 : Number(a.score) || 0;
-    return bValue - aValue;
-  });
-
-  return recordsList;
-};
-
-export const claimDailyLoginXP = (userNameOrEmail = 'Cadet') => {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const userKey = (userNameOrEmail || 'Cadet').toLowerCase().replace(/[^a-z0-9]/g, '_');
-  const todayKey = `astro_daily_login_${userKey}_${todayStr}`;
-  try {
-    const claimed = localStorage.getItem(todayKey);
-    if (claimed) {
-      return { claimed: false, xp: 0, message: 'Daily 100 XP already claimed today!' };
-    }
-    
-    localStorage.setItem(todayKey, 'true');
-    const xpKey = `astro_total_user_xp_${userNameOrEmail || 'guest'}`;
-    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
-    const sanitizedCurrent = currentXp > 50000 ? 0 : currentXp;
-    const newXp = sanitizedCurrent + 100;
-    localStorage.setItem(xpKey, newXp);
-    return { claimed: true, xp: 100, message: '🎉 Daily Login Reward Claimed: +100 XP!' };
-  } catch (e) {
-    return { claimed: false, xp: 0, message: 'Could not claim daily XP.' };
-  }
+  return pendingFlush;
 };
 
 export const saveAstrogameRecord = async (record) => {
   const nowIso = new Date().toISOString();
   const xpEarned = Number(record.xp) || Math.round((Number(record.score) || 0) * 0.5 + (record.won ? 100 : 20));
-  
+  const clientRunId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
   const formattedRecord = {
-    id: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ...record,
+    id: clientRunId,
+    clientRunId,
     created_at: nowIso,
     createdAt: nowIso,
     xp: xpEarned,
-    ...record,
     difficulty: record.difficulty || 'easy',
   };
 
-  const current = getStoredAstroRecords();
-  const updated = [formattedRecord, ...current].slice(0, 250);
-  try {
-    localStorage.setItem('astro_game_records', JSON.stringify(updated));
-  } catch (e) {}
+  const token = getAuthToken();
+  const userId = getTokenUserId();
 
-  try {
-    const xpKey = `astro_total_user_xp_${record.userId || record.userEmail || record.userName || record.name || 'guest'}`;
-    const currentXp = Number(localStorage.getItem(xpKey)) || 0;
-    const sanitizedCurrent = currentXp > 50000 ? 0 : currentXp;
-    localStorage.setItem(xpKey, sanitizedCurrent + xpEarned);
-  } catch (e) {}
-
-  try {
-    await safeFetch(`${API_BASE}/api/astrogames/leaderboard`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formattedRecord),
-    });
-  } catch (e) {
-    console.warn('Leaderboard remote save failed, saved locally.');
+  // Guest: keep the run on this device only; there is no account to credit.
+  if (!token || !userId) {
+    writeJsonList(GUEST_RECORDS_KEY, [formattedRecord, ...getStoredAstroRecords()].slice(0, 250));
+    return { ...formattedRecord, synced: false, guest: true };
   }
 
-  return formattedRecord;
+  try {
+    const saved = await postRun(formattedRecord, token);
+    return { ...formattedRecord, synced: true, totalXp: saved?.totalXp };
+  } catch (e) {
+    console.warn('Score upload failed:', e.message);
+    // Network/server problem: queue it so it is retried instead of lost.
+    if (!e.status || e.status >= 500) {
+      const queue = readJsonList(PENDING_RUNS_KEY);
+      writeJsonList(PENDING_RUNS_KEY, [...queue, { ...formattedRecord, ownerId: userId }].slice(-MAX_PENDING_RUNS));
+    }
+    return { ...formattedRecord, synced: false };
+  }
 };
 
-export const getUserTotalXP = (userNameOrEmail = '') => {
-  const records = getStoredAstroRecords();
-  let userRecords = records;
-  if (userNameOrEmail) {
-    const search = userNameOrEmail.toLowerCase();
-    userRecords = records.filter(
-      (r) =>
-        (r.name && r.name.toLowerCase() === search) ||
-        (r.userEmail && r.userEmail.toLowerCase() === search) ||
-        (r.userName && r.userName.toLowerCase() === search)
-    );
+export const fetchAstrogameRecords = async ({ game, timeframe = 'all', difficulty = 'all' } = {}) => {
+  const params = new URLSearchParams();
+  if (game && game !== 'all') params.set('game', game);
+  if (timeframe === 'weekly') params.set('timeframe', 'weekly');
+  if (difficulty && difficulty !== 'all') params.set('difficulty', difficulty);
+
+  // Ranking, XP totals and filtering all happen in the database now.
+  const rows = await safeFetch(`${API_BASE}/api/astrogames/leaderboard?${params}`);
+  return Array.isArray(rows) ? rows : [];
+};
+
+// The signed-in player's XP total from the server (also refreshes the cache).
+export const fetchPlayerStats = async () => {
+  const token = getAuthToken();
+  const userId = getTokenUserId();
+  if (!token || !userId) return null;
+  await flushPendingRuns();
+  const stats = await safeFetch(`${API_BASE}/api/astrogames/me`, { headers: authHeaders(token) });
+  setCachedXp(userId, stats.xp);
+  return stats;
+};
+
+export const claimDailyLoginXP = async () => {
+  const token = getAuthToken();
+  const userId = getTokenUserId();
+  if (!token || !userId) return { claimed: false, xp: 0, message: '' };
+  try {
+    const result = await safeFetch(`${API_BASE}/api/astrogames/daily-claim`, { method: 'POST', headers: authHeaders(token) });
+    setCachedXp(userId, result.totalXp);
+    return result;
+  } catch (e) {
+    return { claimed: false, xp: 0, message: 'Could not claim daily XP.' };
   }
-  
-  const sumFromRecords = userRecords.reduce((acc, r) => acc + (Number(r.xp) || Math.round((Number(r.score) || 0) * 0.5)), 0);
-  const userKey = userNameOrEmail || 'guest';
-  const storedLocalXp = Number(localStorage.getItem(`astro_total_user_xp_${userKey}`)) || 0;
-  let total = sumFromRecords > 0 ? sumFromRecords : storedLocalXp;
-  if (storedLocalXp > 50000 || (storedLocalXp > sumFromRecords * 3 && sumFromRecords > 0)) {
-    total = sumFromRecords;
+};
+
+// Synchronous so components can render immediately: returns the last total the
+// server reported for this account (call fetchPlayerStats() to refresh it).
+export const getUserTotalXP = () => {
+  const userId = getTokenUserId();
+  if (userId) {
     try {
-      localStorage.setItem(`astro_total_user_xp_${userKey}`, total);
-    } catch (e) {}
+      return Number(localStorage.getItem(xpCacheKey(userId))) || 0;
+    } catch (e) {
+      return 0;
+    }
   }
-  return total;
+  // Guests: total of the runs saved on this device.
+  return getStoredAstroRecords().reduce((sum, r) => sum + (Number(r.xp) || 0), 0);
 };
 
 export const isExperimentalXpMarketEnabled = () => {

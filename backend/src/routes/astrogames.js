@@ -1,25 +1,9 @@
 const axios = require('axios');
+const rateLimit = require('express-rate-limit');
 const logger = require('../utils/logger');
 const { dbRun, dbAll, dbGet, usingPostgres } = require('../middleware/database');
-
-const DAILY_QUESTION_POOL = [
-  { question: 'Which planet is known as the Red Planet?', options: ['Mars', 'Venus', 'Mercury', 'Jupiter'], answer: 'Mars' },
-  { question: 'What is the closest star to Earth?', options: ['The Sun', 'Sirius', 'Proxima Centauri', 'Alpha Centauri'], answer: 'The Sun' },
-  { question: 'How many planets are in our solar system?', options: ['8', '7', '9', '10'], answer: '8' },
-  { question: 'What galaxy do we live in?', options: ['The Milky Way', 'Andromeda', 'Triangulum', 'Whirlpool'], answer: 'The Milky Way' },
-  { question: 'Which planet has the most prominent ring system?', options: ['Saturn', 'Jupiter', 'Uranus', 'Neptune'], answer: 'Saturn' },
-  { question: 'What force keeps planets in orbit around the Sun?', options: ['Gravity', 'Magnetism', 'Inertia alone', 'Solar wind'], answer: 'Gravity' },
-  { question: 'Which moon of Saturn has a thick nitrogen atmosphere?', options: ['Titan', 'Enceladus', 'Mimas', 'Iapetus'], answer: 'Titan' },
-  { question: 'What is the term for the point in an orbit closest to the Sun?', options: ['Perihelion', 'Aphelion', 'Zenith', 'Apogee'], answer: 'Perihelion' },
-];
-
-const PRACTICE_QUESTION_POOL = [
-  { question: 'Which planet is the largest in our solar system?', options: ['Jupiter', 'Saturn', 'Neptune', 'Mars'], answer: 'Jupiter' },
-  { question: 'What is the name of Earth\'s natural satellite?', options: ['The Moon', 'Titan', 'Europa', 'Phobos'], answer: 'The Moon' },
-  { question: 'Which planet is known for its blue-green color due to methane?', options: ['Neptune', 'Mercury', 'Mars', 'Venus'], answer: 'Neptune' },
-  { question: 'What is the brightest planet in our night sky?', options: ['Venus', 'Mercury', 'Mars', 'Jupiter'], answer: 'Venus' },
-  { question: 'What do we call a star system with two stars?', options: ['Binary star', 'Asterism', 'Nebula', 'Galaxy'], answer: 'Binary star' },
-];
+const { authMiddleware } = require('../middleware/auth');
+const { sanitizeRun, GAME_LIMITS, DIFFICULTIES } = require('../services/astrogamesScoring');
 
 const ASTRO_KEYWORDS = [
   'planet', 'star', 'moon', 'sun', 'solar', 'galaxy', 'universe', 'astronom',
@@ -28,185 +12,6 @@ const ASTRO_KEYWORDS = [
   'cosmic', 'telescope', 'nasa', 'spacecraft', 'satellite', 'meteor',
   'eclipse', 'constellation', 'milky way', 'astronaut', 'rocket',
 ];
-
-function getSeededQuestions(pool, seed, amount = 5) {
-  const start = seed.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % pool.length;
-  const picked = [];
-  for (let index = 0; index < amount; index += 1) {
-    const sourceIndex = (start + index) % pool.length;
-    picked.push(pool[sourceIndex]);
-  }
-  return picked;
-}
-
-function buildChallengePayload(type, challengeKey) {
-  const pool = type === 'daily' ? DAILY_QUESTION_POOL : PRACTICE_QUESTION_POOL;
-  const title = type === 'daily' ? 'Daily Cosmic Sprint' : 'Practice Orbit';
-  const description = type === 'daily'
-    ? 'A shared daily challenge that everyone sees and can beat together.'
-    : 'A lighter practice round you can replay anytime.';
-  const difficulty = type === 'daily' ? 'medium' : 'easy';
-  return {
-    id: `${type}-${challengeKey}`,
-    mode: type,
-    challengeKey,
-    title,
-    description,
-    difficulty,
-    questions: getSeededQuestions(pool, challengeKey, type === 'daily' ? 5 : 4),
-  };
-}
-
-async function ensureChallengeTable() {
-  await dbRun(`CREATE TABLE IF NOT EXISTS astrogames_challenges (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    mode TEXT NOT NULL,
-    challenge_key TEXT NOT NULL,
-    title TEXT,
-    description TEXT,
-    difficulty TEXT,
-    payload TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    expires_at DATETIME
-  )`);
-  await dbRun('CREATE UNIQUE INDEX IF NOT EXISTS astrogames_challenges_unique ON astrogames_challenges (mode, challenge_key)');
-}
-
-async function ensureScoresTable() {
-  const createSql = usingPostgres
-    ? `CREATE TABLE IF NOT EXISTS astrogames_scores (
-        id SERIAL PRIMARY KEY,
-        game TEXT NOT NULL,
-        name TEXT NOT NULL,
-        score INTEGER DEFAULT 0,
-        xp INTEGER DEFAULT 0,
-        total INTEGER DEFAULT 0,
-        difficulty TEXT,
-        won BOOLEAN DEFAULT false,
-        guesses INTEGER DEFAULT 0,
-        time_sec INTEGER DEFAULT 0,
-        target TEXT,
-        pct REAL DEFAULT 0,
-        user_id INTEGER DEFAULT NULL,
-        user_email TEXT,
-        user_name TEXT,
-        challenge_type TEXT,
-        challenge_title TEXT,
-        challenge_id TEXT,
-        global_score INTEGER DEFAULT 0,
-        time_ms INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`
-    : `CREATE TABLE IF NOT EXISTS astrogames_scores (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        game TEXT NOT NULL,
-        name TEXT NOT NULL,
-        score INTEGER DEFAULT 0,
-        xp INTEGER DEFAULT 0,
-        total INTEGER DEFAULT 0,
-        difficulty TEXT,
-        won INTEGER DEFAULT 0,
-        guesses INTEGER DEFAULT 0,
-        time_sec INTEGER DEFAULT 0,
-        target TEXT,
-        pct REAL DEFAULT 0,
-        user_id INTEGER DEFAULT NULL,
-        user_email TEXT,
-        user_name TEXT,
-        challenge_type TEXT,
-        challenge_title TEXT,
-        challenge_id TEXT,
-        global_score INTEGER DEFAULT 0,
-        time_ms INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`;
-  await dbRun(createSql);
-
-  if (usingPostgres) {
-    const columns = await dbAll("SELECT column_name FROM information_schema.columns WHERE table_name = 'astrogames_scores'");
-    const existing = new Set(columns.map((column) => column.column_name));
-    const addColumn = async (name, definition) => {
-      if (!existing.has(name)) {
-        await dbRun(`ALTER TABLE astrogames_scores ADD COLUMN IF NOT EXISTS ${name} ${definition}`);
-        existing.add(name);
-      }
-    };
-    await addColumn('user_id', 'INTEGER DEFAULT NULL');
-    await addColumn('xp', 'INTEGER DEFAULT 0');
-    await addColumn('user_email', 'TEXT');
-    await addColumn('user_name', 'TEXT');
-    await addColumn('challenge_type', 'TEXT');
-    await addColumn('challenge_title', 'TEXT');
-    await addColumn('challenge_id', 'TEXT');
-    await addColumn('global_score', 'INTEGER DEFAULT 0');
-    await addColumn('time_ms', 'INTEGER DEFAULT 0');
-  } else {
-    const columns = await dbAll('PRAGMA table_info(astrogames_scores)');
-    const existing = new Set(columns.map((column) => column.name));
-    const addColumn = async (name, definition) => {
-      if (!existing.has(name)) {
-        await dbRun(`ALTER TABLE astrogames_scores ADD COLUMN ${name} ${definition}`);
-        existing.add(name);
-      }
-    };
-    await addColumn('user_id', 'INTEGER DEFAULT NULL');
-    await addColumn('xp', 'INTEGER DEFAULT 0');
-    await addColumn('user_email', 'TEXT');
-    await addColumn('user_name', 'TEXT');
-    await addColumn('challenge_type', 'TEXT');
-    await addColumn('challenge_title', 'TEXT');
-    await addColumn('challenge_id', 'TEXT');
-    await addColumn('global_score', 'INTEGER DEFAULT 0');
-    await addColumn('time_ms', 'INTEGER DEFAULT 0');
-  }
-}
-
-async function ensureQuizResultTables() {
-  const highScoresSql = usingPostgres
-    ? `CREATE TABLE IF NOT EXISTS astrogames_high_scores (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        score INTEGER NOT NULL DEFAULT 0,
-        correct INTEGER NOT NULL DEFAULT 0,
-        total INTEGER NOT NULL DEFAULT 5,
-        user_id INTEGER DEFAULT NULL,
-        user_email TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`
-    : `CREATE TABLE IF NOT EXISTS astrogames_high_scores (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        score INTEGER NOT NULL DEFAULT 0,
-        correct INTEGER NOT NULL DEFAULT 0,
-        total INTEGER NOT NULL DEFAULT 5,
-        user_id INTEGER DEFAULT NULL,
-        user_email TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`;
-  const winnersSql = usingPostgres
-    ? `CREATE TABLE IF NOT EXISTS astrogames_winners (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        score INTEGER NOT NULL DEFAULT 375,
-        correct INTEGER NOT NULL DEFAULT 5,
-        total INTEGER NOT NULL DEFAULT 5,
-        user_id INTEGER DEFAULT NULL,
-        user_email TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`
-    : `CREATE TABLE IF NOT EXISTS astrogames_winners (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        score INTEGER NOT NULL DEFAULT 375,
-        correct INTEGER NOT NULL DEFAULT 5,
-        total INTEGER NOT NULL DEFAULT 5,
-        user_id INTEGER DEFAULT NULL,
-        user_email TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`;
-  await dbRun(highScoresSql);
-  await dbRun(winnersSql);
-}
 
 function decodeHtmlEntities(value) {
   return String(value || '')
@@ -299,206 +104,295 @@ const BACKEND_QUIZ_BANK = {
   ],
 };
 
-async function fetchLiveAstronomyQuestions(difficultyTier = 'medium', amount = 5) {
-  const apiDifficulty = difficultyTier === 'insane' ? 'hard' : difficultyTier;
-  try {
-    const response = await axios.get('https://opentdb.com/api.php', {
-      params: { amount: 50, category: 17, difficulty: apiDifficulty, type: 'multiple' },
-      timeout: 8000,
-    });
-    const payload = response.data;
-    if (payload.response_code !== 0 || !Array.isArray(payload.results) || !payload.results.length) {
-      throw new Error('No live questions returned');
-    }
+// OpenTDB allows roughly one request per 5 seconds per IP, and we were asking it
+// for 50 questions on every page load. Cache the filtered pool per difficulty.
+const LIVE_POOL_TTL_MS = 10 * 60 * 1000;
+const livePoolCache = new Map();
 
-    const decoded = payload.results.map((item) => ({
-      question: decodeHtmlEntities(item.question),
+async function loadLivePool(apiDifficulty) {
+  const cached = livePoolCache.get(apiDifficulty);
+  if (cached && Date.now() - cached.at < LIVE_POOL_TTL_MS) return cached.pool;
+
+  const response = await axios.get('https://opentdb.com/api.php', {
+    params: { amount: 50, category: 17, difficulty: apiDifficulty, type: 'multiple' },
+    timeout: 8000,
+  });
+  const payload = response.data;
+  if (payload.response_code !== 0 || !Array.isArray(payload.results) || !payload.results.length) {
+    throw new Error('No live questions returned');
+  }
+
+  // Keep only questions that are clearly astronomy/space related, de-duplicated.
+  const seen = new Set();
+  const pool = [];
+  for (const item of payload.results) {
+    const question = decodeHtmlEntities(item.question);
+    if (seen.has(question)) continue;
+    if (!ASTRO_KEYWORDS.some((keyword) => question.toLowerCase().includes(keyword))) continue;
+    seen.add(question);
+    pool.push({
+      question,
       answer: decodeHtmlEntities(item.correct_answer),
       options: shuffleArray([item.correct_answer, ...item.incorrect_answers].map(decodeHtmlEntities)),
       category: decodeHtmlEntities(item.category),
-    }));
+    });
+  }
+  livePoolCache.set(apiDifficulty, { at: Date.now(), pool });
+  return pool;
+}
 
-    // Strictly filter to ensure 100% astronomy/space-focused
-    const astronomyMatches = decoded.filter((entry) => ASTRO_KEYWORDS.some((keyword) => entry.question.toLowerCase().includes(keyword)));
-    const seen = new Set();
-    const unique = [];
-    for (const entry of astronomyMatches) {
-      if (seen.has(entry.question)) continue;
-      seen.add(entry.question);
-      unique.push(entry);
-      if (unique.length >= amount) break;
+async function fetchLiveAstronomyQuestions(difficultyTier = 'medium', amount = 5) {
+  const apiDifficulty = difficultyTier === 'insane' ? 'hard' : difficultyTier;
+  const fallbackPool = BACKEND_QUIZ_BANK[difficultyTier] || BACKEND_QUIZ_BANK.easy;
+  try {
+    const live = shuffleArray(await loadLivePool(apiDifficulty)).slice(0, amount);
+    if (live.length >= amount) return live;
+
+    // Not enough live questions: top up from the curated local bank.
+    const seen = new Set(live.map((entry) => entry.question));
+    for (const entry of shuffleArray(fallbackPool)) {
+      if (live.length >= amount) break;
+      if (!seen.has(entry.question)) live.push(entry);
     }
-
-    // If we don't have enough 100% astronomy questions, fall back to our local curated pool
-    if (unique.length < amount) {
-      const fallbackPool = BACKEND_QUIZ_BANK[difficultyTier] || BACKEND_QUIZ_BANK.easy;
-      const shuffledFallback = shuffleArray(fallbackPool);
-      for (const entry of shuffledFallback) {
-        if (!seen.has(entry.question)) {
-          seen.add(entry.question);
-          unique.push(entry);
-          if (unique.length >= amount) break;
-        }
-      }
-    }
-
-    return unique;
+    return live;
   } catch (error) {
-    // If API fails entirely, fall back to our high quality curated astronomy questions
-    const fallbackPool = BACKEND_QUIZ_BANK[difficultyTier] || BACKEND_QUIZ_BANK.easy;
+    logger.warn('Live questions unavailable, using curated bank', { message: error.message });
     return shuffleArray(fallbackPool).slice(0, amount);
   }
 }
 
+// ---------------------------------------------------------------------------
+// Leaderboard helpers
+// ---------------------------------------------------------------------------
+
+const LEADERBOARD_LIMIT = 100;
+
+// Monday 00:00 UTC of the current week.
+function startOfWeekIso(now = new Date()) {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const daysSinceMonday = (start.getUTCDay() + 6) % 7;
+  start.setUTCDate(start.getUTCDate() - daysSinceMonday);
+  return start.toISOString();
+}
+
+function todayUtc() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Postgres returns SUM()/COUNT() as strings (bigint); normalise to numbers.
+const num = (value) => Number(value) || 0;
+
+async function totalXpForUser(userId) {
+  const runs = await dbGet('SELECT COALESCE(SUM(xp), 0) AS xp, COUNT(*) AS games FROM astrogames_scores WHERE user_id = ?', [userId]);
+  const bonus = await dbGet('SELECT COALESCE(SUM(xp), 0) AS xp FROM astrogames_xp_events WHERE user_id = ?', [userId]);
+  return { xp: num(runs?.xp) + num(bonus?.xp), gamesPlayed: num(runs?.games) };
+}
+
+async function globalLeaderboard({ timeframe, difficulty }) {
+  const runFilters = ['user_id IS NOT NULL'];
+  const runParams = [];
+  const bonusFilters = [];
+  const bonusParams = [];
+  if (timeframe === 'weekly') {
+    const since = startOfWeekIso();
+    runFilters.push('created_at >= ?');
+    runParams.push(since);
+    bonusFilters.push('created_at >= ?');
+    bonusParams.push(since);
+  }
+  if (difficulty) {
+    runFilters.push('difficulty = ?');
+    runParams.push(difficulty);
+  }
+  // Login bonuses have no difficulty, so they only count when it isn't filtered.
+  const bonusSql = difficulty
+    ? ''
+    : `UNION ALL SELECT user_id, NULL AS user_name, xp, 0 AS score, 0 AS games, created_at FROM astrogames_xp_events ${bonusFilters.length ? `WHERE ${bonusFilters.join(' AND ')}` : ''}`;
+
+  const rows = await dbAll(
+    `SELECT user_id, MAX(user_name) AS user_name, SUM(xp) AS xp, SUM(score) AS score, SUM(games) AS games_played, MAX(created_at) AS created_at
+     FROM (
+       SELECT user_id, user_name, xp, score, 1 AS games, created_at FROM astrogames_scores WHERE ${runFilters.join(' AND ')}
+       ${bonusSql}
+     ) AS combined
+     GROUP BY user_id
+     ORDER BY SUM(xp) DESC
+     LIMIT ${LEADERBOARD_LIMIT}`,
+    [...runParams, ...(difficulty ? [] : bonusParams)]
+  );
+
+  // Emails are intentionally not returned: this endpoint is public.
+  return rows.map((row) => ({
+    id: `user-${row.user_id}`,
+    userId: row.user_id,
+    name: row.user_name || 'Cadet Pilot',
+    xp: num(row.xp),
+    score: num(row.score),
+    gamesPlayed: num(row.games_played),
+    created_at: row.created_at,
+  }));
+}
+
+async function gameLeaderboard({ game, timeframe, difficulty }) {
+  const filters = [];
+  const params = [];
+  if (game) {
+    filters.push('game = ?');
+    params.push(game);
+  }
+  if (difficulty) {
+    filters.push('difficulty = ?');
+    params.push(difficulty);
+  }
+  if (timeframe === 'weekly') {
+    filters.push('created_at >= ?');
+    params.push(startOfWeekIso());
+  }
+  const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+  const rows = await dbAll(
+    `SELECT id, game, user_id, COALESCE(user_name, name) AS name, score, xp, total, difficulty, won, guesses, time_sec, pct, created_at
+     FROM astrogames_scores ${where}
+     ORDER BY score DESC, created_at ASC
+     LIMIT ${LEADERBOARD_LIMIT}`,
+    params
+  );
+  return rows.map((row) => ({ ...row, won: Boolean(row.won) }));
+}
+
+async function insertRun(userId, user, run) {
+  const columns = 'game, name, score, xp, total, difficulty, won, guesses, time_sec, pct, user_id, user_email, user_name, client_run_id, created_at';
+  const displayName = String(user.username || user.name || user.email || 'Cadet Pilot').slice(0, 120);
+  const values = [
+    run.game,
+    displayName,
+    run.score,
+    run.xp,
+    run.total,
+    run.difficulty,
+    usingPostgres ? run.won : (run.won ? 1 : 0),
+    run.guesses,
+    run.timeSec,
+    run.pct,
+    userId,
+    user.email || null,
+    displayName,
+    run.clientRunId,
+    new Date().toISOString(),
+  ];
+  const placeholders = values.map(() => '?').join(', ');
+  // ON CONFLICT DO NOTHING + the (user_id, client_run_id) unique index = a
+  // retried request returns the original row instead of adding a second one.
+  const result = await dbRun(
+    `INSERT INTO astrogames_scores (${columns}) VALUES (${placeholders}) ON CONFLICT DO NOTHING${usingPostgres ? ' RETURNING id' : ''}`,
+    values
+  );
+  const insertedId = usingPostgres ? result.rows?.[0]?.id : (result.changes ? result.lastInsertRowid : null);
+  if (insertedId) {
+    return { id: insertedId, duplicate: false };
+  }
+  const existing = await dbGet('SELECT id FROM astrogames_scores WHERE user_id = ? AND client_run_id = ?', [userId, run.clientRunId]);
+  return { id: existing?.id, duplicate: true };
+}
+
 function astrogamesRoutes(app) {
-  app.get('/api/astrogames/quiz-results', async (req, res) => {
-    try {
-      await ensureQuizResultTables();
-      const scores = await dbAll('SELECT * FROM astrogames_high_scores ORDER BY score DESC, created_at ASC LIMIT 20');
-      const winners = await dbAll('SELECT * FROM astrogames_winners ORDER BY created_at DESC LIMIT 20');
-      res.json({ scores, winners });
-    } catch (error) {
-      logger.error('Unable to load quiz results', { message: error.message, stack: error.stack });
-      res.status(500).json({ error: 'Quiz results unavailable' });
-    }
-  });
-
-  app.post('/api/astrogames/quiz-results', async (req, res) => {
-    const { name, score, total, correct, userId, userEmail } = req.body;
-    const safeName = String(name || '').trim().slice(0, 120);
-    const safeScore = Math.max(0, Math.min(375, Number(score) || 0));
-    const safeTotal = 5;
-    const safeCorrect = Math.max(0, Math.min(safeTotal, Number(correct) || 0));
-    if (!safeName) return res.status(400).json({ error: 'name required' });
-
-    try {
-      await ensureQuizResultTables();
-      const values = [safeName, safeScore, safeCorrect, safeTotal, userId || null, userEmail || null, new Date().toISOString()];
-      const scoreSql = usingPostgres
-        ? 'INSERT INTO astrogames_high_scores (name, score, correct, total, user_id, user_email, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *'
-        : 'INSERT INTO astrogames_high_scores (name, score, correct, total, user_id, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
-      let savedScore;
-      if (usingPostgres) {
-        const result = await dbRun(scoreSql, values);
-        savedScore = result.rows?.[0];
-      } else {
-        await dbRun(scoreSql, values);
-        const lastId = await dbGet('SELECT last_insert_rowid() AS id');
-        savedScore = await dbGet('SELECT * FROM astrogames_high_scores WHERE id = ?', [lastId?.id]);
-      }
-
-      let savedWinner = null;
-      if (safeCorrect === safeTotal) {
-        const winnerSql = usingPostgres
-          ? 'INSERT INTO astrogames_winners (name, score, correct, total, user_id, user_email, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *'
-          : 'INSERT INTO astrogames_winners (name, score, correct, total, user_id, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        if (usingPostgres) {
-          const result = await dbRun(winnerSql, values);
-          savedWinner = result.rows?.[0];
-        } else {
-          await dbRun(winnerSql, values);
-          const lastId = await dbGet('SELECT last_insert_rowid() AS id');
-          savedWinner = await dbGet('SELECT * FROM astrogames_winners WHERE id = ?', [lastId?.id]);
-        }
-      }
-      res.json({ score: savedScore, winner: savedWinner });
-    } catch (error) {
-      logger.error('Unable to save quiz result', { message: error.message, stack: error.stack, name: safeName });
-      res.status(500).json({ error: 'Unable to save quiz result' });
-    }
+  // A human can't finish more than a handful of runs a minute; this caps abuse
+  // without affecting normal play. Keyed by user (falls back to IP).
+  const submitLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 120,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: (req) => (req.user ? `user-${req.user.id}` : req.ip),
+    message: { error: 'Too many score submissions, please slow down' },
   });
 
   app.get('/api/astrogames/live-questions', async (req, res) => {
     try {
-      const difficulty = (req.query.difficulty || 'medium').toLowerCase();
-      const amount = Number(req.query.amount || 5);
+      const requested = String(req.query.difficulty || 'medium').toLowerCase();
+      const difficulty = DIFFICULTIES.includes(requested) ? requested : 'medium';
+      const amount = Math.min(20, Math.max(1, Math.round(Number(req.query.amount)) || 5));
       const questions = await fetchLiveAstronomyQuestions(difficulty, amount);
-      if (!questions || !questions.length) {
-        return res.status(502).json({ error: 'Unable to fetch astronomy questions' });
-      }
+      if (!questions.length) return res.status(502).json({ error: 'Unable to fetch astronomy questions' });
       res.json({ questions });
     } catch (error) {
+      logger.error('live-questions failed', { message: error.message });
       res.status(500).json({ error: 'Unable to fetch astronomy questions' });
     }
   });
 
+  // Public leaderboard. game=global aggregates XP per player in SQL; any other
+  // game name returns the best individual runs for that game.
   app.get('/api/astrogames/leaderboard', async (req, res) => {
     try {
-      await ensureScoresTable();
-      const userId = req.query.userId;
-      const userEmail = req.query.userEmail;
       const game = String(req.query.game || '').trim().slice(0, 60);
-      const filters = [];
-      const params = [];
-      if (userId || userEmail) {
-        filters.push('(user_id = ? OR user_email = ?)');
-        params.push(userId || '', userEmail || '');
+      const timeframe = req.query.timeframe === 'weekly' ? 'weekly' : 'all';
+      const difficultyParam = String(req.query.difficulty || '').toLowerCase();
+      const difficulty = DIFFICULTIES.includes(difficultyParam) ? difficultyParam : '';
+
+      if (game && game !== 'global' && !GAME_LIMITS[game]) {
+        return res.status(400).json({ error: 'Unknown game' });
       }
-      if (game) {
-        filters.push('game = ?');
-        params.push(game);
-      }
-      const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
-      // A global leaderboard is aggregated per user in the client. Return enough
-      // history for that aggregation instead of limiting it to the first 20 runs.
-      const limit = userId || userEmail ? 200 : 2000;
-      const rows = await dbAll(`SELECT * FROM astrogames_scores ${where} ORDER BY created_at DESC LIMIT ${limit}`, params);
+      const rows = game === 'global'
+        ? await globalLeaderboard({ timeframe, difficulty })
+        : await gameLeaderboard({ game, timeframe, difficulty });
       res.json(rows);
     } catch (error) {
+      logger.error('Leaderboard unavailable', { message: error.message, stack: error.stack });
       res.status(500).json({ error: 'Leaderboard unavailable' });
     }
   });
 
-  app.post('/api/astrogames/leaderboard', async (req, res) => {
-    const { game, name, score, xp, total, difficulty, won, guesses, timeSec, target, date, pct, userId, userEmail, userName, challengeType, challengeTitle, challengeId, globalScore, timeMs } = req.body;
-    if (!game || !name) return res.status(400).json({ error: 'game and name required' });
+  // Save a finished run. Identity comes from the verified token, never from the
+  // request body, so a player can't submit scores as someone else.
+  app.post('/api/astrogames/leaderboard', authMiddleware, submitLimiter, async (req, res) => {
+    const { run, error } = sanitizeRun(req.body);
+    if (error) return res.status(400).json({ error });
 
     try {
-      await ensureScoresTable();
-      const insertSql = usingPostgres
-        ? 'INSERT INTO astrogames_scores (game, name, score, xp, total, difficulty, won, guesses, time_sec, target, pct, user_id, user_email, user_name, challenge_type, challenge_title, challenge_id, global_score, time_ms, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *'
-        : 'INSERT INTO astrogames_scores (game, name, score, xp, total, difficulty, won, guesses, time_sec, target, pct, user_id, user_email, user_name, challenge_type, challenge_title, challenge_id, global_score, time_ms, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      const wonValue = usingPostgres ? (won ? true : false) : (won ? 1 : 0);
-      const insertParams = [
-        game,
-        name,
-        Number(score) || 0,
-        Math.max(0, Number(xp) || Math.round((Number(score) || 0) * 0.5 + (won ? 100 : 20))),
-        Number(total) || 0,
-        difficulty || null,
-        wonValue,
-        Number(guesses) || 0,
-        Number(timeSec) || 0,
-        target || null,
-        Number(pct) || 0,
-        userId || null,
-        userEmail || null,
-        userName || null,
-        challengeType || null,
-        challengeTitle || null,
-        challengeId || null,
-        Number(globalScore) || 0,
-        Number(timeMs) || 0,
-        date || new Date().toISOString(),
-      ];
-      logger.debug('Saving leaderboard entry', { game, name, score: insertParams[2], total: insertParams[3], difficulty });
-
-      let saved;
-      if (usingPostgres) {
-        const result = await dbRun(insertSql, insertParams);
-        saved = result.rows?.[0];
-      } else {
-        await dbRun(insertSql, insertParams);
-        const lastId = await dbGet('SELECT last_insert_rowid() AS id');
-        saved = await dbGet('SELECT * FROM astrogames_scores WHERE id = ?', [lastId?.id]);
-      }
-
-      res.json(saved);
-    } catch (error) {
-      logger.error('Unable to save leaderboard entry', { message: error.message, stack: error.stack, game, name });
+      const userId = Number(req.user.id);
+      const { id, duplicate } = await insertRun(userId, req.user, run);
+      const totals = await totalXpForUser(userId);
+      res.status(duplicate ? 200 : 201).json({ id, duplicate, xpEarned: duplicate ? 0 : run.xp, totalXp: totals.xp, gamesPlayed: totals.gamesPlayed });
+    } catch (e) {
+      logger.error('Unable to save leaderboard entry', { message: e.message, stack: e.stack, game: run.game, userId: req.user.id });
       res.status(500).json({ error: 'Unable to save leaderboard entry' });
+    }
+  });
+
+  // The signed-in player's authoritative XP total (replaces the localStorage tally).
+  app.get('/api/astrogames/me', authMiddleware, async (req, res) => {
+    try {
+      const totals = await totalXpForUser(Number(req.user.id));
+      const claimedToday = await dbGet('SELECT id FROM astrogames_xp_events WHERE user_id = ? AND kind = ? AND day = ?', [Number(req.user.id), 'daily-login', todayUtc()]);
+      res.json({ ...totals, dailyClaimed: Boolean(claimedToday) });
+    } catch (e) {
+      logger.error('Unable to load player stats', { message: e.message, userId: req.user.id });
+      res.status(500).json({ error: 'Unable to load player stats' });
+    }
+  });
+
+  // Daily login reward: once per UTC day, enforced by a unique index.
+  app.post('/api/astrogames/daily-claim', authMiddleware, async (req, res) => {
+    const DAILY_XP = 100;
+    try {
+      const userId = Number(req.user.id);
+      const result = await dbRun(
+        'INSERT INTO astrogames_xp_events (user_id, kind, day, xp, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING',
+        [userId, 'daily-login', todayUtc(), DAILY_XP, new Date().toISOString()]
+      );
+      const claimed = usingPostgres ? result.rowCount > 0 : result.changes > 0;
+      const totals = await totalXpForUser(userId);
+      res.json({
+        claimed,
+        xp: claimed ? DAILY_XP : 0,
+        totalXp: totals.xp,
+        message: claimed ? 'Daily Login Reward Claimed: +100 XP!' : 'Daily 100 XP already claimed today!',
+      });
+    } catch (e) {
+      logger.error('Daily claim failed', { message: e.message, userId: req.user.id });
+      res.status(500).json({ error: 'Unable to claim daily XP' });
     }
   });
 }
 
-module.exports = { astrogamesRoutes };
+module.exports = { astrogamesRoutes, startOfWeekIso };

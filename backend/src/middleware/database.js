@@ -1,5 +1,6 @@
 const path = require('path');
 const { Pool } = require('pg');
+const logger = require('../utils/logger');
 const Database = require('better-sqlite3');
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -15,7 +16,21 @@ function convertPlaceholders(sql) {
 
 async function initDatabase() {
   if (usingPostgres) {
-    pgPool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
+    // Verify the server certificate by default (protects against MITM). Set
+    // DATABASE_SSL_NO_VERIFY=true only for hosts with a self-signed cert, and
+    // DATABASE_SSL=false for a local Postgres without TLS.
+    const ssl = process.env.DATABASE_SSL === 'false'
+      ? false
+      : { rejectUnauthorized: process.env.DATABASE_SSL_NO_VERIFY !== 'true' };
+    pgPool = new Pool({
+      connectionString: DATABASE_URL,
+      ssl,
+      max: Number(process.env.DATABASE_POOL_MAX) || 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+    // Without this listener an error on an idle client crashes the process.
+    pgPool.on('error', (error) => logger.error('Unexpected Postgres pool error', { message: error.message }));
 
     await pgPool.query(`CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -111,7 +126,7 @@ async function initDatabase() {
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
   } else {
-    const dbPath = path.join(__dirname, '../../data.db');
+    const dbPath = process.env.SQLITE_PATH || path.join(__dirname, '../../data.db');
     db = new Database(dbPath);
 
     db.prepare(`CREATE TABLE IF NOT EXISTS users (
@@ -286,8 +301,14 @@ async function dbRun(sql, params = []) {
   return db.prepare(sql).run(...params);
 }
 
+async function closeDatabase() {
+  if (pgPool) await pgPool.end();
+  if (db) db.close();
+}
+
 module.exports = {
   initDatabase,
+  closeDatabase,
   dbAll,
   dbGet,
   dbRun,
